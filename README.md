@@ -1,6 +1,10 @@
 # Dev Content Pipeline
 
+*uroborouroborouroboro...*
+
 An AI-powered content aggregation and generation system for developers. Automatically transforms your daily development work into blog posts, social media content, and structured development logs using local LLMs.
+
+The name "uroboro" captures the recursive nature of this tool - development work feeds content creation, which feeds development insights, which feeds more content... where does one end and the other begin?
 
 ## 🚀 What It Does
 
@@ -220,4 +224,4 @@ Each project can include a `.devlog/README.md` with context for AI assistants:
 
 ---
 
-Transform your daily development work into a content engine! 🚀 
+*uroborouroborouroboro...* Transform your daily development work into a content engine! 🚀 

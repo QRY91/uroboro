@@ -75,7 +75,7 @@ class ContentGenerator:
         
         return self._call_ollama(prompt)
     
-    def generate_blog_post(self, activity_data: Dict, title: str = None, tags: List[str] = None) -> str:
+    def generate_blog_post(self, activity_data: Dict, title: str = None, tags: List[str] = None, format: str = "mdx") -> str:
         """Generate a full blog post from aggregated activity"""
         
         # Auto-generate title if not provided
@@ -113,10 +113,16 @@ class ContentGenerator:
         
         content = self._call_ollama(prompt)
         
-        # Generate frontmatter
-        frontmatter = self._generate_frontmatter(title, tags)
-        
-        return f"{frontmatter}\n\n{content}"
+        if format == "mdx":
+            # Generate frontmatter for MDX
+            frontmatter = self._generate_frontmatter(title, tags)
+            return f"{frontmatter}\n\n{content}"
+        elif format == "markdown":
+            # Plain markdown with simple header
+            return f"# {title}\n\n*{datetime.now().strftime('%B %d, %Y')}*\n\n{content}"
+        else:
+            # Plain text
+            return f"{title}\n{'=' * len(title)}\n{datetime.now().strftime('%B %d, %Y')}\n\n{content}"
     
     def _generate_frontmatter(self, title: str, tags: List[str] = None) -> str:
         """Generate MDX frontmatter for qryzone blog"""
@@ -134,16 +140,25 @@ tags: {json.dumps(tags)}
 excerpt: "Recent development progress and insights"
 ---"""
     
-    def save_blog_post(self, content: str, filename: str = None, output_dir: str = None) -> str:
-        """Save blog post to qryzone content directory"""
+    def save_blog_post(self, content: str, filename: str = None, output_dir: str = None, format: str = "mdx") -> str:
+        """Save blog post to appropriate directory based on format"""
         
         if not filename:
             timestamp = datetime.now().strftime("%Y-%m-%d")
-            filename = f"dev-update-{timestamp}.mdx"
+            if format == "mdx":
+                filename = f"dev-update-{timestamp}.mdx"
+            elif format == "markdown":
+                filename = f"dev-update-{timestamp}.md"
+            else:
+                filename = f"dev-update-{timestamp}.txt"
         
         if not output_dir:
-            # Default to qryzone blog directory
-            output_dir = Path("../qryzone/content/blog")
+            if format == "mdx":
+                # Default to qryzone blog directory for MDX
+                output_dir = Path("../qryzone/content/blog")
+            else:
+                # Plain formats go to local output
+                output_dir = Path("output/posts")
         else:
             output_dir = Path(output_dir)
         
@@ -154,6 +169,12 @@ excerpt: "Recent development progress and insights"
             f.write(content)
         
         return str(output_path)
+    
+    def preview_content(self, content: str, content_type: str = "blog") -> None:
+        """Display content in a readable format for preview"""
+        print(f"\n--- {content_type.upper()} PREVIEW ---")
+        print(content)
+        print(f"--- END {content_type.upper()} PREVIEW ---\n")
     
     def create_social_hooks(self, activity_data: Dict) -> List[str]:
         """Generate social media hooks from activity"""

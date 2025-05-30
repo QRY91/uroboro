@@ -19,6 +19,9 @@ def main():
     parser.add_argument("--title", "-t", help="Custom title for blog post")
     parser.add_argument("--tags", nargs="+", help="Tags for the content")
     parser.add_argument("--dry-run", action="store_true", help="Show output without saving")
+    parser.add_argument("--format", "-f", choices=["mdx", "markdown", "text"], 
+                       default="mdx", help="Output format for blog posts")
+    parser.add_argument("--preview", action="store_true", help="Show content preview instead of saving")
     
     args = parser.parse_args()
     
@@ -42,20 +45,25 @@ def main():
     if args.output in ["devlog", "all"]:
         print("\n📝 Generating devlog summary...")
         devlog = generator.generate_devlog_summary(activity)
-        print("--- DEVLOG SUMMARY ---")
-        print(devlog)
-        print("--- END DEVLOG ---\n")
+        if args.preview or args.dry_run:
+            generator.preview_content(devlog, "devlog")
+        else:
+            print("--- DEVLOG SUMMARY ---")
+            print(devlog)
+            print("--- END DEVLOG ---\n")
     
     if args.output in ["blog", "all"]:
         print("📝 Generating blog post...")
-        blog_post = generator.generate_blog_post(activity, title=args.title, tags=args.tags)
+        blog_post = generator.generate_blog_post(activity, title=args.title, tags=args.tags, format=args.format)
         
-        if args.dry_run:
+        if args.preview:
+            generator.preview_content(blog_post, "blog")
+        elif args.dry_run:
             print("--- BLOG POST (DRY RUN) ---")
             print(blog_post)
             print("--- END BLOG POST ---\n")
         else:
-            saved_path = generator.save_blog_post(blog_post)
+            saved_path = generator.save_blog_post(blog_post, format=args.format)
             print(f"✅ Blog post saved to: {saved_path}")
     
     if args.output in ["social", "all"]:
@@ -67,7 +75,7 @@ def main():
         print("--- END SOCIAL HOOKS ---\n")
     
     # Save raw activity for reference
-    if not args.dry_run:
+    if not args.dry_run and not args.preview:
         output_dir = Path("output") / "daily-runs"
         output_dir.mkdir(parents=True, exist_ok=True)
         
