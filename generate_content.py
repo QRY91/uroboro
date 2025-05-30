@@ -21,6 +21,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Show output without saving")
     parser.add_argument("--format", "-f", choices=["mdx", "markdown", "text"], 
                        default="mdx", help="Output format for blog posts")
+    parser.add_argument("--voice", "-v", help="Writing voice/style (e.g., professional_conversational, technical_deep, storytelling, minimalist, thought_leadership)")
     parser.add_argument("--preview", action="store_true", help="Show content preview instead of saving")
     parser.add_argument("--notes-path", help="Path to notes directory (for knowledge mining)")
     parser.add_argument("--mega-mining", action="store_true", help="Deep archaeological analysis of knowledge base")
@@ -98,7 +99,7 @@ def main():
     
     if args.output in ["blog", "all"]:
         print("📝 Generating blog post...")
-        blog_post = generator.generate_blog_post(activity, title=args.title, tags=args.tags, format=args.format)
+        blog_post = generator.generate_blog_post(activity, title=args.title, tags=args.tags, format=args.format, voice=args.voice)
         
         if args.preview:
             generator.preview_content(blog_post, "blog")

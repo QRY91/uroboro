@@ -1,0 +1,31 @@
+{
+  "name": "uroboro-landing",
+  "version": "1.0.0",
+  "description": "Landing page for uroboro.dev - The self-documenting content pipeline",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "build": "echo 'Static site ready for deployment'",
+    "deploy": "echo 'Deploy to your hosting platform of choice'",
+    "serve": "python3 -m http.server 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qry91/uroboro.git"
+  },
+  "keywords": [
+    "ai",
+    "content-generation",
+    "developer-tools",
+    "local-llm",
+    "documentation",
+    "blog-automation"
+  ],
+  "author": "Q",
+  "license": "MIT",
+  "devDependencies": {},
+  "bugs": {
+    "url": "https://github.com/qry91/uroboro/issues"
+  },
+  "homepage": "https://github.com/qry91/uroboro#readme"
+}

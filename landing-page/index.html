@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uroboro - The Self-Documenting Content Pipeline</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+</head>
+<body>
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <!-- Brand Name -->
+                <div class="brand-name">uroboro</div>
+                
+                <!-- Uroboro Animation -->
+                <div class="uroboro-animation">
+                    <div class="uroboro-container">
+                        <div class="uroboro-circle">
+                            <span class="uroboro-letter">u</span>
+                            <span class="uroboro-letter">r</span>
+                            <span class="uroboro-letter">o</span>
+                            <span class="uroboro-letter">b</span>
+                            <span class="uroboro-letter">o</span>
+                            <span class="uroboro-letter">r</span>
+                            <span class="uroboro-letter">o</span>
+                            <span class="uroboro-letter">u</span>
+                            <span class="uroboro-letter">r</span>
+                            <span class="uroboro-letter">o</span>
+                            <span class="uroboro-letter">b</span>
+                            <span class="uroboro-letter">o</span>
+                            <span class="uroboro-letter">r</span>
+                            <span class="uroboro-letter">o</span>
+                        </div>
+                        <div class="inversion-mask"></div>
+                    </div>
+                </div>
+                
+                <h1 class="hero-title">
+                    The Self-Documenting<br>
+                    <span class="gradient-text">Content Pipeline</span>
+                </h1>
+                
+                <p class="hero-subtitle">
+                    Transform your daily development work into polished blog posts, social media content, 
+                    and technical documentation using <strong>local AI only</strong>. Zero API costs, maximum privacy.
+                </p>
+                
+                <div class="value-props">
+                    <div class="prop">
+                        <span class="prop-icon">🏠</span>
+                        <span>100% Local AI</span>
+                    </div>
+                    <div class="prop">
+                        <span class="prop-icon">💰</span>
+                        <span>$0/month costs</span>
+                    </div>
+                    <div class="prop">
+                        <span class="prop-icon">🎯</span>
+                        <span>Multi-project tracking</span>
+                    </div>
+                    <div class="prop">
+                        <span class="prop-icon">✍️</span>
+                        <span>5 writing styles</span>
+                    </div>
+                </div>
+                
+                <div class="hero-demo">
+                    <div class="demo-input">
+                        <span class="terminal-prompt">$</span>
+                        <span class="demo-command">./capture.sh "Fixed authentication bug in login flow"</span>
+                    </div>
+                    <div class="demo-arrow">↓</div>
+                    <div class="demo-output">
+                        <p>"Today I tackled a tricky authentication issue that taught me something important about session management..."</p>
+                    </div>
+                </div>
+                
+                <div class="hero-cta">
+                    <a href="#how-it-works" class="btn btn-primary">See How It Works</a>
+                    <a href="https://github.com/qry91/uroboro" class="btn btn-secondary">
+                        <span class="github-icon">⭐</span>
+                        View on GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Problem Section -->
+    <section class="problem">
+        <div class="container">
+            <div class="section-header">
+                <h2>You're Amazing at Building.<br>Terrible at Talking About It.</h2>
+                <p class="section-subtitle">Sound familiar?</p>
+            </div>
+            
+            <div class="problem-grid">
+                <div class="problem-item">
+                    <div class="problem-icon">🧠</div>
+                    <div class="problem-text">
+                        <strong>Brilliant technical work</strong> → <em>Forgotten in a week</em>
+                    </div>
+                </div>
+                <div class="problem-item">
+                    <div class="problem-icon">⏰</div>
+                    <div class="problem-text">
+                        <strong>8 hours coding</strong> → <em>8 minutes explaining what you built</em>
+                    </div>
+                </div>
+                <div class="problem-item">
+                    <div class="problem-icon">💡</div>
+                    <div class="problem-text">
+                        <strong>Amazing insights during development</strong> → <em>Can't remember them later</em>
+                    </div>
+                </div>
+                <div class="problem-item">
+                    <div class="problem-icon">📱</div>
+                    <div class="problem-text">
+                        <strong>Social media feels like marketing BS</strong> → <em>You just want to share cool tech</em>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="problem-cost">
+                <h3>The Real Cost:</h3>
+                <ul>
+                    <li><strong>Lost opportunities</strong> - Amazing work goes unnoticed</li>
+                    <li><strong>Imposter syndrome</strong> - No record of your growth</li>
+                    <li><strong>Lonely development</strong> - No community around your work</li>
+                    <li><strong>Career stagnation</strong> - No portfolio of your thinking</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section id="how-it-works" class="solution">
+        <div class="container">
+            <div class="section-header">
+                <h2>From Development Work to Published Content</h2>
+                <p class="section-subtitle">In 3 simple steps</p>
+            </div>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Capture (5 seconds)</h3>
+                        <div class="code-block">
+                            <code>./capture.sh "Implemented real-time notifications using WebSockets"</code>
+                        </div>
+                        <ul>
+                            <li>Quick terminal command during development</li>
+                            <li>No interruption to your flow state</li>
+                            <li>Captures context while it's fresh in your mind</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Aggregate (Automatic)</h3>
+                        <p>Uroboro collects your captures across all projects:</p>
+                        <ul>
+                            <li>Git commit summaries</li>
+                            <li>Daily development notes</li>
+                            <li>Project-specific insights</li>
+                            <li>Cross-project patterns</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Generate (AI-Powered)</h3>
+                        <p>Local AI transforms your raw captures into:</p>
+                        <ul>
+                            <li><strong>Blog posts</strong> - Professional, engaging articles</li>
+                            <li><strong>Social hooks</strong> - Twitter-ready content threads</li>
+                            <li><strong>Technical docs</strong> - Architecture decisions explained</li>
+                            <li><strong>Progress summaries</strong> - Weekly/monthly development reports</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="architecture">
+                <h3>The Architecture</h3>
+                <div class="arch-diagram">
+                    <div class="arch-step">
+                        <div class="arch-box">Daily Dev Work</div>
+                        <div class="arch-arrow">→</div>
+                    </div>
+                    <div class="arch-step">
+                        <div class="arch-box">Quick Capture</div>
+                        <div class="arch-arrow">→</div>
+                    </div>
+                    <div class="arch-step">
+                        <div class="arch-box">Local AI</div>
+                        <div class="arch-arrow">→</div>
+                    </div>
+                    <div class="arch-step">
+                        <div class="arch-box">Published Content</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Voice Showcase -->
+    <section class="voices">
+        <div class="container">
+            <div class="section-header">
+                <h2>Your Voice, Amplified</h2>
+                <p class="section-subtitle">Choose your writing style</p>
+            </div>
+            
+            <div class="voice-tabs">
+                <button class="voice-tab active" data-voice="professional">Professional</button>
+                <button class="voice-tab" data-voice="technical">Technical</button>
+                <button class="voice-tab" data-voice="storytelling">Storytelling</button>
+                <button class="voice-tab" data-voice="minimalist">Minimalist</button>
+                <button class="voice-tab" data-voice="thought">Thought Leadership</button>
+            </div>
+            
+            <div class="voice-example">
+                <div class="voice-input">
+                    <h4>Your capture:</h4>
+                    <p>"Fixed memory leak in WebSocket connection pool. Wasn't cleaning up event listeners properly."</p>
+                </div>
+                
+                <div class="voice-output" id="voice-output">
+                    <h4>Generated content:</h4>
+                    <p id="voice-content">
+                        "Today I discovered something interesting about WebSocket lifecycle management. While debugging what seemed like a simple memory issue, I uncovered a subtle but important pattern about event listener cleanup that every real-time application developer should know..."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Section -->
+    <section class="technical">
+        <div class="container">
+            <div class="section-header">
+                <h2>Why Local AI?</h2>
+                <p class="section-subtitle">Built for developers who care about privacy and cost</p>
+            </div>
+            
+            <div class="comparison">
+                <div class="comparison-table">
+                    <div class="comparison-row header">
+                        <div class="comparison-cell">Aspect</div>
+                        <div class="comparison-cell">Cloud APIs</div>
+                        <div class="comparison-cell highlight">Local LLMs</div>
+                    </div>
+                    <div class="comparison-row">
+                        <div class="comparison-cell">Privacy</div>
+                        <div class="comparison-cell">❌ Code sent to 3rd parties</div>
+                        <div class="comparison-cell highlight">✅ Never leaves your machine</div>
+                    </div>
+                    <div class="comparison-row">
+                        <div class="comparison-cell">Cost</div>
+                        <div class="comparison-cell">❌ $50-200/month</div>
+                        <div class="comparison-cell highlight">✅ $0/month</div>
+                    </div>
+                    <div class="comparison-row">
+                        <div class="comparison-cell">Customization</div>
+                        <div class="comparison-cell">❌ Limited prompts</div>
+                        <div class="comparison-cell highlight">✅ Full model control</div>
+                    </div>
+                    <div class="comparison-row">
+                        <div class="comparison-cell">Reliability</div>
+                        <div class="comparison-cell">❌ Rate limits, outages</div>
+                        <div class="comparison-cell highlight">✅ Offline capable</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="requirements">
+                <h3>System Requirements</h3>
+                <ul>
+                    <li><strong>RAM:</strong> 16GB+ recommended</li>
+                    <li><strong>Storage:</strong> ~5GB for models + your content</li>
+                    <li><strong>OS:</strong> Linux, macOS, Windows (with WSL)</li>
+                    <li><strong>Dependencies:</strong> Python 3.8+, Ollama</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Start Documenting Your Development Journey</h2>
+                <p>Transform your daily work into a portfolio of insights</p>
+                
+                <div class="cta-buttons">
+                    <a href="https://github.com/qry91/uroboro" class="btn btn-primary btn-large">
+                        Get Started on GitHub
+                    </a>
+                    <a href="mailto:hello@uroboro.dev" class="btn btn-secondary btn-large">
+                        Get Help Setting Up
+                    </a>
+                </div>
+                
+                <p class="cta-note">
+                    Open source, self-hosted, and designed to grow with your workflow.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>Uroboro</h3>
+                    <p>The self-documenting content pipeline</p>
+                </div>
+                
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Product</h4>
+                        <a href="#how-it-works">How it works</a>
+                        <a href="https://github.com/qry91/uroboro">GitHub</a>
+                        <a href="https://github.com/qry91/uroboro/blob/main/docs/getting-started.md">Getting Started</a>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4>Resources</h4>
+                        <a href="https://github.com/qry91/uroboro/blob/main/docs/examples.md">Examples</a>
+                        <a href="https://github.com/qry91/uroboro/blob/main/docs/configuration.md">Configuration</a>
+                        <a href="https://qry.zone">Blog</a>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4>Contact</h4>
+                        <a href="mailto:hello@uroboro.dev">Email</a>
+                        <a href="https://twitter.com/qrynx">Twitter</a>
+                        <a href="https://github.com/qry91">GitHub</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Uroboro. Open source under MIT License.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 

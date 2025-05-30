@@ -75,7 +75,7 @@ class ContentGenerator:
         
         return self._call_ollama(prompt)
     
-    def generate_blog_post(self, activity_data: Dict, title: str = None, tags: List[str] = None, format: str = "mdx") -> str:
+    def generate_blog_post(self, activity_data: Dict, title: str = None, tags: List[str] = None, format: str = "mdx", voice: str = None) -> str:
         """Generate a full blog post from aggregated activity"""
         
         # Auto-generate title if not provided
@@ -94,6 +94,28 @@ class ContentGenerator:
             daily_content = "\n".join([note['content'] for note in activity_data["daily_notes"]])
             all_activity += f"\n\n**General Notes**: {daily_content}"
         
+        # Get style configuration
+        style_config = self.config.get("style_config", {})
+        voice_name = voice or style_config.get("default_voice", "professional_conversational")
+        voice_config = style_config.get("voices", {}).get(voice_name, {})
+        
+        # Build style instructions
+        style_instructions = voice_config.get("prompt_additions", "Write in first person, conversational but professional tone.")
+        
+        # Add brand voice preferences
+        brand_voice = style_config.get("brand_voice", {})
+        if brand_voice.get("avoid_phrases"):
+            style_instructions += f"\n\nAvoid these phrases: {', '.join(brand_voice['avoid_phrases'])}"
+        if brand_voice.get("preferred_phrases"):
+            style_instructions += f"\nPrefer phrases like: {', '.join(brand_voice['preferred_phrases'])}"
+        if brand_voice.get("personality_traits"):
+            style_instructions += f"\nWrite with personality traits: {', '.join(brand_voice['personality_traits'])}"
+        
+        # Add custom instructions if any
+        custom_instructions = style_config.get("custom_instructions", "")
+        if custom_instructions:
+            style_instructions += f"\n\nAdditional instructions: {custom_instructions}"
+
         prompt = f"""
         Write a engaging blog post about recent development work. Use this activity data:
 
@@ -105,9 +127,9 @@ class ContentGenerator:
         3. Technical insights or lessons learned  
         4. What's coming next
 
-        Write in first person, conversational but professional tone.
-        Make it interesting for both technical and non-technical readers.
-        Include specific details but explain technical concepts clearly.
+        STYLE INSTRUCTIONS:
+        {style_instructions}
+        
         Aim for 300-500 words.
         """
         
