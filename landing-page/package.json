@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "dev": "python3 -m http.server 8000",
-    "build": "echo 'Static site ready for deployment'",
+    "build": "echo 'Static files ready - no build needed'",
     "deploy": "echo 'Deploy to your hosting platform of choice'",
     "serve": "python3 -m http.server 8000"
   },
