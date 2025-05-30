@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Any
+import argparse
 
 class ContentAggregator:
     def __init__(self, config_path="config/settings.json"):
@@ -103,6 +104,9 @@ class ContentAggregator:
         if devlog_dir.exists():
             recent_logs = []
             for log_file in devlog_dir.glob("*.md"):
+                if log_file.name == "README.md":
+                    # Skip README, handle separately
+                    continue
                 if datetime.fromtimestamp(log_file.stat().st_mtime) > cutoff:
                     recent_logs.append({
                         "file": str(log_file),
@@ -110,6 +114,14 @@ class ContentAggregator:
                     })
             if recent_logs:
                 activity["devlog"] = recent_logs
+            
+            # Load project context from README if available
+            readme_file = devlog_dir / "README.md"
+            if readme_file.exists():
+                activity["context"] = {
+                    "file": str(readme_file),
+                    "content": readme_file.read_text(encoding='utf-8')
+                }
         
         # TODO: Add git activity collection
         # TODO: Add file change detection
@@ -119,21 +131,33 @@ class ContentAggregator:
 # CLI interface for quick testing
 if __name__ == "__main__":
     import sys
+    
+    parser = argparse.ArgumentParser(description="Content Pipeline Aggregator")
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    
+    # Capture command
+    capture_parser = subparsers.add_parser('capture', help='Capture content')
+    capture_parser.add_argument('content', nargs='+', help='Content to capture')
+    capture_parser.add_argument('--project', '-p', help='Project name')
+    capture_parser.add_argument('--tags', '-t', nargs='+', help='Tags')
+    
+    # Collect command
+    collect_parser = subparsers.add_parser('collect', help='Collect recent activity')
+    collect_parser.add_argument('--days', '-d', type=int, default=1, help='Days to look back')
+    
+    if len(sys.argv) == 1:
+        print("Content Pipeline Aggregator")
+        print("Usage: python aggregator.py [capture|collect] ...")
+        parser.print_help()
+        sys.exit(0)
+    
+    args = parser.parse_args()
     aggregator = ContentAggregator()
     
-    if len(sys.argv) > 1:
-        command = sys.argv[1]
-        
-        if command == "capture":
-            content = " ".join(sys.argv[2:])
-            aggregator.quick_capture(content)
-        
-        elif command == "collect":
-            activity = aggregator.collect_recent_activity()
-            print(json.dumps(activity, indent=2))
-        
-        else:
-            print("Usage: python aggregator.py [capture|collect] [content]")
-    else:
-        print("Content Pipeline Aggregator")
-        print("Usage: python aggregator.py [capture|collect] [content]") 
+    if args.command == "capture":
+        content = " ".join(args.content)
+        aggregator.quick_capture(content, project=args.project, tags=args.tags)
+    
+    elif args.command == "collect":
+        activity = aggregator.collect_recent_activity(days=args.days)
+        print(json.dumps(activity, indent=2)) 
