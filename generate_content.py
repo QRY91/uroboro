@@ -14,7 +14,7 @@ from src.processors.content_generator import ContentGenerator
 def main():
     parser = argparse.ArgumentParser(description="Generate content from development activity")
     parser.add_argument("--days", "-d", type=int, default=1, help="Days of activity to collect")
-    parser.add_argument("--output", "-o", choices=["blog", "devlog", "social", "all"], 
+    parser.add_argument("--output", "-o", choices=["blog", "devlog", "social", "all", "knowledge"], 
                        default="all", help="Type of content to generate")
     parser.add_argument("--title", "-t", help="Custom title for blog post")
     parser.add_argument("--tags", nargs="+", help="Tags for the content")
@@ -22,8 +22,55 @@ def main():
     parser.add_argument("--format", "-f", choices=["mdx", "markdown", "text"], 
                        default="mdx", help="Output format for blog posts")
     parser.add_argument("--preview", action="store_true", help="Show content preview instead of saving")
+    parser.add_argument("--notes-path", help="Path to notes directory (for knowledge mining)")
+    parser.add_argument("--mega-mining", action="store_true", help="Deep archaeological analysis of knowledge base")
+    parser.add_argument("--no-privacy-filter", action="store_true", help="Disable privacy filter (include personal notes)")
     
     args = parser.parse_args()
+    
+    # Initialize content generator
+    generator = ContentGenerator()
+    
+    # Handle knowledge mining separately
+    if args.output == "knowledge":
+        if args.mega_mining:
+            print("🏺 MEGA MINING MODE: Archaeological expedition through your knowledge base...")
+        else:
+            print("🧠 Mining knowledge base for themes and insights...")
+            
+        knowledge_analysis = generator.mine_knowledge_base(
+            args.notes_path, 
+            deep_analysis=args.mega_mining,
+            privacy_filter=not args.no_privacy_filter
+        )
+        
+        if args.preview or args.dry_run:
+            generator.preview_content(knowledge_analysis, "knowledge analysis")
+        else:
+            # Save to output directory with unique timestamp
+            output_dir = Path("output") / "knowledge-mining"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            
+            # Include scope in filename if analyzing specific path
+            if args.notes_path:
+                scope = Path(args.notes_path).name
+                # Sanitize scope for filename (replace spaces, special chars)
+                scope_clean = scope.replace(" ", "-").replace("/", "-").replace("\\", "-")
+                scope_clean = "".join(c for c in scope_clean if c.isalnum() or c in "-_")
+                filename = f"archaeology-{scope_clean}-{timestamp}.md"
+            else:
+                filename = f"knowledge-analysis-{timestamp}.md"
+            
+            output_path = output_dir / filename
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(knowledge_analysis)
+            
+            print(f"✅ Knowledge archaeology saved to: {output_path}")
+        return
     
     # Collect recent activity
     print(f"🔍 Collecting activity from last {args.days} day(s)...")
@@ -37,9 +84,6 @@ def main():
         return
     
     print(f"✅ Found activity from {len(activity.get('projects', {}))} projects and {len(activity.get('daily_notes', []))} daily notes")
-    
-    # Initialize content generator
-    generator = ContentGenerator()
     
     # Generate content based on requested type
     if args.output in ["devlog", "all"]:

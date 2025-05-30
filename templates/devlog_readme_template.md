@@ -37,7 +37,7 @@
 
 ### Quick Capture Commands
 ```bash
-# From the dev-content-pipeline directory:
+# From the uroboro directory:
 ./capture.sh "description of work done" {PROJECT_NAME}
 
 # Examples:
@@ -71,5 +71,5 @@
 {PROJECT_SPECIFIC_NOTES}
 
 ---
-*This file is used by the dev-content-pipeline for AI-powered content generation*  
+*This file is used by uroboro for AI-powered content generation*  
 *Update regularly to maintain accurate context for AI assistants* 

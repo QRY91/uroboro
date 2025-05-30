@@ -1,130 +1,212 @@
-# Dev Content Pipeline
+# Uroboro
 
 *uroborouroborouroboro...*
 
-An AI-powered content aggregation and generation system for developers. Automatically transforms your daily development work into blog posts, social media content, and structured development logs using local LLMs.
+An AI-powered content aggregation and generation system that transforms your daily development work into blog posts, social media content, and structured development logs using **local LLMs only**. Zero API costs, maximum privacy.
 
 The name "uroboro" captures the recursive nature of this tool - development work feeds content creation, which feeds development insights, which feeds more content... where does one end and the other begin?
 
-## 🚀 What It Does
+## 🤔 What Does It Actually Do?
 
-- **Captures development activity** across multiple projects with zero friction
-- **Aggregates context** from project devlogs, daily notes, and git activity
-- **Generates content** using local AI models (Ollama)
-- **Publishes automatically** to your blog (qryzone format)
-- **Creates social media hooks** ready for posting
-- **Maintains development history** with searchable context
+**In Simple Terms**: You type `./capture.sh "Fixed that tricky bug"` and it automatically becomes part of tomorrow's blog post about your development progress.
 
-## ✨ Features
+**The Full Picture**:
+- **Captures** your daily development work with single terminal commands
+- **Aggregates** context from multiple projects, understanding what each project is about
+- **Generates** polished content using local AI that knows your development style
+- **Publishes** directly to your blog in the right format (MDX for Next.js)
+- **Creates** social media hooks ready for Twitter/Bluesky
+- **Maintains** searchable development history across all your projects
 
-- **Multi-project aggregation**: Collect context from all your active projects
-- **AI-powered content generation**: Local LLM integration with Mistral/Llama models
-- **Zero-setup capture**: Quick terminal commands for logging development work
-- **Structured output**: Blog posts, devlogs, social content in proper formats
-- **Automatic publishing**: Direct integration with Next.js/MDX blog structure
-- **Local-first**: Works entirely offline with local LLMs
-- **Cross-project insights**: Discover connections between different projects
+## 🏗️ How It Works
 
-## 🛠 Installation & Setup
+### The Architecture
+```
+Development Work → Quick Capture → AI Processing → Published Content
+     ↓               ↓               ↓               ↓
+Terminal commands → .devlog files → Local LLM → Blog/Social/Devlog
+```
+
+### The Components
+- **ContentAggregator**: Collects activity from configured projects and notes
+- **ContentGenerator**: Uses local LLM to transform raw captures into polished content  
+- **Project Context**: Each project has a `.devlog/README.md` explaining its purpose to the AI
+- **Multi-format Output**: Blog posts (MDX), social hooks, development summaries
+
+### The Data Flow
+1. You work on projects and capture insights via `./capture.sh`
+2. Captures go to `.devlog/YYYY-MM-DD-capture.md` files in each project
+3. `generate_content.py` reads recent captures + project context
+4. Local LLM (Mistral via Ollama) generates structured content
+5. Blog posts save to `../qryzone/content/blog/` in MDX format
+6. Social hooks display in terminal for copy/paste
+
+## 💰 Costs of Operation
+
+**TL;DR: $0 ongoing costs**
+
+- **Cloud AI APIs**: None (everything runs locally)
+- **Storage**: ~820KB for the tool + your text captures
+- **Compute**: Uses your local machine via Ollama
+- **Dependencies**: Python 3.8+ + Ollama (both free)
+
+**What You Need to Pay For**: Nothing. The most expensive part is the electricity to run Ollama.
+
+## 🚀 What's Needed to Get Started
 
 ### Prerequisites
-- Python 3.8+
-- [Ollama](https://ollama.ai) installed with a model (mistral, llama2, etc.)
+```bash
+# 1. Python 3.8+ (probably already have)
+python3 --version
 
-### Quick Start
+# 2. Install Ollama (if not already)
+curl -fsSL https://ollama.ai/install.sh | sh
 
-1. **Clone and setup**:
-   ```bash
-   git clone <this-repo>
-   cd dev-content-pipeline
-   python3 src/aggregator.py  # Creates default config
-   ```
+# 3. Pull a language model
+ollama pull mistral:latest
+```
 
-2. **Configure your projects** in `config/settings.json`:
-   ```json
-   {
-     "projects": {
-       "my-project": {
-         "path": "~/projects/my-project",
-         "type": "web",
-         "active": true
-       }
-     }
-   }
-   ```
+### 5-Minute Setup
+```bash
+# Clone this repo
+git clone <this-repo>
+cd uroboro
 
-3. **Create devlog folders** in your projects:
-   ```bash
-   mkdir ~/projects/my-project/.devlog
-   ```
+# Run once to create default config
+python3 src/aggregator.py
+
+# Edit config to point to your projects
+nano config/settings.json
+
+# Create devlog directories in your projects
+mkdir ~/my-project/.devlog
+
+# Test it works
+./capture.sh "Testing the pipeline"
+python3 generate_content.py --preview
+```
+
+## 🤖 Does the AI Work Locally?
+
+**Yes, 100% local**. The tool uses:
+
+- **Ollama** as the local LLM server
+- **Mistral** as the default model (you can change this)
+- **No internet required** once set up
+- **No API keys** or external services
+- **Complete privacy** - your code/notes never leave your machine
+
+### Supported Models
+```bash
+# Recommended (fast, good quality)
+ollama pull mistral:latest
+
+# Alternatives
+ollama pull llama2:7b-chat      # Meta's model
+ollama pull deepseek-r1:7b      # Coding-focused
+ollama pull codellama:7b        # Code-specialized
+```
+
+## 📁 Where Does the Data Go?
+
+### Input Data (Your Captures)
+```
+~/your-project/.devlog/
+├── 2024-05-30-capture.md      # Your daily captures
+├── 2024-05-31-capture.md      # Organized by date
+└── README.md                  # Project context for AI
+```
+
+### Generated Content
+```
+uroboro/output/
+├── daily-runs/                 # Raw activity JSON
+│   └── activity_2024-05-30_21-30-00.json
+└── knowledge-mining/           # AI analysis dumps
+    └── archaeology-notes-2024-05-30.md
+
+../qryzone/content/blog/       # Published blog posts
+└── 2024-05-30-development-progress.mdx
+```
+
+### Configuration
+```
+uroboro/config/
+└── settings.json              # Project paths, AI model, etc.
+```
+
+**Data Privacy**: Everything stays on your machine. No telemetry, no cloud uploads, no external API calls.
+
+## 📊 Current Project Configuration
+
+The tool is currently configured to monitor these projects:
+
+| Project | Type | Role | Status |
+|---------|------|------|--------|
+| quantum-dice | game | Development project | Active |
+| qryzone | website | Output channel (blog) | Active |
+| notes | knowledge | Knowledge base | Active |
+| panopticron | tool | Development project | Active |  
+| uroboro | meta | Self-documenting | Active |
 
 ## 📝 Daily Usage
 
-### Capture Development Work
+### Morning: Generate Yesterday's Content
 ```bash
-# Project-specific captures
-./capture.sh "Fixed authentication bug" my-project
-./capture.sh "Redesigned user dashboard" my-project
-
-# General development notes  
-./capture.sh "Great insight about React state management"
-
-# With tags
-./capture.sh "Implemented caching layer" my-project --tags performance optimization
+python3 generate_content.py --title "Development Progress" --tags daily-update
 ```
 
-### Generate Content
+### During Development: Quick Captures
 ```bash
+./capture.sh "Implemented user authentication" quantum-dice
+./capture.sh "Found interesting React pattern"
+./capture.sh "Fixed critical payment bug" --tags bugfix critical
+```
+
+### Evening: Review and Publish
+```bash
+# See what content would be generated
+python3 generate_content.py --preview
+
 # Generate everything (blog + social + devlog)
 python3 generate_content.py
 
-# Specific content types
-python3 generate_content.py --output blog --title "Weekly Development Update"
-python3 generate_content.py --output social
-python3 generate_content.py --output devlog
-
-# Custom options
-python3 generate_content.py --days 7 --title "Week in Review" --tags development AI automation
+# Custom weekly summary
+python3 generate_content.py --days 7 --title "Week in Development"
 ```
 
-### Content Output
-
-**Blog posts** → Saved to `../qryzone/content/blog/` in MDX format  
-**Social hooks** → Ready-to-post Twitter/social content  
-**Devlog summaries** → Structured development progress  
-**Raw activity** → JSON files in `output/daily-runs/`
-
-## 🏗 Project Structure
+## 🔧 Project Structure
 
 ```
-dev-content-pipeline/
+uroboro/           # 820KB total
 ├── src/
-│   ├── aggregator.py           # Core aggregation logic
+│   ├── aggregator.py          # Collects activity across projects
 │   └── processors/
 │       └── content_generator.py # AI content generation
 ├── config/
-│   └── settings.json           # Project configuration
-├── templates/                  # Content templates
-├── output/                     # Generated content and logs
-├── capture.sh                  # Quick capture script
-├── generate_content.py         # Main content generation
-└── test_llm.py                # LLM integration testing
+│   └── settings.json          # Project paths and configuration
+├── templates/                 # Content generation templates
+├── output/                   # Generated content and logs
+├── capture.sh                # Quick capture script
+├── generate_content.py       # Main content generation script
+└── test_llm.py              # Test local LLM integration
 ```
 
-## ⚙️ Configuration
+## ⚙️ Configuration Deep Dive
 
-Edit `config/settings.json`:
+Edit `config/settings.json` to customize:
 
 ```json
 {
   "notes_root": "~/notes",
   "llm_model": "mistral:latest",
   "projects": {
-    "project-name": {
-      "path": "~/path/to/project",
-      "type": "web|game|tool|etc",
+    "my-project": {
+      "path": "~/projects/my-project",
+      "type": "web|game|tool|meta|knowledge",
       "active": true,
-      "role": "output_channel|knowledge_base|etc"
+      "role": "development|output_channel|knowledge_base",
+      "description": "AI context about this project"
     }
   },
   "output_channels": {
@@ -134,94 +216,81 @@ Edit `config/settings.json`:
 }
 ```
 
-## 🤖 AI Integration
+## 🧠 AI Context System
 
-Uses local LLMs via Ollama for:
-- **Content summarization**: Extracting key insights from development activity
-- **Blog post generation**: Creating engaging, well-structured articles
-- **Social media hooks**: Generating tweet-ready content with hashtags
-- **Cross-project analysis**: Finding connections between different projects
-
-### Supported Models
-- `mistral:latest` (recommended)
-- `llama2:7b-chat`
-- `deepseek-r1:7b`
-- Any Ollama-compatible model
-
-## 📊 Example Workflow
-
-```bash
-# Morning: Generate yesterday's content
-python3 generate_content.py --title "Development Progress" --tags daily-update
-
-# During development: Quick captures
-./capture.sh "Implemented user authentication system" web-app
-./capture.sh "Discovered interesting pattern in state management"
-./capture.sh "Fixed critical bug in payment processing" web-app
-
-# Evening: Weekly summary
-python3 generate_content.py --days 7 --output blog --title "Week in Development"
-```
-
-## 🔧 Advanced Features
-
-### Multi-Project Aggregation
-Automatically collects and correlates activity across all your projects, finding technical connections and shared patterns.
-
-### AI-Powered Insights
-Local LLM analyzes your development patterns to:
-- Identify recurring challenges
-- Suggest next steps
-- Extract technical insights
-- Generate engaging content narratives
-
-### Zero-Friction Capture
-Designed for minimal interruption to your development flow. Quick terminal commands that take seconds.
-
-## 🚀 Scaling & Future Features
-
-**Immediate Extensions**:
-- Voice capture integration
-- Git commit analysis
-- Code change summarization
-- Project ignore patterns
-- Template customization
-
-**Advanced Possibilities**:
-- Multi-agent AI workflows
-- Automated social media posting
-- Technical documentation generation
-- Cross-team collaboration features
-- Analytics and trend analysis
-
-## 🤝 AI Assistant Integration
-
-Each project can include a `.devlog/README.md` with context for AI assistants:
+Each project can include `.devlog/README.md` with context for the AI:
 
 ```markdown
-# Project: My Web App
-## Current Focus: User authentication and dashboard
-## Tech Stack: React, Node.js, PostgreSQL
-## Recent Challenges: State management complexity
-## Capture Usage: ./capture.sh "description" my-web-app
+# Project: Quantum Dice Game
+
+## Purpose
+A web-based dice game that uses quantum mechanics for true randomness.
+
+## Current Focus  
+- WebGL visualizations of quantum states
+- Real-world physics integration
+- User experience improvements
+
+## Technical Stack
+React, Three.js, quantum API integration
+
+## AI Instructions
+When generating content about this project, emphasize the technical innovation
+and learning journey rather than game mechanics.
 ```
 
-## 📈 Benefits
+## 🚀 Advanced Features
 
-- **Consistent documentation** of development progress
-- **Automated content creation** for blogs and social media
-- **Historical context** for project decisions
-- **Cross-project learning** and pattern recognition
-- **Reduced friction** for sharing development insights
-- **Professional portfolio building** through regular content
+### Knowledge Mining
+```bash
+# Analyze your entire notes directory for insights
+python3 generate_content.py --output knowledge --notes-path ~/notes
 
-## 🛡 Privacy & Local-First
+# Deep archaeological dig through knowledge base
+python3 generate_content.py --output knowledge --mega-mining
+```
 
-- All processing happens locally using Ollama
-- No data sent to external APIs (unless you choose to)
-- Full control over your development data
-- Works offline once models are downloaded
+### Multi-Project Insights
+The AI automatically finds connections between projects:
+- Shared technical patterns
+- Cross-project learnings
+- Recurring challenges and solutions
 
----
+### Zero-Friction Workflow
+- **Terminal integration**: Works from any project directory
+- **Cursor integration**: Capture directly from your editor
+- **Background processing**: Generate content while you work
+- **Minimal interruption**: Designed for flow state preservation
 
-*uroborouroborouroboro...* Transform your daily development work into a content engine! 🚀 
+## 🔮 Scaling & Future
+
+**Immediate Extensions:**
+- Voice capture integration (`./capture.sh` via speech-to-text)
+- Git commit analysis (automatic capture from commit messages)
+- Code change summarization (what files changed, why)
+- Template customization (different AI personalities)
+
+**Advanced Possibilities:**
+- Multi-agent AI workflows (specialist agents for different content types)
+- Cross-team collaboration (shared capture across team members)
+- Technical documentation auto-generation
+- Integration with project management tools
+
+## 🤝 Contributing
+
+This is a personal tool that grew organically. The architecture is simple and hackable:
+- Add new content types in `ContentGenerator`
+- Add new capture sources in `ContentAggregator`  
+- Modify AI prompts in the template files
+- Create new output channels in the config
+
+## 📈 Success Metrics
+
+After building this tool, the measurable outcomes:
+- **Daily writing**: From sporadic to automated daily blog posts
+- **Social presence**: Consistent content hooks for social media
+- **Development visibility**: Clear record of daily progress across projects
+- **Knowledge retention**: Searchable history of development insights
+- **Content quality**: AI transforms rough notes into polished articles
+
+The meta-aspect is compelling: using the tool to document building the tool creates a recursive content loop that embodies the "open garage door" philosophy. 

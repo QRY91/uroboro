@@ -218,4 +218,195 @@ excerpt: "Recent development progress and insights"
                 hook = re.sub(r'^\d+\.\s+', '', line)
                 hooks.append(hook)
         
-        return hooks 
+        return hooks
+    
+    def mine_knowledge_base(self, notes_path: str = None, deep_analysis: bool = False, privacy_filter: bool = True) -> str:
+        """Mine the notes knowledge base for themes, insights, and patterns"""
+        
+        if not notes_path:
+            # Use notes path from config
+            notes_path = Path(self.config.get("projects", {}).get("notes", {}).get("path", "~/notes")).expanduser()
+        else:
+            notes_path = Path(notes_path).expanduser()
+        
+        if not notes_path.exists():
+            return "Error: Notes directory not found"
+        
+        # Collect markdown files
+        md_files = list(notes_path.glob("*.md"))
+        txt_files = list(notes_path.glob("*.txt"))
+        
+        # For deep analysis, also recursively search subdirectories
+        if deep_analysis:
+            md_files.extend(list(notes_path.rglob("*.md")))
+            txt_files.extend(list(notes_path.rglob("*.txt")))
+            # Also include other text-like files
+            other_files = list(notes_path.rglob("*.html"))
+            other_files.extend(list(notes_path.rglob("*.json")))
+            other_files.extend(list(notes_path.rglob("*.log")))
+        else:
+            other_files = []
+        
+        all_files = md_files + txt_files + other_files
+        
+        if not all_files:
+            return "Error: No markdown or text files found in notes directory"
+        
+        # Privacy filter keywords (things to skip or anonymize)
+        privacy_keywords = [
+            "password", "secret", "private", "personal", "embarrassing", 
+            "diary", "journal", "confession", "vent", "rant", "therapy",
+            "relationship", "dating", "crush", "anxiety", "depression"
+        ] if privacy_filter else []
+        
+        # Read and aggregate content
+        knowledge_content = []
+        file_summaries = []
+        source_mapping = {}
+        
+        for file_path in all_files:
+            try:
+                content = file_path.read_text(encoding='utf-8')
+                if len(content.strip()) < 50:  # Skip very short files
+                    continue
+                
+                # Privacy filter check
+                if privacy_filter and any(keyword in content.lower() for keyword in privacy_keywords):
+                    file_summaries.append(f"- {file_path.name} (PRIVATE - {len(content)} chars)")
+                    continue
+                
+                # Store full content for deep analysis
+                if deep_analysis:
+                    content_chunk = content[:2000]  # More content for deep analysis
+                else:
+                    content_chunk = content[:1000]
+                
+                knowledge_content.append(f"**{file_path.name}**:\n{content_chunk}...")
+                file_summaries.append(f"- {file_path.name} ({len(content)} chars)")
+                source_mapping[file_path.name] = {
+                    "path": str(file_path),
+                    "size": len(content),
+                    "modified": file_path.stat().st_mtime if file_path.exists() else 0
+                }
+                
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}")
+        
+        combined_content = "\n\n".join(knowledge_content)
+        files_summary = "\n".join(file_summaries)
+        source_list = "\n".join([f"- **{name}**: {info['path']}" for name, info in source_mapping.items()])
+        
+        if deep_analysis:
+            prompt = f"""
+            Perform DEEP ARCHAEOLOGICAL ANALYSIS of this knowledge base. This is a personal reflection for the author to rediscover forgotten insights and patterns in their own thinking.
+
+            FILES ANALYZED ({len(source_mapping)} files):
+            {files_summary}
+
+            CONTENT FOR ANALYSIS:
+            {combined_content}
+
+            SOURCE MAPPING:
+            {source_list}
+
+            Create a comprehensive self-reflection analysis in markdown format:
+
+            # 🧭 Personal Knowledge Archaeology Report
+
+            ## 📚 Knowledge Inventory
+            - What domains of knowledge are represented?
+            - What's the balance between technical and non-technical content?
+            - What timeframes are covered?
+
+            ## 🧠 Your Mental Models
+            - What frameworks for thinking appear repeatedly?
+            - How do you approach problem-solving across different domains?
+            - What cognitive patterns emerge?
+
+            ## 🎯 Core Values & Philosophy
+            - What principles guide your decisions?
+            - What matters most to you professionally and personally?
+            - How has your thinking evolved?
+
+            ## 🔧 Technical Evolution
+            - What's your learning trajectory across technologies?
+            - Where do you see knowledge gaps vs strengths?
+            - What tools/languages/concepts keep appearing?
+
+            ## 🌊 Recurring Themes & Obsessions
+            - What topics do you return to repeatedly?
+            - What problems fascinate you?
+            - What questions keep coming up?
+
+            ## 🔗 Hidden Connections
+            - What unexpected links exist between seemingly unrelated notes?
+            - How do your interests intersect and inform each other?
+            - What patterns might you have missed?
+
+            ## 💡 Forgotten Gold
+            - What insights seem particularly valuable but might be forgotten?
+            - What ideas deserve revisiting?
+            - What knowledge could be "freshened up" for current projects?
+
+            ## 🚀 Future Content Seeds
+            - What stories are hiding in this knowledge?
+            - What would make compelling blog posts or projects?
+            - What expertise could you share with others?
+
+            ## 🎭 Your Intellectual Personality
+            - How would you describe your thinking style?
+            - What makes your approach unique?
+            - What's your "intellectual signature"?
+
+            ## 📍 Knowledge Map
+            - Which files contain your most valuable insights?
+            - What should you revisit first?
+            - Where are the treasure troves?
+
+            Be specific, quote examples, cite sources by filename. Make this a mirror for self-discovery.
+            """
+        else:
+            prompt = f"""
+            Analyze this knowledge base from markdown files and extract key insights:
+
+            FILES ANALYZED:
+            {files_summary}
+
+            CONTENT SAMPLE:
+            {combined_content}
+
+            Please provide a comprehensive analysis in markdown format covering:
+
+            # Knowledge Base Analysis
+
+            ## Main Themes
+            - What are the 3-5 central themes across all content?
+
+            ## Technical Interests
+            - What technologies, tools, and languages appear most frequently?
+            - What patterns in technical learning/exploration exist?
+
+            ## Professional Philosophy 
+            - What approaches to software development emerge?
+            - What values or principles are emphasized?
+
+            ## Current Challenges
+            - What problems or obstacles are being worked through?
+            - What areas need more development?
+
+            ## Learning Patterns
+            - How does the author approach learning new topics?
+            - What knowledge gaps are identified?
+
+            ## Project Insights
+            - What connections exist between different projects?
+            - What development patterns emerge?
+
+            ## Key Takeaways
+            - What are the most valuable insights for future development?
+            - What themes could inform content creation?
+
+            Be specific and quote relevant examples where possible. Aim for actionable insights.
+            """
+        
+        return self._call_ollama(prompt) 
