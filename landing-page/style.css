@@ -532,6 +532,94 @@ section {
     font-style: italic;
 }
 
+/* Voice Training Section */
+.voice-training {
+    background: rgba(42, 31, 61, 0.6);
+    backdrop-filter: blur(5px);
+}
+
+.training-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-xl);
+    margin-bottom: var(--space-2xl);
+}
+
+.training-step {
+    background: var(--bg-secondary);
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.training-icon {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+}
+
+.training-step h3 {
+    margin-bottom: var(--space-sm);
+    color: var(--text-primary);
+}
+
+.training-step p {
+    margin-bottom: var(--space-md);
+    color: var(--text-secondary);
+}
+
+.training-step ul {
+    text-align: left;
+    list-style: none;
+    margin-bottom: var(--space-md);
+}
+
+.training-step li {
+    padding: 0.25rem 0;
+    color: var(--text-secondary);
+    position: relative;
+    padding-left: var(--space-md);
+}
+
+.training-step li::before {
+    content: "•";
+    color: var(--primary);
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.code-snippet {
+    background: var(--bg-dark);
+    padding: var(--space-sm);
+    border-radius: var(--radius);
+    margin-top: var(--space-sm);
+}
+
+.code-snippet code {
+    color: #fbbf24;  /* Pale orange for commands */
+    font-family: var(--font-mono);
+}
+
+.recursive-magic {
+    background: var(--bg-primary);
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    text-align: center;
+    border-left: 4px solid var(--accent);
+}
+
+.recursive-magic h3 {
+    margin-bottom: var(--space-md);
+    color: var(--text-primary);
+}
+
+.recursive-magic p {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 /* Technical Section */
 .technical {
     background: rgba(42, 31, 61, 0.6);

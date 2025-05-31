@@ -272,7 +272,39 @@ The AI automatically finds connections between projects:
 - Cross-project learnings
 - Recurring challenges and solutions
 
-### Zero-Friction Workflow
+### Voice Analysis & Personalization
+
+**Train uroboro to write like YOU**
+
+uroboro can analyze your existing notes to extract your authentic writing patterns and create a personalized voice profile:
+
+```bash
+# Analyze your writing patterns
+python3 voice_analyzer.py
+
+# Use your personalized voice
+python3 generate_content.py --voice personal_excavated
+```
+
+### Voice Archaeology Features
+- **Sentence Structure Analysis** - Learns your preferred sentence length and complexity
+- **Phrase Pattern Extraction** - Identifies your common expressions and technical terminology
+- **Tone Mapping** - Captures your use of meta-commentary, parentheticals, and asides
+- **Technical Style Profiling** - Understands your level of technical depth and jargon usage
+
+### Available Voices
+- `professional_conversational` - Polished but approachable (default)
+- `technical_deep` - Detailed technical explanations
+- `storytelling` - Narrative development journey format
+- `minimalist` - Concise, bullet-focused content
+- `thought_leadership` - Industry insights and broader perspectives
+- `matter_of_fact` - Direct technical reporting without promotional language
+- `personal_excavated` - Your authentic voice based on analyzed writing patterns
+
+**The Recursive Magic**: The more you use uroboro, the more content it generates in your actual voice - not generic AI slop.
+
+## 🚀 Zero-Friction Workflow
+
 - **Terminal integration**: Works from any project directory
 - **Cursor integration**: Capture directly from your editor
 - **Background processing**: Generate content while you work

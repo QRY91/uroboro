@@ -113,7 +113,7 @@ def main():
     
     if args.output in ["social", "all"]:
         print("📱 Generating social media hooks...")
-        social_hooks = generator.create_social_hooks(activity)
+        social_hooks = generator.create_social_hooks(activity, voice=args.voice)
         print("--- SOCIAL HOOKS ---")
         for i, hook in enumerate(social_hooks, 1):
             print(f"{i}. {hook}")

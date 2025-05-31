@@ -198,8 +198,23 @@ excerpt: "Recent development progress and insights"
         print(content)
         print(f"--- END {content_type.upper()} PREVIEW ---\n")
     
-    def create_social_hooks(self, activity_data: Dict) -> List[str]:
+    def create_social_hooks(self, activity_data: Dict, voice: str = None) -> List[str]:
         """Generate social media hooks from activity"""
+        
+        # Get style configuration
+        style_config = self.config.get("style_config", {})
+        voice_name = voice or style_config.get("default_voice", "professional_conversational")
+        voice_config = style_config.get("voices", {}).get(voice_name, {})
+        
+        # Build style instructions for social content
+        style_instructions = voice_config.get("prompt_additions", "Write in conversational tone.")
+        
+        # Add brand voice preferences
+        brand_voice = style_config.get("brand_voice", {})
+        if brand_voice.get("avoid_phrases"):
+            style_instructions += f"\n\nAvoid these phrases: {', '.join(brand_voice['avoid_phrases'])}"
+        if brand_voice.get("preferred_phrases"):
+            style_instructions += f"\nPrefer phrases like: {', '.join(brand_voice['preferred_phrases'])}"
         
         # Extract key accomplishments
         accomplishments = []
@@ -213,16 +228,32 @@ excerpt: "Recent development progress and insights"
         
         combined_work = "\n".join(accomplishments[:10])  # Limit context
         
+        # Adjust social approach based on voice
+        if voice_name in ["matter_of_fact", "personal_excavated"]:
+            social_approach = """Create 3-5 concise social media posts from this development work:
+            
+            - Report what was built/learned without promotional language
+            - Focus on technical substance
+            - Avoid exclamation points and engagement tactics
+            - Include relevant hashtags but keep them minimal
+            - Write for people who already care about the technology"""
+        else:
+            social_approach = """Create 3-5 engaging social media hooks from this development work:
+            
+            - Make them engaging and accessible
+            - Include relevant hashtags
+            - Show progress/momentum
+            - Mix technical and human interest angles"""
+        
         prompt = f"""
-        Create 3-5 engaging social media hooks from this development work:
+        {social_approach}
 
         {combined_work}
 
+        STYLE INSTRUCTIONS:
+        {style_instructions}
+
         Format each as a tweet-style post (under 280 chars):
-        - Make them engaging and accessible
-        - Include relevant hashtags
-        - Show progress/momentum
-        - Mix technical and human interest angles
 
         Output format:
         1. [hook text]
