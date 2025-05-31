@@ -1,358 +1,382 @@
-# uroboro
-
-*uroborouroborouroboro...*
-
-> **🌐 Visit [uroboro.dev](https://uroboro.dev)** for the full experience, examples, and interactive demo.
-
-An AI-powered content aggregation and generation system that transforms your daily development work into blog posts, social media content, and structured development logs using **local LLMs only**. Zero API costs, maximum privacy.
-
-The name "uroboro" captures the recursive nature of this tool - development work feeds content creation, which feeds development insights, which feeds more content... where does one end and the other begin?
-
-## 🌟 Key Features
-
-- 🏠 **100% Local AI** - No API costs, complete privacy
-- 💰 **$0/month operation** - One-time setup, zero ongoing costs  
-- 🎯 **Multi-project tracking** - Captures work across all your projects
-- ✍️ **5 writing styles** - Professional, technical, storytelling, minimalist, thought leadership
-- 🚀 **Zero-friction workflow** - Single command captures, automatic generation
-
-## 🤔 What Does It Actually Do?
-
-**In Simple Terms**: You type `./capture.sh "Fixed that tricky bug"` and it automatically becomes part of tomorrow's blog post about your development progress.
-
-**The Full Picture**:
-- **Captures** your daily development work with single terminal commands
-- **Aggregates** context from multiple projects, understanding what each project is about
-- **Generates** polished content using local AI that knows your development style
-- **Publishes** directly to your blog in the right format (MDX for Next.js)
-- **Creates** social media hooks ready for Twitter/Bluesky
-- **Maintains** searchable development history across all your projects
-
-## 🚀 Quick Start
-
-**Want to see how it works first?** Visit **[uroboro.dev](https://uroboro.dev)** for an interactive demo and detailed examples.
-
-**Ready to install?** Follow the 5-minute setup below or check out the [Getting Started Guide](https://uroboro.dev#how-it-works).
-
-## 🏗️ How It Works
-
-### The Architecture
-```
-Development Work → Quick Capture → AI Processing → Published Content
-     ↓               ↓               ↓               ↓
-Terminal commands → .devlog files → Local LLM → Blog/Social/Devlog
-```
-
-### The Components
-- **ContentAggregator**: Collects activity from configured projects and notes
-- **ContentGenerator**: Uses local LLM to transform raw captures into polished content  
-- **Project Context**: Each project has a `.devlog/README.md` explaining its purpose to the AI
-- **Multi-format Output**: Blog posts (MDX), social hooks, development summaries
-
-### The Data Flow
-1. You work on projects and capture insights via `./capture.sh`
-2. Captures go to `.devlog/YYYY-MM-DD-capture.md` files in each project
-3. `generate_content.py` reads recent captures + project context
-4. Local LLM (Mistral via Ollama) generates structured content
-5. Blog posts save to `../qryzone/content/blog/` in MDX format
-6. Social hooks display in terminal for copy/paste
-
-## 💰 Costs of Operation
-
-**TL;DR: $0 ongoing costs**
-
-- **Cloud AI APIs**: None (everything runs locally)
-- **Storage**: ~820KB for the tool + your text captures
-- **Compute**: Uses your local machine via Ollama
-- **Dependencies**: Python 3.8+ + Ollama (both free)
-
-**What You Need to Pay For**: Nothing. The most expensive part is the electricity to run Ollama.
-
-## 🚀 What's Needed to Get Started
-
-### Prerequisites
-```bash
-# 1. Python 3.8+ (probably already have)
-python3 --version
-
-# 2. Install Ollama (if not already)
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# 3. Pull a language model
-ollama pull mistral:latest
-```
-
-### 5-Minute Setup
-```bash
-# Clone this repo
-git clone <this-repo>
-cd uroboro
-
-# Run once to create default config
-python3 src/aggregator.py
-
-# Edit config to point to your projects
-nano config/settings.json
-
-# Create devlog directories in your projects
-mkdir ~/my-project/.devlog
-
-# Test it works
-./capture.sh "Testing the pipeline"
-python3 generate_content.py --preview
-```
-
-## 🤖 Does the AI Work Locally?
-
-**Yes, 100% local**. The tool uses:
-
-- **Ollama** as the local LLM server
-- **Mistral** as the default model (you can change this)
-- **No internet required** once set up
-- **No API keys** or external services
-- **Complete privacy** - your code/notes never leave your machine
-
-### Supported Models
-```bash
-# Recommended (fast, good quality)
-ollama pull mistral:latest
-
-# Alternatives
-ollama pull llama2:7b-chat      # Meta's model
-ollama pull deepseek-r1:7b      # Coding-focused
-ollama pull codellama:7b        # Code-specialized
-```
-
-## 📁 Where Does the Data Go?
-
-### Input Data (Your Captures)
-```
-~/your-project/.devlog/
-├── 2024-05-30-capture.md      # Your daily captures
-├── 2024-05-31-capture.md      # Organized by date
-└── README.md                  # Project context for AI
-```
-
-### Generated Content
-```
-uroboro/output/
-├── daily-runs/                 # Raw activity JSON
-│   └── activity_2024-05-30_21-30-00.json
-└── knowledge-mining/           # AI analysis dumps
-    └── archaeology-notes-2024-05-30.md
-
-../qryzone/content/blog/       # Published blog posts
-└── 2024-05-30-development-progress.mdx
-```
-
-### Configuration
-```
-uroboro/config/
-└── settings.json              # Project paths, AI model, etc.
-```
-
-**Data Privacy**: Everything stays on your machine. No telemetry, no cloud uploads, no external API calls.
-
-## 📊 Current Project Configuration
-
-The tool is currently configured to monitor these projects:
-
-| Project | Type | Role | Status |
-|---------|------|------|--------|
-| quantum-dice | game | Development project | Active |
-| qryzone | website | Output channel (blog) | Active |
-| notes | knowledge | Knowledge base | Active |
-| panopticron | tool | Development project | Active |  
-| uroboro | meta | Self-documenting | Active |
-
-## 📝 Daily Usage
-
-### Morning: Generate Yesterday's Content
-```bash
-python3 generate_content.py --title "Development Progress" --tags daily-update
-```
-
-### During Development: Quick Captures
-```bash
-./capture.sh "Implemented user authentication" quantum-dice
-./capture.sh "Found interesting React pattern"
-./capture.sh "Fixed critical payment bug" --tags bugfix critical
-```
-
-### Evening: Review and Publish
-```bash
-# See what content would be generated
-python3 generate_content.py --preview
-
-# Generate everything (blog + social + devlog)
-python3 generate_content.py
-
-# Custom weekly summary
-python3 generate_content.py --days 7 --title "Week in Development"
-```
-
-## 🔧 Project Structure
-
-```
-uroboro/           # 820KB total
-├── src/
-│   ├── aggregator.py          # Collects activity across projects
-│   └── processors/
-│       └── content_generator.py # AI content generation
-├── config/
-│   └── settings.json          # Project paths and configuration
-├── templates/                 # Content generation templates
-├── output/                   # Generated content and logs
-├── capture.sh                # Quick capture script
-├── generate_content.py       # Main content generation script
-└── test_llm.py              # Test local LLM integration
-```
-
-## ⚙️ Configuration Deep Dive
-
-Edit `config/settings.json` to customize:
-
-```json
-{
-  "notes_root": "~/notes",
-  "llm_model": "mistral:latest",
-  "projects": {
-    "my-project": {
-      "path": "~/projects/my-project",
-      "type": "web|game|tool|meta|knowledge",
-      "active": true,
-      "role": "development|output_channel|knowledge_base",
-      "description": "AI context about this project"
-    }
-  },
-  "output_channels": {
-    "blog": "qryzone",
-    "social": "general"
-  }
-}
-```
-
-## 🧠 AI Context System
-
-Each project can include `.devlog/README.md` with context for the AI:
-
-```markdown
-# Project: Quantum Dice Game
-
-## Purpose
-A web-based dice game that uses quantum mechanics for true randomness.
-
-## Current Focus  
-- WebGL visualizations of quantum states
-- Real-world physics integration
-- User experience improvements
-
-## Technical Stack
-React, Three.js, quantum API integration
-
-## AI Instructions
-When generating content about this project, emphasize the technical innovation
-and learning journey rather than game mechanics.
-```
-
-## 🚀 Advanced Features
-
-### Knowledge Mining
-```bash
-# Analyze your entire notes directory for insights
-python3 generate_content.py --output knowledge --notes-path ~/notes
-
-# Deep archaeological dig through knowledge base
-python3 generate_content.py --output knowledge --mega-mining
-```
-
-### Multi-Project Insights
-The AI automatically finds connections between projects:
-- Shared technical patterns
-- Cross-project learnings
-- Recurring challenges and solutions
-
-### Voice Analysis & Personalization
-
-**Train uroboro to write like YOU**
-
-uroboro can analyze your existing notes to extract your authentic writing patterns and create a personalized voice profile:
-
-```bash
-# Analyze your writing patterns
-python3 voice_analyzer.py
-
-# Use your personalized voice
-python3 generate_content.py --voice personal_excavated
-```
-
-### Voice Archaeology Features
-- **Sentence Structure Analysis** - Learns your preferred sentence length and complexity
-- **Phrase Pattern Extraction** - Identifies your common expressions and technical terminology
-- **Tone Mapping** - Captures your use of meta-commentary, parentheticals, and asides
-- **Technical Style Profiling** - Understands your level of technical depth and jargon usage
-
-### Available Voices
-- `professional_conversational` - Polished but approachable (default)
-- `technical_deep` - Detailed technical explanations
-- `storytelling` - Narrative development journey format
-- `minimalist` - Concise, bullet-focused content
-- `thought_leadership` - Industry insights and broader perspectives
-- `matter_of_fact` - Direct technical reporting without promotional language
-- `personal_excavated` - Your authentic voice based on analyzed writing patterns
-
-**The Recursive Magic**: The more you use uroboro, the more content it generates in your actual voice - not generic AI slop.
-
-## 🚀 Zero-Friction Workflow
-
-- **Terminal integration**: Works from any project directory
-- **Cursor integration**: Capture directly from your editor
-- **Background processing**: Generate content while you work
-- **Minimal interruption**: Designed for flow state preservation
-
-## 🔮 Scaling & Future
-
-**Immediate Extensions:**
-- Voice capture integration (`./capture.sh` via speech-to-text)
-- Git commit analysis (automatic capture from commit messages)
-- Code change summarization (what files changed, why)
-- Template customization (different AI personalities)
-
-**Advanced Possibilities:**
-- Multi-agent AI workflows (specialist agents for different content types)
-- Cross-team collaboration (shared capture across team members)
-- Technical documentation auto-generation
-- Integration with project management tools
-
-## 🤝 Contributing
-
-This is a personal tool that grew organically. The architecture is simple and hackable:
-- Add new content types in `ContentGenerator`
-- Add new capture sources in `ContentAggregator`  
-- Modify AI prompts in the template files
-- Create new output channels in the config
-
-**Want to contribute?** Check out the [issues](https://github.com/qry91/uroboro/issues) or visit [uroboro.dev](https://uroboro.dev) to get in touch.
-
-## 📈 Success Metrics
-
-After building this tool, the measurable outcomes:
-- **Daily writing**: From sporadic to automated daily blog posts
-- **Social presence**: Consistent content hooks for social media
-- **Development visibility**: Clear record of daily progress across projects
-- **Knowledge retention**: Searchable history of development insights
-- **Content quality**: AI transforms rough notes into polished articles
-
-The meta-aspect is compelling: using the tool to document building the tool creates a recursive content loop that embodies the "open garage door" philosophy.
+# uroboro 🐍
+
+**The Self-Documenting Content Pipeline**
+
+Transform your daily development work into polished blog posts, social media content, and technical documentation using **local AI only**. Zero API costs, maximum privacy.
+
+![Demo](assets/uroboro_demo.gif)
+
+*[View more demos](#-demos): [Core Workflow](assets/uroboro_demo_core.gif) • [Git Integration](assets/uroboro_demo_git.gif) • [Project Templates](assets/uroboro_demo_templates.gif)*
+
+## ✨ Features
+
+- **🏠 100% Local AI** - No API costs, no data sent to external servers
+- **⚡ Unified CLI** - Single command interface for all functionality (`uro`)
+- **📝 Smart Content Generation** - Blog posts, social media, technical docs
+- **🎯 Multi-Project Tracking** - Organize captures across different projects
+- **🔗 Git Integration** - Auto-capture commits with hooks and analyze patterns
+- **📋 Project Templates** - Quick setup for new projects with AI context
+- **🎨 Voice Training** - Learn your authentic writing style from existing content
+- **🧠 Knowledge Mining** - Extract insights from your development history
+- **🔒 Privacy-First** - Optional local-only usage tracking
+- **📊 Development Analytics** - Track your growth and patterns over time
+
+### 🚀 Core Features Deep Dive
+
+#### ⚡ Smart Capture System
+- **5-second captures** during development with zero flow interruption
+- **Auto-tagging** and smart categorization of insights
+- **Multi-project organization** across different codebases
+- **Rich context** including git info, timestamps, and metadata
+- **Cross-project pattern recognition** for better insights
+
+#### 🔗 Seamless Git Integration
+- **Auto-capture git commits** - Never miss development insights
+- **Git hooks installation** - Zero-friction integration with your workflow
+- **Commit pattern analysis** - Extract trends from your development history
+- **Branch awareness** - Context-aware logging across feature branches
+- **Repository insights** - Understand your coding patterns over time
+
+#### 📋 AI-Optimized Project Templates
+- **6 template types**: Web, API, Game, Tool, Research, Mobile
+- **Pre-configured AI context** for better content generation
+- **Project-specific configurations** including appropriate `.gitignore` files
+- **Smart defaults** optimized for different development workflows
+- **Quick start guides** to get productive immediately
+
+#### 🎨 Authentic Voice Training
+- **Personal voice extraction** from your existing markdown files and notes
+- **Writing pattern analysis** including sentence structure, tone, and style
+- **Recursive improvement** - gets better the more you use it
+- **Multiple voice styles** available (Professional, Technical, Storytelling, etc.)
+- **Anti-AI detection** - sounds like you, not generic AI content
+
+#### 🧠 Knowledge Mining & Analytics
+- **Cross-project insights** - find patterns across all your codebases
+- **Learning trajectory tracking** - visualize your growth over time
+- **Technical evolution documentation** - automatic skill development logs
+- **Hidden connection discovery** - uncover unexpected relationships in your work
+- **Development pattern analysis** - understand your productive rhythms
+
+#### 🔒 Privacy-First Design
+- **100% local processing** with Ollama - no external API calls
+- **Zero data collection** - your code and insights stay on your machine
+- **Optional usage statistics** stored locally in SQLite for your analysis
+- **No telemetry or phone-home** functionality
+- **Full data ownership** - export and analyze your own development patterns
 
 ---
 
-## 🔗 Links & Resources
+## 🎬 Live Demos
 
-- **🌐 Website**: [uroboro.dev](https://uroboro.dev) - Interactive demo and examples
-- **📚 Documentation**: [Getting Started](https://uroboro.dev#how-it-works) - Step-by-step setup guide
-- **💬 Contact**: [hello@uroboro.dev](mailto:hello@uroboro.dev) - Questions or setup help
-- **🐦 Updates**: [@qrynx](https://twitter.com/qrynx) - Follow for updates and insights
-- **📝 Blog**: [qry.zone](https://qry.zone) - Real examples of content generated by uroboro
+### Core Workflow Demo
+![Core Workflow Demo](assets/uroboro_demo_core.gif)
+*The essential uroboro experience: `uro capture` → `uro status` → `uro generate`*
 
-**License**: MIT - Build upon it, modify it, make it your own. 
+### Git Integration Demo  
+![Git Integration Demo](assets/uroboro_demo_git.gif)
+*Install hooks, analyze patterns, auto-capture commits*
+
+### Project Templates Demo
+![Project Templates Demo](assets/uroboro_demo_templates.gif)
+*Quick setup with AI-optimized configurations*
+
+### Complete Feature Overview
+![Full Demo](assets/uroboro_demo.gif)
+*Complete walkthrough of all uroboro capabilities*
+
+---
+
+## 🚀 Quick Start
+
+### 🎬 See It In Action First
+
+Before diving into installation, see uroboro in action:
+
+| Demo | What it shows | Duration |
+|------|---------------|----------|
+| [**🎯 Core Workflow**](assets/uroboro_demo_core.gif) | Essential capture → status → generate flow | 15s |
+| [**🔗 Git Integration**](assets/uroboro_demo_git.gif) | Hook installation and commit analysis | 20s |
+| [**📋 Project Templates**](assets/uroboro_demo_templates.gif) | Quick project setup with AI context | 25s |
+| [**🎬 Complete Overview**](assets/uroboro_demo.gif) | Full feature tour and workflow | 45s |
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/qry91/uroboro
+cd uroboro
+
+# Install dependencies
+pip install -e .
+
+# Verify installation
+uroboro --help
+```
+
+### Basic Usage
+
+```bash
+# Capture development insights (quick alias: uro)
+uro capture "Fixed authentication bug in login flow"
+
+# Capture with project and tags
+uro capture "Implemented real-time notifications" --project my-app --tags feature websockets
+
+# Generate content from recent activity
+uro generate --blog --voice storytelling
+
+# Check status
+uro status
+
+# Set up git auto-capture
+uro git --hook-install
+```
+
+## 📋 Commands
+
+### Core Commands
+
+- **`uro capture`** - Capture development insights and progress
+- **`uro generate`** - Generate blog posts, social content, documentation
+- **`uro status`** - Show recent activity and system status
+- **`uro voice`** - Analyze and train your writing voice
+
+### Advanced Features
+
+- **`uro git`** - Git integration for automatic commit capture
+- **`uro project`** - Project template management
+- **`uro mine`** - Knowledge base mining and analysis
+- **`uro tracking`** - Privacy-first usage analytics
+
+### Project Templates
+
+Create new projects with optimal uroboro integration:
+
+```bash
+# List available templates
+uro project --list
+
+# Create a new web project
+uro project create my-web-app --template web --name "My Web App"
+
+# Available templates: web, api, game, tool, research, mobile
+```
+
+Each template includes:
+- Pre-configured `.devlog/README.md` with AI instructions
+- Appropriate `.gitignore` for the project type
+- Initial capture file to get started
+
+## 🎯 Workflow
+
+### 1. Daily Development Capture
+
+```bash
+# During development - capture insights as they happen
+uro capture "Discovered interesting pattern in React state management"
+uro capture "Performance optimization reduced load time by 40%" --tags performance
+```
+
+### 2. Git Integration
+
+```bash
+# Install git hook for automatic commit capture
+uro git --hook-install
+
+# Or manually capture recent commits
+uro git --capture-commits --days 3
+```
+
+### 3. Content Generation
+
+```bash
+# Generate blog post from recent activity
+uro generate --blog --voice professional --days 7
+
+# Create social media content
+uro generate --social --voice storytelling
+
+# Preview before saving
+uro generate --preview --output all
+```
+
+### 4. Voice Training
+
+```bash
+# Analyze your writing style
+uro voice
+
+# Use your personal voice in generation
+uro generate --voice personal_excavated
+```
+
+## 🏗️ Architecture
+
+```
+Daily Dev Work → Quick Capture → Local AI → Published Content
+     ↓              ↓              ↓            ↓
+  Git commits   .devlog files   Ollama LLM   Blog posts
+  Code changes  Project notes   Local only   Social media
+  Insights      Cross-project   Zero cost    Documentation
+```
+
+## 🎨 Writing Voices
+
+uroboro supports multiple writing styles:
+
+- **Professional** - Polished, conversational tone
+- **Technical** - Deep technical explanations
+- **Storytelling** - Narrative approach to development
+- **Minimalist** - Concise, bullet-focused content
+- **Thought Leadership** - Industry insights and bigger picture
+- **Personal Excavated** - Your authentic voice (trained from your writing)
+
+## 🔧 Configuration
+
+### System Requirements
+
+- **Python 3.8+**
+- **Git** (for git integration features)
+- **Ollama** (for local AI processing)
+- **16GB+ RAM** recommended for local LLMs
+
+### Privacy & Tracking
+
+uroboro includes optional local-only usage tracking:
+
+```bash
+# Enable tracking (data never leaves your machine)
+uro tracking --enable
+
+# View statistics
+uro tracking --stats
+
+# Disable and clear data
+uro tracking --disable
+```
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+# Install test dependencies
+pip install pytest pytest-cov
+
+# Run tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=src --cov-report=term-missing
+```
+
+## 🚀 Development
+
+### Project Structure
+
+```
+uroboro/
+├── src/                    # Core modules
+│   ├── cli.py             # Unified CLI interface
+│   ├── aggregator.py      # Content aggregation
+│   ├── git_integration.py # Git hooks and analysis
+│   ├── project_templates.py # Project scaffolding
+│   ├── usage_tracker.py   # Privacy-first analytics
+│   └── processors/        # Content generation
+├── tests/                 # Test suite
+├── landing-page/          # Project website
+├── assets/               # Demo GIFs and media
+└── examples/             # Usage examples
+```
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
+
+### CI/CD
+
+The project includes comprehensive GitHub Actions workflows:
+
+- **Tests** - Multi-Python version testing
+- **Integration Tests** - End-to-end CLI testing
+- **Demo Generation** - Automated GIF creation with VHS
+- **Linting** - Code quality checks
+
+## 🌟 Examples
+
+### Blog Post Generation
+
+Input (captured over a week):
+```bash
+uro capture "Implemented user authentication with OAuth2"
+uro capture "Fixed memory leak in WebSocket connections"
+uro capture "Added real-time collaboration features"
+```
+
+Output:
+```markdown
+# Building Real-Time Features: A Week of Authentication and Performance
+
+This week brought some interesting challenges in building robust real-time features. 
+The journey from basic authentication to performant WebSocket connections taught me 
+several important lessons about production-ready web applications...
+```
+
+### Git Integration
+
+```bash
+# Analyze your development patterns
+uro git --analyze --days 30
+
+# Output:
+📊 Git Analysis Results:
+  Total commits: 47
+  
+  Top commit keywords:
+    fix: 12 times
+    add: 8 times
+    update: 6 times
+    
+  File types changed:
+    .py: 23 files
+    .md: 12 files
+    .js: 8 files
+```
+
+## 🎬 Demos
+
+### Core Workflow
+![Core Workflow Demo](assets/uroboro_demo_core.gif)
+*Capture → Status → Generate: The essential uroboro workflow*
+
+### Git Integration  
+![Git Integration Demo](assets/uroboro_demo_git.gif)
+*Auto-capture commits, analyze patterns, install hooks*
+
+### Project Templates
+![Project Templates Demo](assets/uroboro_demo_templates.gif)
+*Quick project setup with AI-optimized templates*
+
+### Full Feature Overview
+![Full Demo](assets/uroboro_demo.gif)
+*Complete walkthrough of uroboro capabilities*
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 🔗 Links
+
+- **Website**: [uroboro.dev](https://uroboro.dev)
+- **Documentation**: [GitHub Wiki](https://github.com/qry91/uroboro/wiki)
+- **Issues**: [GitHub Issues](https://github.com/qry91/uroboro/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/qry91/uroboro/discussions)
+
+---
+
+*uroboro: The tool that documents itself while helping you document everything else* 🐍
