@@ -222,9 +222,12 @@ code {
 
 .value-props {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-md);
     margin-bottom: var(--space-xl);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .prop {
@@ -315,9 +318,12 @@ section {
 
 .problem-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-lg);
     margin-bottom: var(--space-2xl);
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .problem-item {
@@ -693,6 +699,16 @@ section {
 @media (max-width: 768px) {
     .container {
         padding: 0 var(--space-sm);
+    }
+    
+    .value-props {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+    }
+    
+    .problem-grid {
+        grid-template-columns: 1fr;
+        max-width: 500px;
     }
     
     .hero-cta {
