@@ -152,7 +152,7 @@ code {
 
 .code-block {
     background: var(--bg-dark);
-    color: var(--text-inverse);
+    color: #e2d5f0;  /* Light lavender for better visibility */
     padding: var(--space-sm);
     border-radius: var(--radius);
     margin: var(--space-sm) 0;
@@ -256,7 +256,7 @@ code {
 .demo-input {
     font-family: var(--font-mono);
     background: var(--bg-dark);
-    color: var(--text-inverse);
+    color: #e2d5f0;  /* Light lavender for better readability */
     padding: var(--space-sm);
     border-radius: var(--radius);
     margin-bottom: var(--space-sm);
@@ -268,7 +268,7 @@ code {
 }
 
 .demo-command {
-    color: var(--accent);
+    color: #fbbf24;  /* Pale orange for commands */
 }
 
 .demo-arrow {
@@ -558,7 +558,7 @@ section {
 
 .comparison-row.header {
     background: var(--bg-dark);
-    color: var(--text-inverse);
+    color: #fbbf24;  /* Pale orange for table headers */
 }
 
 .comparison-cell {
@@ -648,7 +648,7 @@ section {
 }
 
 .footer-brand h3 {
-    color: var(--text-inverse);
+    color: #e2d5f0;  /* Light lavender for better visibility */
     margin-bottom: var(--space-sm);
 }
 
@@ -663,7 +663,7 @@ section {
 }
 
 .footer-column h4 {
-    color: var(--text-inverse);
+    color: #fbbf24;  /* Pale orange for section headers */
     margin-bottom: var(--space-sm);
     font-size: 0.875rem;
     font-weight: 600;
@@ -744,7 +744,7 @@ section {
     }
 }
 
-/* Uroboro Animation */
+/* uroboro Animation */
 .uroboro-animation {
     margin: var(--space-xl) 0 var(--space-2xl);
     height: 200px;

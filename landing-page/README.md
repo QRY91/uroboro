@@ -1,6 +1,6 @@
-# Uroboro.dev Landing Page
+# uroboro.dev Landing Page
 
-The official landing page for Uroboro - The Self-Documenting Content Pipeline.
+The official landing page for uroboro - The Self-Documenting Content Pipeline.
 
 ## 🚀 Quick Start
 
@@ -141,7 +141,7 @@ To enhance SEO:
 
 ## 🤝 Contributing
 
-This landing page is part of the main Uroboro project. To contribute:
+This landing page is part of the main uroboro project. To contribute:
 
 1. Fork the main repository
 2. Make changes in the `landing-page/` directory
@@ -150,4 +150,4 @@ This landing page is part of the main Uroboro project. To contribute:
 
 ## 📄 License
 
-MIT License - see the main Uroboro repository for details. 
+MIT License - see the main uroboro repository for details. 

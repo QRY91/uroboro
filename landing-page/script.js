@@ -48,7 +48,7 @@ What this means for engineering leaders: invest in infrastructure knowledge, not
     }
 };
 
-// Spectacular Uroboro Animation
+// Spectacular uroboro Animation
 function initUroboroAnimation() {
     const allLetters = document.querySelectorAll('.uroboro-letter');
     

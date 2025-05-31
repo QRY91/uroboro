@@ -1,4 +1,4 @@
-# Uroboro.dev - Hero Section
+# uroboro.dev - Hero Section
 
 ## The Self-Documenting Content Pipeline
 

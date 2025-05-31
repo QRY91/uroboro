@@ -1,4 +1,4 @@
-# How Uroboro Works
+# How uroboro Works
 
 ## From Development Work to Published Content in 3 Steps
 
@@ -11,7 +11,7 @@
 - Captures context while it's fresh in your mind
 
 ### Step 2: Aggregate (Automatic)
-Uroboro collects your captures across all projects:
+uroboro collects your captures across all projects:
 - Git commit summaries
 - Daily development notes  
 - Project-specific insights
