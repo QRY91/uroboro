@@ -10,6 +10,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
 </head>
 <body>
+    <!-- Top Tickertape -->
+    <div class="tickertape tickertape-top">
+        <div class="tickertape-content">
+            uroboro
+        </div>
+    </div>
     <!-- Hero Section -->
     <header class="hero">
         <div class="container">
@@ -65,14 +71,22 @@
                     </div>
                     <div class="prop">
                         <span class="prop-icon">✍️</span>
-                        <span>5 writing styles</span>
+                        <span>6 writing styles</span>
+                    </div>
+                    <div class="prop">
+                        <span class="prop-icon">🔗</span>
+                        <span>Git integration</span>
+                    </div>
+                    <div class="prop">
+                        <span class="prop-icon">📋</span>
+                        <span>Project templates</span>
                     </div>
                 </div>
                 
                 <div class="hero-demo">
                     <div class="demo-input">
                         <span class="terminal-prompt">$</span>
-                        <span class="demo-command">./capture.sh "Fixed authentication bug in login flow"</span>
+                        <span class="demo-command">uro capture "Fixed authentication bug in login flow"</span>
                     </div>
                     <div class="demo-arrow">↓</div>
                     <div class="demo-output">
@@ -142,7 +156,7 @@
     <section id="how-it-works" class="solution">
         <div class="container">
             <div class="section-header">
-                <h2>From Development Work to Published Content</h2>
+                <h2>How uroboro Works</h2>
                 <p class="section-subtitle">In 3 simple steps</p>
             </div>
             
@@ -150,9 +164,9 @@
                 <div class="step">
                     <div class="step-number">1</div>
                     <div class="step-content">
-                        <h3>Capture (5 seconds)</h3>
+                        <h3>Capture <br>(5 seconds)</h3>
                         <div class="code-block">
-                            <code>./capture.sh "Implemented real-time notifications using WebSockets"</code>
+                            <code>uro capture "Implemented real-time notifications using WebSockets"</code>
                         </div>
                         <ul>
                             <li>Quick terminal command during development</li>
@@ -165,7 +179,7 @@
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h3>Aggregate (Automatic)</h3>
+                        <h3>Aggregate <br>(Automatic)</h3>
                         <p>uroboro collects your captures across all projects:</p>
                         <ul>
                             <li>Git commit summaries</li>
@@ -179,7 +193,7 @@
                 <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-content">
-                        <h3>Generate (AI-Powered)</h3>
+                        <h3>Generate <br>(AI-Powered)</h3>
                         <p>Local AI transforms your raw captures into:</p>
                         <ul>
                             <li><strong>Blog posts</strong> - Professional, engaging articles</li>
@@ -190,26 +204,338 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Feature Carousel -->
+    <section class="features-carousel">
+        <div class="container">
+            <div class="section-header">
+                <h2>Complete Feature Set</h2>
+                <p class="section-subtitle">Everything you need for developer content creation</p>
+            </div>
             
-            <div class="architecture">
-                <h3>The Architecture</h3>
-                <div class="arch-diagram">
-                    <div class="arch-step">
-                        <div class="arch-box">Daily Dev Work</div>
-                        <div class="arch-arrow">→</div>
+            <div class="carousel-container">
+                <div class="carousel-nav">
+                    <button class="nav-btn active" data-feature="capture">Capture</button>
+                    <button class="nav-btn" data-feature="git">Git Integration</button>
+                    <button class="nav-btn" data-feature="templates">Project Templates</button>
+                    <button class="nav-btn" data-feature="voice">Voice Training</button>
+                    <button class="nav-btn" data-feature="mining">Knowledge Mining</button>
+                    <button class="nav-btn" data-feature="privacy">Privacy First</button>
+                </div>
+                
+                <div class="carousel-content">
+                    <div class="feature-slide active" id="capture-slide">
+                        <div class="feature-grid">
+                            <div class="feature-demo">
+                                <h3>⚡ Smart Capture</h3>
+                                <div class="demo-terminal">
+                                    <div class="terminal-header">
+                                        <div class="terminal-buttons">
+                                            <span class="btn-red"></span>
+                                            <span class="btn-yellow"></span>
+                                            <span class="btn-green"></span>
+                                        </div>
+                                        <span class="terminal-title">Terminal</span>
+                                    </div>
+                                    <div class="terminal-body">
+                                        <p><span class="prompt">$</span> uro capture "Fixed memory leak in connection pool"</p>
+                                        <p class="output">✅ Captured to project: backend-api</p>
+                                        <p class="output">📝 Added tags: bug-fix, performance</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <h4>Effortless Development Logging</h4>
+                                <ul>
+                                    <li><strong>5-second captures</strong> - No interruption to flow state</li>
+                                    <li><strong>Auto-tagging</strong> - Smart categorization</li>
+                                    <li><strong>Multi-project</strong> - Organize across codebases</li>
+                                    <li><strong>Rich context</strong> - Git info, timestamps, metadata</li>
+                                </ul>
+                                <div class="feature-code">
+                                    <code>uro capture "insight" --project my-app --tags feature</code>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="arch-step">
-                        <div class="arch-box">Quick Capture</div>
-                        <div class="arch-arrow">→</div>
+                    
+                    <div class="feature-slide" id="git-slide">
+                        <div class="feature-grid">
+                            <div class="feature-demo">
+                                <h3>🔗 Git Integration</h3>
+                                <div class="demo-terminal">
+                                    <div class="terminal-header">
+                                        <div class="terminal-buttons">
+                                            <span class="btn-red"></span>
+                                            <span class="btn-yellow"></span>
+                                            <span class="btn-green"></span>
+                                        </div>
+                                        <span class="terminal-title">Terminal</span>
+                                    </div>
+                                    <div class="terminal-body">
+                                        <p><span class="prompt">$</span> uro git --hook-install</p>
+                                        <p class="output">🪝 Git hook installed successfully</p>
+                                        <p><span class="prompt">$</span> git commit -m "Add user auth"</p>
+                                        <p class="output">📝 Auto-captured: Authentication system implemented</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <h4>Seamless Git Workflow</h4>
+                                <ul>
+                                    <li><strong>Auto-capture commits</strong> - Never miss development insights</li>
+                                    <li><strong>Git hooks</strong> - Zero-friction integration</li>
+                                    <li><strong>Commit analysis</strong> - Extract patterns from history</li>
+                                    <li><strong>Branch awareness</strong> - Context-aware logging</li>
+                                </ul>
+                                <div class="feature-code">
+                                    <code>uro git --analyze --days 30</code>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="arch-step">
-                        <div class="arch-box">Local AI</div>
-                        <div class="arch-arrow">→</div>
+                    
+                    <div class="feature-slide" id="templates-slide">
+                        <div class="feature-grid">
+                            <div class="feature-demo">
+                                <h3>📋 Project Templates</h3>
+                                <div class="demo-terminal">
+                                    <div class="terminal-header">
+                                        <div class="terminal-buttons">
+                                            <span class="btn-red"></span>
+                                            <span class="btn-yellow"></span>
+                                            <span class="btn-green"></span>
+                                        </div>
+                                        <span class="terminal-title">Terminal</span>
+                                    </div>
+                                    <div class="terminal-body">
+                                        <p><span class="prompt">$</span> uro project create my-web-app --template web</p>
+                                        <p class="output">🚀 Created project with optimized AI context</p>
+                                        <p class="output">📁 Web-specific .devlog configuration</p>
+                                        <p class="output">✅ Ready for content generation</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <h4>AI-Optimized Project Setup</h4>
+                                <ul>
+                                    <li><strong>Smart templates</strong> - Web, API, Game, Tool, Research, Mobile</li>
+                                    <li><strong>Pre-configured AI context</strong> - Better content generation</li>
+                                    <li><strong>Project-specific .gitignore</strong> - Clean repositories</li>
+                                    <li><strong>Quick start guides</strong> - Get productive immediately</li>
+                                </ul>
+                                <div class="feature-code">
+                                    <code>uro project --list</code>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="arch-step">
-                        <div class="arch-box">Published Content</div>
+                    
+                    <div class="feature-slide" id="voice-slide">
+                        <div class="feature-grid">
+                            <div class="feature-demo">
+                                <h3>🎨 Voice Training</h3>
+                                <div class="voice-analysis">
+                                    <h4>Your Writing Profile</h4>
+                                    <div class="analysis-item">
+                                        <span class="metric">Avg Sentence Length:</span>
+                                        <span class="value">18.3 words</span>
+                                    </div>
+                                    <div class="analysis-item">
+                                        <span class="metric">Technical Depth:</span>
+                                        <span class="value">High</span>
+                                    </div>
+                                    <div class="analysis-item">
+                                        <span class="metric">Meta-commentary:</span>
+                                        <span class="value">15%</span>
+                                    </div>
+                                    <div class="analysis-item">
+                                        <span class="metric">Common Phrases:</span>
+                                        <span class="value">"turns out", "interestingly"</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <h4>Authentic Content Generation</h4>
+                                <ul>
+                                    <li><strong>Personal voice extraction</strong> - Sounds like you, not AI</li>
+                                    <li><strong>Writing pattern analysis</strong> - Sentence structure, tone</li>
+                                    <li><strong>Recursive improvement</strong> - Gets better with use</li>
+                                    <li><strong>Multiple voice styles</strong> - Professional, technical, storytelling</li>
+                                </ul>
+                                <div class="feature-code">
+                                    <code>uro voice --analyze</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-slide" id="mining-slide">
+                        <div class="feature-grid">
+                            <div class="feature-demo">
+                                <h3>🧠 Knowledge Mining</h3>
+                                <div class="mining-results">
+                                    <h4>Extracted Insights</h4>
+                                    <div class="insight-item">
+                                        <span class="insight-tag">Pattern</span>
+                                        <span class="insight-text">WebSocket memory leaks in 3 projects</span>
+                                    </div>
+                                    <div class="insight-item">
+                                        <span class="insight-tag">Growth</span>
+                                        <span class="insight-text">React hooks mastery over 6 months</span>
+                                    </div>
+                                    <div class="insight-item">
+                                        <span class="insight-tag">Trend</span>
+                                        <span class="insight-text">Increasing focus on performance optimization</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <h4>Extract Wisdom from Development History</h4>
+                                <ul>
+                                    <li><strong>Cross-project insights</strong> - Find patterns across codebases</li>
+                                    <li><strong>Learning trajectory</strong> - Track your growth over time</li>
+                                    <li><strong>Technical evolution</strong> - Document skill development</li>
+                                    <li><strong>Hidden connections</strong> - Discover unexpected relationships</li>
+                                </ul>
+                                <div class="feature-code">
+                                    <code>uro mine --analyze --timeframe 6months</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-slide" id="privacy-slide">
+                        <div class="feature-grid">
+                            <div class="feature-demo">
+                                <h3>🔒 Privacy First</h3>
+                                <div class="privacy-dashboard">
+                                    <h4>Usage Statistics (Local Only)</h4>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Total Captures:</span>
+                                        <span class="stat-value">247</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Content Generated:</span>
+                                        <span class="stat-value">18 posts</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Data Location:</span>
+                                        <span class="stat-value">Your machine only</span>
+                                    </div>
+                                    <div class="privacy-note">
+                                        ✅ No external API calls • No data collection • No tracking
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <h4>100% Local, 0% Surveillance</h4>
+                                <ul>
+                                    <li><strong>Local AI only</strong> - Ollama, no external APIs</li>
+                                    <li><strong>Zero data collection</strong> - Your code stays on your machine</li>
+                                    <li><strong>Optional usage stats</strong> - Local SQLite, your control</li>
+                                    <li><strong>No phone home</strong> - No telemetry, no analytics</li>
+                                </ul>
+                                <div class="feature-code">
+                                    <code>uro tracking --stats</code>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demos Section -->
+    <section class="demos">
+        <div class="container">
+            <div class="section-header">
+                <h2>See uroboro in Action</h2>
+                <p class="section-subtitle">Watch real workflows in under 30 seconds each</p>
+            </div>
+            
+            <div class="demos-grid">
+                <!-- Non-featured demos in horizontal row -->
+                <div class="demos-row">
+                    <div class="demo-card">
+                        <div class="demo-video">
+                            <img src="assets/uroboro_demo_core.gif" alt="Core workflow demo showing capture, status, and generate commands" loading="lazy">
+                            <div class="demo-overlay">
+                                <span class="demo-duration">15s</span>
+                            </div>
+                        </div>
+                        <div class="demo-info">
+                            <h3>⚡ Core Workflow</h3>
+                            <p>The essential uroboro experience: capture insights, check status, and generate content in seconds.</p>
+                            <div class="demo-commands">
+                                <code>uro capture → uro status → uro generate</code>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="demo-card">
+                        <div class="demo-video">
+                            <img src="assets/uroboro_demo_git.gif" alt="Git integration demo showing hook installation and automatic commit capture" loading="lazy">
+                            <div class="demo-overlay">
+                                <span class="demo-duration">20s</span>
+                            </div>
+                        </div>
+                        <div class="demo-info">
+                            <h3>🔗 Git Integration</h3>
+                            <p>Install hooks, analyze commit patterns, and automatically capture development insights from your git workflow.</p>
+                            <div class="demo-commands">
+                                <code>uro git --hook-install</code>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="demo-card">
+                        <div class="demo-video">
+                            <img src="assets/uroboro_demo_templates.gif" alt="Project templates demo showing creation of new projects with AI context" loading="lazy">
+                            <div class="demo-overlay">
+                                <span class="demo-duration">25s</span>
+                            </div>
+                        </div>
+                        <div class="demo-info">
+                            <h3>📋 Project Templates</h3>
+                            <p>Quick project setup with AI-optimized configurations for web, API, game, tool, research, and mobile projects.</p>
+                            <div class="demo-commands">
+                                <code>uro project create my-app --template web</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Featured demo in its own row -->
+                <div class="demos-row">
+                    <div class="demo-card featured">
+                        <div class="demo-video">
+                            <img src="assets/uroboro_demo.gif" alt="Complete uroboro demo showing full feature set and workflow" loading="lazy">
+                            <div class="demo-overlay">
+                                <span class="demo-duration">45s</span>
+                                <span class="demo-badge">Complete Tour</span>
+                            </div>
+                        </div>
+                        <div class="demo-info">
+                            <h3>🎬 Complete Feature Overview</h3>
+                            <p>The full uroboro experience showcasing all major features: capture, git integration, voice training, and content generation.</p>
+                            <div class="demo-commands">
+                                <code>The complete developer content pipeline</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="demos-cta">
+                <p>Ready to transform your development workflow?</p>
+                <a href="https://github.com/qry91/uroboro" class="btn btn-primary">
+                    <span>⭐</span>
+                    Get Started on GitHub
+                </a>
             </div>
         </div>
     </section>
@@ -260,7 +586,7 @@
                     <h3>Analyze Your Writing</h3>
                     <p>uroboro scans your existing notes and markdown files to understand your natural writing patterns, sentence structure, and preferred phrases.</p>
                     <div class="code-snippet">
-                        <code>python3 voice_analyzer.py</code>
+                        <code>uro voice --analyze</code>
                     </div>
                 </div>
                 
@@ -281,7 +607,7 @@
                     <h3>Generate Authentic Content</h3>
                     <p>Use your personalized voice to create content that sounds like <em>you</em> - not generic AI slop.</p>
                     <div class="code-snippet">
-                        <code>--voice personal_excavated</code>
+                        <code>uro generate --voice personal_excavated</code>
                     </div>
                 </div>
             </div>
@@ -409,5 +735,14 @@
     
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "7e9d8b03c4e27e92268d848a78589ca0"}'></script>
+
+    <!-- Bottom Tickertape -->
+    <div class="tickertape tickertape-bottom">
+        <div class="tickertape-rotation-wrapper">
+            <div class="tickertape-content">
+                uroboro
+            </div>
+        </div>
+    </div>
 </body>
-</html> 
+</html>
