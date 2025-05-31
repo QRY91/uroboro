@@ -48,6 +48,35 @@ What this means for engineering leaders: invest in infrastructure knowledge, not
     }
 };
 
+// Animated tab title like oxal.org
+function initAnimatedTitle() {
+    const baseTitle = "uroboro";
+    const fullText = "uroborouroborouroborouroborouroborouroborouroboro";
+    let position = 0;
+    let direction = 1;
+    
+    function updateTitle() {
+        // Create a sliding window effect
+        const windowSize = 12; // Number of characters to show
+        let displayText;
+        
+        if (position + windowSize >= fullText.length) {
+            // When we reach the end, show the base title
+            displayText = baseTitle;
+            position = 0;
+        } else {
+            // Show sliding window of the full text
+            displayText = fullText.substring(position, position + windowSize);
+            position += direction;
+        }
+        
+        document.title = displayText;
+    }
+    
+    // Update every 200ms for smooth scrolling effect
+    setInterval(updateTitle, 200);
+}
+
 // Spectacular uroboro Animation
 function initUroboroAnimation() {
     const allLetters = document.querySelectorAll('.uroboro-letter');
@@ -117,8 +146,17 @@ function initUroboroAnimation() {
 
 // Initialize voice demo
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the animated title
+    initAnimatedTitle();
+    
     // Initialize the spectacular uroboro animation
     initUroboroAnimation();
+    
+    // Initialize feature carousel
+    initFeatureCarousel();
+    
+    // Initialize dynamic tickertape
+    initTickertape();
     
     const voiceTabs = document.querySelectorAll('.voice-tab');
     const voiceContent = document.getElementById('voice-content');
@@ -192,6 +230,46 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Feature Carousel functionality
+function initFeatureCarousel() {
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const featureSlides = document.querySelectorAll('.feature-slide');
+    
+    // Debug logging
+    console.log('Carousel initialization:', {
+        navButtons: navButtons.length,
+        featureSlides: featureSlides.length
+    });
+    
+    // Ensure first slide is active on load
+    if (featureSlides.length > 0) {
+        featureSlides[0].classList.add('active');
+    }
+    
+    navButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const feature = this.getAttribute('data-feature');
+            console.log('Switching to feature:', feature);
+            
+            // Remove active class from all buttons and slides
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            featureSlides.forEach(slide => slide.classList.remove('active'));
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Show corresponding slide
+            const targetSlide = document.getElementById(`${feature}-slide`);
+            if (targetSlide) {
+                targetSlide.classList.add('active');
+                console.log('Activated slide:', targetSlide.id);
+            } else {
+                console.error('Could not find slide for feature:', feature);
+            }
+        });
+    });
+}
+
 // Add some terminal-like typing effect to the hero demo (optional enhancement)
 function typewriterEffect(element, text, speed = 50) {
     element.innerHTML = '';
@@ -218,4 +296,59 @@ document.addEventListener('DOMContentLoaded', function() {
             typewriterEffect(demoCommand, originalText, 30);
         }, 1000);
     }
-}); 
+});
+
+// Dynamic Tickertape Generation - Simple Always-Visible Scroll 🐍
+function initTickertape() {
+    function generateRepeatingText(baseText, containerWidth, multiplier = 3) {
+        // Calculate how many repetitions we need to fill viewport width
+        // This ensures seamless scrolling with no gaps
+        const charWidth = 8; // Approximate character width in pixels for the mono font
+        const baseLength = baseText.length * charWidth;
+        const totalNeeded = containerWidth * multiplier; // Default 3x viewport for seamless loop
+        const repetitions = Math.ceil(totalNeeded / baseLength);
+        
+        return baseText.repeat(repetitions);
+    }
+    
+    // Generate content for both tickertapes
+    const viewportWidth = window.innerWidth;
+    const topRepeatingText = generateRepeatingText('uroboro', viewportWidth, 3);
+    const bottomRepeatingText = generateRepeatingText('uroboro', viewportWidth, 3); // Match top multiplier
+    
+    // Update both top and bottom tickertapes
+    const topContent = document.querySelector('.tickertape-top .tickertape-content');
+    const bottomContent = document.querySelector('.tickertape-bottom .tickertape-content');
+    
+    if (topContent) {
+        topContent.textContent = topRepeatingText;
+    }
+    
+    if (bottomContent) {
+        bottomContent.textContent = bottomRepeatingText;
+    }
+    
+    // Add ouroboros click behavior - bottom tickertape scrolls to top
+    const bottomTickertape = document.querySelector('.tickertape-bottom');
+    if (bottomTickertape) {
+        bottomTickertape.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        bottomTickertape.style.cursor = 'pointer';
+        bottomTickertape.title = 'Click to return to the beginning... 🐍';
+        bottomTickertape.style.pointerEvents = 'auto';
+    }
+    
+    // Top tickertape is not clickable - avoid annoying misclicks
+    const topTickertape = document.querySelector('.tickertape-top');
+    if (topTickertape) {
+        topTickertape.style.cursor = 'default';
+        topTickertape.style.pointerEvents = 'none';
+    }
+}
+
+// Regenerate on window resize to maintain seamless scrolling
+window.addEventListener('resize', initTickertape); 
