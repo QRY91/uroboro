@@ -1,6 +1,6 @@
 # uroboro 🐍
 
-**Get Acknowledged For Your Actual Work**
+**The Self-Documenting Content Pipeline**
 
 Transform development insights into professional content that gets you noticed. **Three commands. That's it.** Local AI only, zero API costs.
 

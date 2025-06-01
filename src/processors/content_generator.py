@@ -64,24 +64,28 @@ class ContentGenerator:
                 print("\n⏭️  Skipping final file display")
     
     def _call_ollama(self, prompt: str, model: str = None) -> str:
-        """Call ollama with the given prompt"""
+        """Call Ollama to generate content"""
         model = model or self.llm_model
         
         try:
+            print(f"[DEBUG] Calling ollama with model: {model}, prompt length: {len(prompt)} chars")
             result = subprocess.run([
                 "ollama", "run", model
-            ], input=prompt, capture_output=True, text=True, timeout=60)
+            ], input=prompt, capture_output=True, text=True, timeout=15)
             
-            if result.returncode == 0:
-                return result.stdout.strip()
-            else:
-                print(f"Ollama error: {result.stderr}")
-                return "Error: Could not generate content"
-                
+            if result.returncode != 0:
+                print(f"[DEBUG] Ollama error: {result.stderr}")
+                return f"Error calling LLM: {result.stderr}"
+            
+            print(f"[DEBUG] Ollama success, response length: {len(result.stdout)} chars")
+            return result.stdout.strip()
+            
         except subprocess.TimeoutExpired:
+            print("[DEBUG] Ollama timeout after 15 seconds")
             return "Error: LLM request timed out"
-        except FileNotFoundError:
-            return "Error: Ollama not found. Please install ollama first."
+        except Exception as e:
+            print(f"[DEBUG] Ollama exception: {e}")
+            return f"Error calling LLM: {str(e)}"
     
     def generate_devlog_summary(self, activity_data: Dict) -> str:
         """Generate a development log summary from aggregated activity"""
@@ -127,29 +131,7 @@ class ContentGenerator:
         return self._call_ollama(prompt)
     
     def generate_blog_post(self, activity_data: Dict, title: str = None, tags: List[str] = None, format: str = "mdx", voice: str = None) -> str:
-        """Generate a full blog post from aggregated activity"""
-        
-        # Auto-generate title if not provided
-        if not title:
-            title = f"Development Update - {datetime.now().strftime('%B %d, %Y')}"
-        
-        # PRIORITY 1: Extract daily notes FIRST (today's captures)
-        daily_highlights = []
-        for note in activity_data.get("daily_notes", []):
-            if note.get("priority") == "high" or note.get("type") == "recent_capture":
-                daily_highlights.append(f"**Today's Work**: {note['content']}")
-            else:
-                daily_highlights.append(note['content'])
-        
-        # PRIORITY 2: Extract project highlights (older content)
-        project_highlights = []
-        for project_name, project_data in activity_data.get("projects", {}).items():
-            if "devlog" in project_data:
-                content = "\n".join([entry['content'] for entry in project_data["devlog"]])
-                project_highlights.append(f"**{project_name}**: {content}")
-        
-        # Prioritize daily content by putting it first and calling it the main content
-        all_activity = "\n".join(daily_highlights + project_highlights)
+        """Generate a blog post from aggregated activity data"""
         
         # Get style configuration
         style_config = self.config.get("style_config", {})
@@ -157,7 +139,7 @@ class ContentGenerator:
         voice_config = style_config.get("voices", {}).get(voice_name, {})
         
         # Build style instructions
-        style_instructions = voice_config.get("prompt_additions", "Write in first person, conversational but professional tone.")
+        style_instructions = voice_config.get("prompt_additions", "Write in engaging, professional tone.")
         
         # Add brand voice preferences
         brand_voice = style_config.get("brand_voice", {})
@@ -165,32 +147,42 @@ class ContentGenerator:
             style_instructions += f"\n\nAvoid these phrases: {', '.join(brand_voice['avoid_phrases'])}"
         if brand_voice.get("preferred_phrases"):
             style_instructions += f"\nPrefer phrases like: {', '.join(brand_voice['preferred_phrases'])}"
-        if brand_voice.get("personality_traits"):
-            style_instructions += f"\nWrite with personality traits: {', '.join(brand_voice['personality_traits'])}"
         
-        # Add custom instructions if any
-        custom_instructions = style_config.get("custom_instructions", "")
-        if custom_instructions:
-            style_instructions += f"\n\nAdditional instructions: {custom_instructions}"
-
-        prompt = f"""
-        Write an engaging blog post about recent development work. Use this activity data:
-
-        {all_activity}
+        # PRIORITY: Focus on daily captures (recent work)
+        daily_captures = []
+        for note in activity_data.get("daily_notes", []):
+            if note.get("priority") == "high" or note.get("type") == "recent_capture":
+                # Extract actual capture content after timestamps
+                content_lines = note['content'].split('\n')
+                for line in content_lines:
+                    if line.startswith('## 2025-06-02T'):  # Today's captures
+                        # Skip the timestamp line, get the actual content
+                        continue
+                    elif line.strip() and not line.startswith('##'):
+                        # This is the actual capture content
+                        daily_captures.append(line.strip())
+                        
+        # Build focused content summary  
+        today_work = "\n".join(daily_captures[:5]) if daily_captures else "No recent captures found"
         
-        IMPORTANT: Focus primarily on "Today's Work" entries - these are the most recent and important achievements.
-
-        Structure the post as:
-        1. Brief introduction setting context
-        2. Main development highlights organized by most recent work first
-        3. Technical insights or lessons learned  
-        4. What's coming next
-
-        STYLE INSTRUCTIONS:
-        {style_instructions}
+        if not title:
+            title = f"Dev Update - {datetime.now().strftime('%B %d, %Y')}"
         
-        Aim for 300-500 words. Make sure today's recent captures are the main focus.
-        """
+        # Create focused prompt with today's work only
+        prompt = f"""Write an engaging blog post about today's development work:
+
+TODAY'S CAPTURES:
+{today_work}
+
+Structure:
+1. Brief intro (1-2 sentences)
+2. Main highlights from today's work
+3. Brief technical insight or lesson learned
+4. Quick note on what's next
+
+STYLE: {style_instructions}
+
+Keep it 200-300 words, focused on today's specific achievements."""
         
         content = self._call_ollama(prompt)
         
