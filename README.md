@@ -1,583 +1,199 @@
 # uroboro 🐍
 
-**The Self-Documenting Content Pipeline**
+**Get Acknowledged For Your Actual Work**
 
-Transform your daily development work into polished blog posts, social media content, and technical documentation using **local AI only**. Zero API costs, maximum privacy.
+Transform development insights into professional content that gets you noticed. **Three commands. That's it.** Local AI only, zero API costs.
 
 ![Demo](assets/uroboro_demo.gif)
 
-*[View more demos](#-demos): [Core Workflow](assets/uroboro_demo_core.gif) • [Git Integration](assets/uroboro_demo_git.gif) • [Project Templates](assets/uroboro_demo_templates.gif)*
+## 🎯 The Sacred Workflow
 
-## ✨ Features
-
-- **🏠 100% Local AI** - No API costs, no data sent to external servers
-- **⚡ Unified CLI** - Single command interface for all functionality (`uro`)
-- **📝 Smart Content Generation** - Blog posts, social media, technical docs
-- **🎯 Multi-Project Tracking** - Organize captures across different projects
-- **🔗 Git Integration** - Auto-capture commits with hooks and analyze patterns
-- **📋 Project Templates** - Quick setup for new projects with AI context
-- **🎨 Voice Training** - Learn your authentic writing style from existing content
-- **🧠 Knowledge Mining** - Extract insights from your development history
-- **🎤 Interactive Interviews** - Extract narrative context through structured interviews
-- **❓ Q&A Preparation** - Practice presentations with audience-specific questions
-- **🥋 Sensei Learning System** - AI teaching framework with skill gap analysis and voice integration
-- **🥚 tamagoro (Eternal Egg System)** - Gamified local model training with overingestion protection
-- **🔒 Privacy-First** - Optional local-only usage tracking
-- **📊 Development Analytics** - Track your growth and patterns over time
-
-### 🚀 Core Features Deep Dive
-
-#### 🥋 Revolutionary Sensei Learning System
-- **Skill gap analysis** - Identify areas for improvement across 7 core skills
-- **AI-to-AI teaching** - Advanced knowledge transfer between AI entities
-- **Voice pattern integration** - Learning enhanced by your authentic writing style
-- **Progressive skill tracking** - From beginner to master proficiency levels
-- **Self-aware capabilities** - System knows its own strengths and areas for growth
-- **Three-mode framework**: Dojo (analysis), Sensei (teaching), Apprentice (learning)
-
-#### ⚡ Smart Capture System
-- **5-second captures** during development with zero flow interruption
-- **Auto-tagging** and smart categorization of insights
-- **Multi-project organization** across different codebases
-- **Rich context** including git info, timestamps, and metadata
-- **Cross-project pattern recognition** for better insights
-
-#### 🔗 Seamless Git Integration
-- **Auto-capture git commits** - Never miss development insights
-- **Git hooks installation** - Zero-friction integration with your workflow
-- **Commit pattern analysis** - Extract trends from your development history
-- **Branch awareness** - Context-aware logging across feature branches
-- **Repository insights** - Understand your coding patterns over time
-
-#### 📋 AI-Optimized Project Templates
-- **6 template types**: Web, API, Game, Tool, Research, Mobile
-- **Pre-configured AI context** for better content generation
-- **Project-specific configurations** including appropriate `.gitignore` files
-- **Smart defaults** optimized for different development workflows
-- **Quick start guides** to get productive immediately
-
-#### 🎨 Authentic Voice Training
-- **Personal voice extraction** from your existing markdown files and notes
-- **Writing pattern analysis** including sentence structure, tone, and style
-- **Recursive improvement** - gets better the more you use it
-- **Multiple voice styles** available (Professional, Technical, Storytelling, etc.)
-- **Anti-AI detection** - sounds like you, not generic AI content
-
-#### 🧠 Knowledge Mining & Analytics
-- **Cross-project insights** - find patterns across all your codebases
-- **Learning trajectory tracking** - visualize your growth over time
-- **Technical evolution documentation** - automatic skill development logs
-- **Hidden connection discovery** - uncover unexpected relationships in your work
-- **Development pattern analysis** - understand your productive rhythms
-
-#### 🎤 Interactive Interview System
-- **Context extraction** through structured interviews (postmortem, deviation analysis, gap analysis)
-- **Material analysis** to identify knowledge gaps and generate targeted questions
-- **Interactive terminal interface** with user control commands
-- **Comprehensive results** with summaries and detailed responses
-- **Academic integration** for methodology documentation and research insights
-
-#### ❓ Audience-Specific Q&A Preparation
-- **8 audience types** including expert, layman, skeptical academic, business executive
-- **Practice and quiz modes** for presentation preparation
-- **Performance feedback** and question difficulty adjustment
-- **Mixed-discipline support** for diverse presentation audiences
-- **ADHD-friendly design** with structured practice sessions
-
-#### 🔒 Privacy-First Design
-- **100% local processing** with Ollama - no external API calls
-- **Zero data collection** - your code and insights stay on your machine
-- **Optional usage statistics** stored locally in SQLite for your analysis
-- **No telemetry or phone-home** functionality
-- **Full data ownership** - export and analyze your own development patterns
-
-#### 🥚 Revolutionary tamagoro System (Eternal Eggs)
-- **Gamified model training** - Grow your own personalized AI models locally
-- **Overingestion protection** - Comprehensive safeguards against the "ouroboros problem"
-- **Content deduplication** - Prevents repetitive training data from degrading model quality
-- **Quality trend monitoring** - Stops feeding if data quality degrades over time
-- **Health monitoring** - Real-time egg health status with early warning systems
-- **Privacy-first breeding** - All training data stays local, zero external dependencies
-- **Multiple egg types** - Academic, Voice, Technical writers specialized for different tasks
-- **Achievement system** - Unlock milestones as your eggs grow (First Century, Quality Master, etc.)
-- **Hatching criteria** - 2000+ examples, 7.0+ quality score, 3+ skill diversity required
-- **Local LoRA training** - Future: actual fine-tuned models from your personalized datasets
-
----
-
-## 🎬 Demos
-
-### Core Workflow
-![Core Workflow Demo](assets/uroboro_demo_core.gif)
-*Capture → Status → Generate: The essential uroboro workflow*
-
-### Git Integration  
-![Git Integration Demo](assets/uroboro_demo_git.gif)
-*Auto-capture commits, analyze patterns, install hooks*
-
-### Project Templates
-![Project Templates Demo](assets/uroboro_demo_templates.gif)
-*Quick project setup with AI-optimized templates*
-
-### tamagoro System
-![tamagoro Demo](assets/uroboro_demo_tamagoro.gif)
-*Gamified AI training - spawn eggs, watch them grow, hatch personalized models*
-
-### Health Monitoring
-![Health Monitoring Demo](assets/uroboro_demo_tamagoro_health.gif)
-*Overingestion protection and farm health checks prevent data degradation*
-
-### Full Feature Overview
-![Full Demo](assets/uroboro_demo.gif)
-*Complete walkthrough of uroboro capabilities*
-
----
-
-## 🚀 Quick Start
-
-### 🎬 See It In Action First
-
-Before diving into installation, see uroboro in action:
-
-| Demo | What it shows | Duration |
-|------|---------------|----------|
-| [**🎯 Core Workflow**](assets/uroboro_demo_core.gif) | Essential capture → status → generate flow | 15s |
-| [**🔗 Git Integration**](assets/uroboro_demo_git.gif) | Hook installation and commit analysis | 20s |
-| [**📋 Project Templates**](assets/uroboro_demo_templates.gif) | Quick project setup with AI context | 25s |
-| [**🥚 tamagoro System**](assets/uroboro_demo_tamagoro.gif) | Gamified AI training with egg spawning and growth | 30s |
-| [**🏥 Health Monitoring**](assets/uroboro_demo_tamagoro_health.gif) | Overingestion protection and health checks | 20s |
-| [**🎬 Complete Overview**](assets/uroboro_demo.gif) | Full feature tour and workflow | 45s |
-
-### Installation
+**Three commands beats seventeen.** We discovered this by cutting uroboro from 1,558 lines to 270 lines, removing 14 commands, and keeping only what delivers acknowledgment for your actual work.
 
 ```bash
-# Clone the repository
-git clone https://github.com/qry91/uroboro
-cd uroboro
+# 1. Capture your work (10 seconds)
+uro capture "Fixed auth timeout - cut query time from 3s to 200ms"
 
-# Install dependencies
-pip install -e .
+# 2. Publish content (2 minutes)  
+uro publish --blog
 
-# Verify installation
-uroboro --help
-```
-
-### Basic Usage
-
-```bash
-# Capture development insights (quick alias: uro)
-uro capture "Fixed authentication bug in login flow"
-
-# Capture with project and tags
-uro capture "Implemented real-time notifications" --project my-app --tags feature websockets
-
-# Generate content from recent activity
-uro generate --blog --voice storytelling
-
-# Check status
+# 3. Check everything (complete overview)
 uro status
-
-# Set up git auto-capture
-uro git --hook-install
 ```
 
-## 📋 Commands
+## ✨ What Actually Works
 
-### Core Commands
+- **🎯 3 Sacred Commands** - capture, publish, status. That's it.
+- **⚡ 10-Second Capture** - Zero flow state interruption
+- **📝 2-Minute Publish** - Professional content generation
+- **🏠 100% Local AI** - Ollama, no external APIs
+- **💰 $0/month costs** - No subscription, no usage fees
+- **🔒 Private by design** - Your code stays on your machine
+- **🔗 Git integration** - When you need it, not when we think you should
 
-- **`uro capture`** - Capture development insights and progress
-- **`uro generate`** - Generate blog posts, social content, documentation
-- **`uro status`** - Show recent activity and system status
-- **`uro voice`** - Analyze and train your writing voice
+## 🎬 Truth in Action
 
-### Advanced Features
+| Demo | What it shows | Why it matters |
+|------|---------------|----------------|
+| [**⚡ Core Workflow**](assets/uroboro_demo_core.gif) | capture → status → publish | The actual working product |
+| [**🔗 Git Integration**](assets/uroboro_demo_git.gif) | Auto-capture commits | Optional but functional |
+| [**🎬 Complete Overview**](assets/uroboro_demo.gif) | Full workflow | Tool that documents itself |
 
-- **`uro git`** - Git integration for automatic commit capture
-- **`uro project`** - Project template management
-- **`uro mine`** - Knowledge base mining and analysis
-- **`uro interview`** - Interactive interviews for context extraction
-- **`uro qa`** - Q&A practice for presentation preparation
-- **`uro dojo`** - Skill gap analysis and training preparation
-- **`uro sensei`** - AI teaching and knowledge transfer
-- **`uro apprentice`** - Learning through observation and practice
-- **`uro egg`** - tamagoro system for gamified local model training
-- **`uro tracking`** - Privacy-first usage analytics
+## 🔪 The Great CLI Bloodbath
 
-### Sensei Learning System
+We started with **17 commands** and **1,558 lines** of bloated complexity. We murdered 14 commands, kept 3 sacred ones, and found that **focus beats features**: improve core functionality instead of adding new complexity.
 
-Train AI to write like you and master specific skills:
+### What We Kept (Sacred Commands)
+- **`uro capture`** - 10-second insight logging
+- **`uro publish`** - Generate blog posts, social content, dev logs  
+- **`uro status`** - Complete pipeline overview
+
+### What We Murdered (Feature Bloat)
+- ❌ 14 unnecessary commands
+- ❌ tamagoro egg system fantasy
+- ❌ sensei learning complexity
+- ❌ interview system bloat
+- ❌ Q&A preparation overhead
+- ❌ academic mode distraction
+- ❌ 6 different project templates
+- ❌ Voice training complexity
+
+## 🚀 Get Started in 3 Minutes
+
+### 1. Install
+```bash
+git clone https://github.com/qry91/uroboro
+cd uroboro && pip install -e .
+```
+
+### 2. Capture Your Work
+```bash
+uro capture "Your development insight here"
+```
+
+### 3. Publish & Get Acknowledged
+```bash
+uro publish --blog
+```
+
+## 📋 Sacred Commands Reference
+
+### `uro capture`
+**Purpose**: Lightning-fast insight logging during development
 
 ```bash
-# View uroboro's current skill assessment
-uro dojo --stats
+# Basic capture
+uro capture "Fixed memory leak in connection pool"
 
-# Analyze skill gaps in materials
-uro dojo --analyze-gap --skill academic_writing --materials ./docs/
-
-# Prepare training materials for a skill
-uro dojo --prepare-training --skill ieee_formatting
-
-# Teach a skill to a user or AI
-uro sensei --teach --skill content_transformation --voice professional
-
-# Practice and observe learning sessions
-uro apprentice --practice-skill --skill voice_mimicry --materials ./samples/
+# With context (optional)
+uro capture "Implemented WebSocket reconnection" --project my-app
 ```
 
-### tamagoro System (Eternal Eggs)
+**Features that actually work**:
+- 10-second workflow
+- Auto-git integration (when wanted)
+- Project organization (when needed)
+- Zero flow state interruption
 
-Grow your own personalized AI models with gamified local training:
+### `uro publish`
+**Purpose**: Transform captures into professional content
 
 ```bash
-# Spawn your first egg
-uro egg --spawn academic-writer --type academic
+# Generate blog post
+uro publish --blog
 
-# View farm status
-uro egg --list
+# Generate dev log
+uro publish --devlog
 
-# Check detailed egg stats and health
-uro egg --stats --name academic-writer
-uro egg --health
+# Generate social content
+uro publish --social
 
-# Feed an egg manually with training data
-uro egg --feed --name academic-writer \
-  --input "Transform bullet points into flowing prose" \
-  --output "The implementation demonstrates substantial improvements..." \
-  --skills academic_writing content_transformation \
-  --quality 8.5
-
-# Test auto-feeding system
-uro egg --test-auto-feed
-
-# Hatch your trained model (when ready)
-uro egg --hatch academic-writer
-
-# Configure auto-feeding protection
-uro egg --auto-feed-threshold 7.0
-uro egg --auto-feed-enable
+# Custom timeframe
+uro publish --blog --days 7
 ```
 
-### Project Templates
+**Features that actually work**:
+- Professional blog posts
+- Social media content
+- Technical dev logs
+- Auto-voice detection (sounds like you, not AI)
+- 2-minute generation time
 
-Create new projects with optimal uroboro integration:
+### `uro status`
+**Purpose**: Complete overview of your development pipeline
 
 ```bash
-# List available templates
-uro project --list
-
-# Create a new web project
-uro project create my-web-app --template web --name "My Web App"
-
-# Available templates: web, api, game, tool, research, mobile
+# See everything
+uro status
 ```
 
-Each template includes:
-- Pre-configured `.devlog/README.md` with AI instructions
-- Appropriate `.gitignore` for the project type
-- Initial capture file to get started
+**Shows you**:
+- Recent captures across all projects
+- Git integration status
+- Content generation history
+- Usage analytics (local only)
+- System health
 
-## 🎯 Workflow
+## 💡 Why Three Commands Work
 
-### 1. Daily Development Capture
+### 🎯 Drunk User Test
+If someone slightly impaired can't use your tool successfully in under 2 minutes, it's too complex. Three commands pass this test.
 
-```bash
-# During development - capture insights as they happen
-uro capture "Discovered interesting pattern in React state management"
-uro capture "Performance optimization reduced load time by 40%" --tags performance
-```
+### ⚡ Focus Principle
+When in doubt, improve what you have instead of adding new features. Every new feature is a chance to confuse users and break what works.
 
-### 2. Git Integration
+### 🔥 Acknowledgment Pipeline
+One goal: help developers get acknowledged for their actual work. Everything else is distraction. We removed the distractions.
 
-```bash
-# Install git hook for automatic commit capture
-uro git --hook-install
+## 🏠 Local AI Setup
 
-# Or manually capture recent commits
-uro git --capture-commits --days 3
-```
-
-### 3. Content Generation
-
-```bash
-# Generate blog post from recent activity
-uro generate --blog --voice professional --days 7
-
-# Create social media content
-uro generate --social --voice storytelling
-
-# Preview before saving
-uro generate --preview --output all
-```
-
-### 4. Voice Training
-
-```bash
-# Analyze your writing style
-uro voice
-
-# Use your personal voice in generation
-uro generate --voice personal_excavated
-```
-
-### 5. Interview & Presentation Prep
-
-```bash
-# Conduct structured interview on project materials
-uro interview --type deviation_analysis --materials ./project-docs/
-
-# Practice Q&A with different audiences
-uro qa --audience skeptical_academic --mode practice
-uro qa --audience business_executive --mode quiz
-```
-
-### 6. Sensei Learning System
-
-```bash
-# Check uroboro's skill assessment (voice-enhanced)
-uro dojo --stats
-
-# Analyze gaps in your academic writing
-uro dojo --analyze-gap --skill academic_writing --materials ./research/
-
-# Teach AI to write in your style
-uro sensei --teach --skill voice_mimicry --voice personal_excavated --save-session
-
-# Practice content transformation skills
-uro apprentice --practice-skill --skill content_transformation --materials ./drafts/
-```
-
-## 🏗️ Architecture
-
-```
-Daily Dev Work → Quick Capture → Local AI → Published Content
-     ↓              ↓              ↓            ↓
-  Git commits   .devlog files   Ollama LLM   Blog posts
-  Code changes  Project notes   Local only   Social media
-  Insights      Cross-project   Zero cost    Documentation
-```
-
-## 🎨 Writing Voices
-
-uroboro supports multiple writing styles:
-
-- **Professional** - Polished, conversational tone
-- **Technical** - Deep technical explanations
-- **Storytelling** - Narrative approach to development
-- **Minimalist** - Concise, bullet-focused content
-- **Thought Leadership** - Industry insights and bigger picture
-- **Personal Excavated** - Your authentic voice (trained from your writing)
-
-## 🔧 Configuration
-
-### System Requirements
-
+### Requirements
 - **Python 3.8+**
-- **Git** (for git integration features)
-- **Ollama** (for local AI processing)
-- **16GB+ RAM** recommended for local LLMs
+- **Ollama** (for local AI)
+- **Git** (for git integration)
+- **16GB+ RAM** (recommended)
 
-### Privacy & Tracking
-
-uroboro includes optional local-only usage tracking:
-
+### Install Ollama
 ```bash
-# Enable tracking (data never leaves your machine)
-uro tracking --enable
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
 
-# View statistics
-uro tracking --stats
-
-# Disable and clear data
-uro tracking --disable
+# Pull a model (example)
+ollama pull mistral:latest
 ```
 
-## 🧪 Testing
+uroboro automatically detects and uses your Ollama models. No configuration needed.
 
-Run the test suite:
+## 🔒 Privacy First
 
-```bash
-# Install test dependencies
-pip install pytest pytest-cov
+- **100% local processing** - No external API calls
+- **Zero data collection** - Your insights stay on your machine  
+- **Optional usage stats** - Local SQLite only, your control
+- **No telemetry** - No phone home, no analytics
+- **Full data ownership** - Export and analyze your own patterns
 
-# Run tests
-pytest tests/ -v
+## 🚢 North Star Principle
 
-# Run with coverage
-pytest tests/ --cov=src --cov-report=term-missing
-```
+**Three commands beats seventeen.** 
 
-## 🚀 Development
+This isn't just philosophy - it's what we learned. We took a bloated 17-command CLI with 1,558 lines and surgical-strike removed everything that didn't directly contribute to developer acknowledgment.
 
-### Project Structure
+**Result**: A tool that actually gets used because it respects your time and workflow.
 
-```
-uroboro/
-├── src/                    # Core modules
-│   ├── cli.py             # Unified CLI interface
-│   ├── aggregator.py      # Content aggregation
-│   ├── git_integration.py # Git hooks and analysis
-│   ├── project_templates.py # Project scaffolding
-│   ├── usage_tracker.py   # Privacy-first analytics
-│   └── processors/        # Content generation
-├── tests/                 # Test suite
-├── landing-page/          # Project website
-├── assets/               # Demo GIFs and media
-└── examples/             # Usage examples
-```
+## 🤝 Contributing
 
-### Contributing
+Found a bug in one of the sacred commands? Want to improve the core workflow? 
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-### CI/CD
-
-The project includes comprehensive GitHub Actions workflows:
-
-- **Tests** - Multi-Python version testing
-- **Integration Tests** - End-to-end CLI testing
-- **Demo Generation** - Automated GIF creation with VHS
-- **Linting** - Code quality checks
-
-## 🌟 Examples
-
-### Sensei Learning System
-
-```bash
-# View AI's self-assessment
-uro dojo --stats
-
-# Output:
-🎯 **UROBORO SKILLS ASSESSMENT** (Voice-Enhanced)
-=================================================
-
-📊 **Overall Statistics**:
-• Total Skills: 7
-• Training Sessions: 3
-• Last Training: 2025-06-01 14:30:25
-• Voice Profile: ✅ Active
-
-🎤 **Voice Integration Status**:
-  • Academic Style Score: 4/6
-  • Academic Proficiency: Intermediate
-  • Sentence Complexity: 18.6 words/sentence
-  • Technical Frequency: 0.7%
-  • Voice Skills Ready: ✅
-
-🏆 **Skill Proficiency Breakdown**:
-  🔵 **Academic Writing**: Advanced 🎤87%
-     └─ Academic prose and documentation style
-     └─ Success Rate: 92.0%
-     └─ Sessions: 2
-
-🚀 **Recommended Actions**:
-  1. Practice ieee_formatting skill with voice integration
-  2. Conduct teaching session for academic_writing
-  3. Leverage voice patterns for 4 voice-integrated skills
-```
-
-### Blog Post Generation
-
-Input (captured over a week):
-```bash
-uro capture "Implemented user authentication with OAuth2"
-uro capture "Fixed memory leak in WebSocket connections"
-uro capture "Added real-time collaboration features"
-```
-
-Output:
-```markdown
-# Building Real-Time Features: A Week of Authentication and Performance
-
-This week brought some interesting challenges in building robust real-time features. 
-The journey from basic authentication to performant WebSocket connections taught me 
-several important lessons about production-ready web applications...
-```
-
-### Git Integration
-
-```bash
-# Analyze your development patterns
-uro git --analyze --days 30
-
-# Output:
-📊 Git Analysis Results:
-  Total commits: 47
-  
-  Top commit keywords:
-    fix: 12 times
-    add: 8 times
-    update: 6 times
-    
-  File types changed:
-    .py: 23 files
-    .md: 12 files
-    .js: 8 files
-```
-
-### tamagoro System
-
-```bash
-# Spawn your first AI egg
-uro egg --spawn academic-writer --type academic
-
-# Check its growth progress
-uro egg --stats academic-writer
-
-# Output:
-🥚 **academic-writer Egg Status**
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Dataset Size: 847/2000 examples (42.4% to hatching)
-🎯 Quality Score: 8.7/10.0 (Excellent)
-🧬 Specializations:
-   • Academic Writing: [████████░░] 85% (425 examples)
-   • IEEE Formatting: [███████░░░] 72% (360 examples)
-   • Content Transform: [█████░░░░░] 52% (260 examples)
-
-🏆 Achievements: First Century, Quality Master, High Diversity
-🥚 Growing... 1153 more examples needed
-
-# Monitor farm health (overingestion protection)
-uro egg --health
-
-# Output:
-🏥 **tamagoro Farm Health Report**
-🛡️ Protection Systems: 🟢 All Active
-🥚 Farm Summary: 🟢 1 Healthy, 🟡 0 Warning, 🔴 0 Unhealthy
-```
-
-## 🎬 Demos
-
-### Core Workflow
-![Core Workflow Demo](assets/uroboro_demo_core.gif)
-*Capture → Status → Generate: The essential uroboro workflow*
-
-### Git Integration  
-![Git Integration Demo](assets/uroboro_demo_git.gif)
-*Auto-capture commits, analyze patterns, install hooks*
-
-### Project Templates
-![Project Templates Demo](assets/uroboro_demo_templates.gif)
-*Quick project setup with AI-optimized templates*
-
-### Full Feature Overview
-![Full Demo](assets/uroboro_demo.gif)
-*Complete walkthrough of uroboro capabilities*
+1. **Keep it simple** - If it adds complexity, we probably don't want it
+2. **Drunk user test** - Can someone slightly impaired use it?
+3. **Acknowledgment focus** - Does it help developers get noticed for their work?
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
-
-## 🔗 Links
-
-- **Website**: [uroboro.dev](https://uroboro.dev)
-- **Documentation**: [GitHub Wiki](https://github.com/qry91/uroboro/wiki)
-- **Issues**: [GitHub Issues](https://github.com/qry91/uroboro/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/qry91/uroboro/discussions)
+MIT License - Use it, modify it, ship it. Just get acknowledged for your work.
 
 ---
 
-*uroboro: The tool that documents itself while helping you document everything else* 🐍
+**uroboro**: The tool that documents itself while helping you document everything else 🐍
+
+*Made by developers, for developers who deserve acknowledgment.*

@@ -68,12 +68,25 @@ class ContentAggregator:
         cutoff = datetime.now() - timedelta(days=days)
         activity = {
             "timestamp": datetime.now().isoformat(),
+            "daily_notes": [],  # PRIORITY: Put daily notes first
             "projects": {},
-            "daily_notes": [],
             "raw_captures": []
         }
         
-        # Collect from active projects
+        # PRIORITY 1: Collect daily notes FIRST (most recent captures)
+        daily_dir = self.notes_root / "daily"
+        if daily_dir.exists():
+            for note_file in daily_dir.glob("*.md"):
+                if datetime.fromtimestamp(note_file.stat().st_mtime) > cutoff:
+                    content = note_file.read_text(encoding='utf-8')
+                    activity["daily_notes"].append({
+                        "file": str(note_file),
+                        "content": content,
+                        "priority": "high",  # Mark as high priority
+                        "type": "recent_capture"  # Explicit type
+                    })
+        
+        # PRIORITY 2: Collect from active projects (older devlogs)
         for project_name, project_config in self.projects.items():
             if not project_config.get("active", False):
                 continue
@@ -82,16 +95,6 @@ class ContentAggregator:
             project_activity = self._collect_project_activity(project_path, cutoff)
             if project_activity:
                 activity["projects"][project_name] = project_activity
-        
-        # Collect daily notes
-        daily_dir = self.notes_root / "daily"
-        if daily_dir.exists():
-            for note_file in daily_dir.glob("*.md"):
-                if datetime.fromtimestamp(note_file.stat().st_mtime) > cutoff:
-                    activity["daily_notes"].append({
-                        "file": str(note_file),
-                        "content": note_file.read_text(encoding='utf-8')
-                    })
         
         return activity
     

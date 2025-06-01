@@ -564,20 +564,22 @@ section {
 
 .steps {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: var(--space-xl);
-    margin-bottom: var(--space-2xl);
+    margin-top: var(--space-xl);
 }
 
 .step {
     position: relative;
-    padding: var(--space-lg);
+    padding: var(--space-xl);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
 }
 
 .step-number {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: var(--space-md);
+    left: var(--space-md);
     width: 3rem;
     height: 3rem;
     background: var(--primary);
@@ -1638,4 +1640,112 @@ section {
 .cta-note {
     font-size: 0.875rem;
     opacity: 0.8;
+}
+
+/* Demo workflow styles */
+.demo-workflow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.demo-step {
+    position: relative;
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.demo-step .step-number {
+    position: static;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.demo-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.demo-output {
+    background: var(--bg-tertiary);
+    padding: var(--space-md);
+    border-radius: var(--radius);
+    border-left: 4px solid var(--accent);
+}
+
+/* Install steps styles */
+.install-steps {
+    display: grid;
+    gap: var(--space-lg);
+    margin: var(--space-xl) 0;
+}
+
+.install-step {
+    position: relative;
+    padding: var(--space-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+}
+
+.install-step .step-number {
+    position: absolute;
+    top: var(--space-md);
+    left: var(--space-md);
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--accent);
+    color: var(--text-inverse);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.install-step .step-content {
+    margin-left: 3.5rem;
+}
+
+.install-step .step-content h3 {
+    margin-bottom: var(--space-sm);
+    color: var(--text-primary);
+}
+
+/* Workflow truth section - needs breathing room for emphasis */
+.workflow-truth {
+    margin-top: var(--space-3xl);
+    padding: var(--space-xl);
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    text-align: center;
+}
+
+.workflow-truth h3 {
+    margin-bottom: var(--space-md);
+    color: var(--text-primary);
+}
+
+.workflow-truth p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-sm);
+}
+
+.workflow-truth p:last-child {
+    margin-bottom: 0;
 } 

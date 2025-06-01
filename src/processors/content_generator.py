@@ -86,27 +86,34 @@ class ContentGenerator:
     def generate_devlog_summary(self, activity_data: Dict) -> str:
         """Generate a development log summary from aggregated activity"""
         
-        # Extract content for summarization
+        # PRIORITY 1: Extract daily notes FIRST (most recent captures)
+        daily_content = []
+        for note in activity_data.get("daily_notes", []):
+            if note.get("priority") == "high" or note.get("type") == "recent_capture":
+                daily_content.append(f"**Recent Capture**: {note['content']}")
+            else:
+                daily_content.append(note['content'])
+        
+        # PRIORITY 2: Extract project content (older devlogs)
         project_content = []
         for project_name, project_data in activity_data.get("projects", {}).items():
             if "devlog" in project_data:
                 for entry in project_data["devlog"]:
                     project_content.append(f"**{project_name}**: {entry['content']}")
         
-        daily_content = []
-        for note in activity_data.get("daily_notes", []):
-            daily_content.append(note['content'])
-        
-        all_content = "\n".join(project_content + daily_content)
+        # Prioritize daily notes by putting them first
+        all_content = "\n".join(daily_content + project_content)
         
         prompt = f"""
-        Analyze this development activity and create a concise development log summary:
+        Analyze this development activity and create a concise development log summary.
+        
+        IMPORTANT: The "Recent Capture" entries are today's most important work - prioritize these heavily.
 
         {all_content}
 
         Create a structured summary with:
         ## Technical Work
-        - Brief bullet points of what was accomplished
+        - Brief bullet points of what was accomplished (prioritize recent captures)
 
         ## Key Insights  
         - Important discoveries or decisions made
@@ -114,7 +121,7 @@ class ContentGenerator:
         ## Next Steps
         - What should be tackled next
 
-        Keep it professional but conversational. Focus on the most significant items.
+        Keep it professional but conversational. Focus on the most significant items from today's captures first.
         """
         
         return self._call_ollama(prompt)
@@ -126,17 +133,23 @@ class ContentGenerator:
         if not title:
             title = f"Development Update - {datetime.now().strftime('%B %d, %Y')}"
         
-        # Extract project highlights
+        # PRIORITY 1: Extract daily notes FIRST (today's captures)
+        daily_highlights = []
+        for note in activity_data.get("daily_notes", []):
+            if note.get("priority") == "high" or note.get("type") == "recent_capture":
+                daily_highlights.append(f"**Today's Work**: {note['content']}")
+            else:
+                daily_highlights.append(note['content'])
+        
+        # PRIORITY 2: Extract project highlights (older content)
         project_highlights = []
         for project_name, project_data in activity_data.get("projects", {}).items():
             if "devlog" in project_data:
                 content = "\n".join([entry['content'] for entry in project_data["devlog"]])
                 project_highlights.append(f"**{project_name}**: {content}")
         
-        all_activity = "\n".join(project_highlights)
-        if activity_data.get("daily_notes"):
-            daily_content = "\n".join([note['content'] for note in activity_data["daily_notes"]])
-            all_activity += f"\n\n**General Notes**: {daily_content}"
+        # Prioritize daily content by putting it first and calling it the main content
+        all_activity = "\n".join(daily_highlights + project_highlights)
         
         # Get style configuration
         style_config = self.config.get("style_config", {})
@@ -161,20 +174,22 @@ class ContentGenerator:
             style_instructions += f"\n\nAdditional instructions: {custom_instructions}"
 
         prompt = f"""
-        Write a engaging blog post about recent development work. Use this activity data:
+        Write an engaging blog post about recent development work. Use this activity data:
 
         {all_activity}
+        
+        IMPORTANT: Focus primarily on "Today's Work" entries - these are the most recent and important achievements.
 
         Structure the post as:
         1. Brief introduction setting context
-        2. Main development highlights organized by project/topic
+        2. Main development highlights organized by most recent work first
         3. Technical insights or lessons learned  
         4. What's coming next
 
         STYLE INSTRUCTIONS:
         {style_instructions}
         
-        Aim for 300-500 words.
+        Aim for 300-500 words. Make sure today's recent captures are the main focus.
         """
         
         content = self._call_ollama(prompt)
