@@ -1353,6 +1353,62 @@ section {
     font-size: 1.5rem;
 }
 
+/* Fix missing list styles for demo boxes */
+.demo-info-large ul {
+    list-style: none;
+    margin-bottom: var(--space-lg);
+}
+
+.demo-info-large li {
+    padding: 0.5rem 0;
+    color: var(--text-secondary);
+    position: relative;
+    padding-left: var(--space-md);
+    line-height: 1.5;
+}
+
+.demo-info-large li::before {
+    content: "•";
+    color: var(--accent);
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+}
+
+/* Demo highlights styling */
+.demo-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-md);
+}
+
+.demo-highlights .highlight {
+    background: rgba(217, 119, 6, 0.2);
+    color: var(--accent);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius);
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+/* Demo commands styling */
+.demo-commands {
+    background: var(--bg-dark);
+    padding: var(--space-sm);
+    border-radius: var(--radius);
+    margin: var(--space-md) 0;
+    border: 1px solid var(--border-dark);
+}
+
+.demo-commands code {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+}
+
 .demo-video-large {
     position: relative;
     background: var(--bg-dark);
