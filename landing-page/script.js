@@ -48,14 +48,18 @@ What this means for engineering leaders: invest in infrastructure knowledge, not
     }
 };
 
-// Animated tab title like oxal.org
+// Animated tab title like oxal.org - Performance Optimized
 function initAnimatedTitle() {
     const baseTitle = "uroboro";
     const fullText = "uroborouroborouroborouroborouroborouroborouroboro";
     let position = 0;
     let direction = 1;
+    let titleIntervalId;
     
     function updateTitle() {
+        // Only update if page is visible
+        if (document.visibilityState !== 'visible') return;
+        
         // Create a sliding window effect
         const windowSize = 12; // Number of characters to show
         let displayText;
@@ -73,11 +77,21 @@ function initAnimatedTitle() {
         document.title = displayText;
     }
     
-    // Update every 200ms for smooth scrolling effect
-    setInterval(updateTitle, 200);
+    // Start title animation with longer interval (300ms instead of 200ms)
+    titleIntervalId = setInterval(updateTitle, 300);
+    
+    // Pause title animation when page is hidden
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+            clearInterval(titleIntervalId);
+            document.title = baseTitle; // Reset to base title when hidden
+        } else {
+            titleIntervalId = setInterval(updateTitle, 300);
+        }
+    });
 }
 
-// Spectacular uroboro Animation
+// Spectacular uroboro Animation - Performance Optimized
 function initUroboroAnimation() {
     const allLetters = document.querySelectorAll('.uroboro-letter');
     
@@ -90,31 +104,52 @@ function initUroboroAnimation() {
         loop: true
     });
     
-    // Color inversion effect based on position
-    function updateInversion() {
-        const container = document.querySelector('.uroboro-container');
-        if (!container) return;
-        
-        const containerRect = container.getBoundingClientRect();
-        const centerX = containerRect.left + containerRect.width / 2;
-        
-        allLetters.forEach(letter => {
-            const letterRect = letter.getBoundingClientRect();
-            const letterCenterX = letterRect.left + letterRect.width / 2;
+    // Performance-optimized color inversion with page visibility and reduced frequency
+    let inversionAnimationId;
+    let lastUpdateTime = 0;
+    const UPDATE_INTERVAL = 100; // Reduced from 50ms to 100ms (10fps instead of 20fps)
+    
+    function updateInversion(currentTime) {
+        // Only update if page is visible and enough time has passed
+        if (document.visibilityState === 'visible' && (currentTime - lastUpdateTime) >= UPDATE_INTERVAL) {
+            const container = document.querySelector('.uroboro-container');
+            if (!container) return;
             
-            // Invert color when letter is in the right half (under the mask)
-            if (letterCenterX > centerX) {
-                letter.style.color = '#ffffff';
-                letter.style.textShadow = '0 0 12px rgba(255, 255, 255, 0.8), 0 0 6px rgba(255, 255, 255, 0.6)';
-            } else {
-                letter.style.color = 'var(--primary)';
-                letter.style.textShadow = 'none';
-            }
-        });
+            const containerRect = container.getBoundingClientRect();
+            const centerX = containerRect.left + containerRect.width / 2;
+            
+            allLetters.forEach(letter => {
+                const letterRect = letter.getBoundingClientRect();
+                const letterCenterX = letterRect.left + letterRect.width / 2;
+                
+                // Invert color when letter is in the right half (under the mask)
+                if (letterCenterX > centerX) {
+                    letter.style.color = '#ffffff';
+                    letter.style.textShadow = '0 0 12px rgba(255, 255, 255, 0.8), 0 0 6px rgba(255, 255, 255, 0.6)';
+                } else {
+                    letter.style.color = 'var(--primary)';
+                    letter.style.textShadow = 'none';
+                }
+            });
+            
+            lastUpdateTime = currentTime;
+        }
+        
+        inversionAnimationId = requestAnimationFrame(updateInversion);
     }
     
-    // Update inversion effect continuously for smooth color transitions
-    setInterval(updateInversion, 50);
+    // Start the animation loop
+    inversionAnimationId = requestAnimationFrame(updateInversion);
+    
+    // Pause animation when page is hidden to save resources
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+            cancelAnimationFrame(inversionAnimationId);
+        } else {
+            lastUpdateTime = 0; // Reset timer when page becomes visible again
+            inversionAnimationId = requestAnimationFrame(updateInversion);
+        }
+    });
     
     // Add subtle pulsing to the mask
     anime({
@@ -133,15 +168,6 @@ function initUroboroAnimation() {
         easing: 'easeInOutSine',
         loop: true
     });
-    
-    // Add subtle scale breathing effect (more subtle for record effect)
-    /* anime({
-        targets: '.uroboro-circle',
-        scale: [0.99, 1.01, 0.99],
-        duration: 8000,
-        easing: 'easeInOutSine',
-        loop: true
-    }); */
 }
 
 // Initialize voice demo
