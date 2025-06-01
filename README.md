@@ -18,10 +18,21 @@ Transform your daily development work into polished blog posts, social media con
 - **📋 Project Templates** - Quick setup for new projects with AI context
 - **🎨 Voice Training** - Learn your authentic writing style from existing content
 - **🧠 Knowledge Mining** - Extract insights from your development history
+- **🎤 Interactive Interviews** - Extract narrative context through structured interviews
+- **❓ Q&A Preparation** - Practice presentations with audience-specific questions
+- **🥋 Sensei Learning System** - AI teaching framework with skill gap analysis and voice integration
 - **🔒 Privacy-First** - Optional local-only usage tracking
 - **📊 Development Analytics** - Track your growth and patterns over time
 
 ### 🚀 Core Features Deep Dive
+
+#### 🥋 Revolutionary Sensei Learning System
+- **Skill gap analysis** - Identify areas for improvement across 7 core skills
+- **AI-to-AI teaching** - Advanced knowledge transfer between AI entities
+- **Voice pattern integration** - Learning enhanced by your authentic writing style
+- **Progressive skill tracking** - From beginner to master proficiency levels
+- **Self-aware capabilities** - System knows its own strengths and areas for growth
+- **Three-mode framework**: Dojo (analysis), Sensei (teaching), Apprentice (learning)
 
 #### ⚡ Smart Capture System
 - **5-second captures** during development with zero flow interruption
@@ -57,6 +68,20 @@ Transform your daily development work into polished blog posts, social media con
 - **Technical evolution documentation** - automatic skill development logs
 - **Hidden connection discovery** - uncover unexpected relationships in your work
 - **Development pattern analysis** - understand your productive rhythms
+
+#### 🎤 Interactive Interview System
+- **Context extraction** through structured interviews (postmortem, deviation analysis, gap analysis)
+- **Material analysis** to identify knowledge gaps and generate targeted questions
+- **Interactive terminal interface** with user control commands
+- **Comprehensive results** with summaries and detailed responses
+- **Academic integration** for methodology documentation and research insights
+
+#### ❓ Audience-Specific Q&A Preparation
+- **8 audience types** including expert, layman, skeptical academic, business executive
+- **Practice and quiz modes** for presentation preparation
+- **Performance feedback** and question difficulty adjustment
+- **Mixed-discipline support** for diverse presentation audiences
+- **ADHD-friendly design** with structured practice sessions
 
 #### 🔒 Privacy-First Design
 - **100% local processing** with Ollama - no external API calls
@@ -147,7 +172,42 @@ uro git --hook-install
 - **`uro git`** - Git integration for automatic commit capture
 - **`uro project`** - Project template management
 - **`uro mine`** - Knowledge base mining and analysis
+- **`uro interview`** - Interactive interviews for context extraction
+- **`uro qa`** - Q&A practice for presentation preparation
+- **`uro dojo`** - Skill gap analysis and training preparation
+- **`uro sensei`** - AI teaching and knowledge transfer
+- **`uro apprentice`** - Learning through observation and practice
 - **`uro tracking`** - Privacy-first usage analytics
+
+### Sensei Learning System
+
+Train AI to write like you and master specific skills:
+
+```bash
+# View uroboro's current skill assessment
+uro dojo --stats
+
+# Analyze skill gaps in materials
+uro dojo --analyze-gap --skill academic_writing --materials ./docs/
+
+# Prepare training materials for a skill
+uro dojo --prepare-training --skill ieee_formatting
+
+# Teach a skill to a user or AI
+uro sensei --teach --skill content_transformation --voice professional
+
+# Practice and observe learning sessions
+uro apprentice --practice-skill --skill voice_mimicry --materials ./samples/
+```
+
+Available skills:
+- **ieee_formatting** - Academic citation and formatting standards
+- **academic_writing** - Professional prose and documentation style
+- **content_transformation** - Converting structured data to flowing prose
+- **voice_mimicry** - Matching authentic voice patterns and tone
+- **anti_ai_patterns** - Removing AI-generated language markers
+- **technical_documentation** - Clear technical specification writing
+- **research_synthesis** - Combining multiple sources into coherent analysis
 
 ### Project Templates
 
@@ -209,6 +269,33 @@ uro voice
 
 # Use your personal voice in generation
 uro generate --voice personal_excavated
+```
+
+### 5. Interview & Presentation Prep
+
+```bash
+# Conduct structured interview on project materials
+uro interview --type deviation_analysis --materials ./project-docs/
+
+# Practice Q&A with different audiences
+uro qa --audience skeptical_academic --mode practice
+uro qa --audience business_executive --mode quiz
+```
+
+### 6. Sensei Learning System
+
+```bash
+# Check uroboro's skill assessment (voice-enhanced)
+uro dojo --stats
+
+# Analyze gaps in your academic writing
+uro dojo --analyze-gap --skill academic_writing --materials ./research/
+
+# Teach AI to write in your style
+uro sensei --teach --skill voice_mimicry --voice personal_excavated --save-session
+
+# Practice content transformation skills
+uro apprentice --practice-skill --skill content_transformation --materials ./drafts/
 ```
 
 ## 🏗️ Architecture
@@ -308,6 +395,41 @@ The project includes comprehensive GitHub Actions workflows:
 - **Linting** - Code quality checks
 
 ## 🌟 Examples
+
+### Sensei Learning System
+
+```bash
+# View AI's self-assessment
+uro dojo --stats
+
+# Output:
+🎯 **UROBORO SKILLS ASSESSMENT** (Voice-Enhanced)
+=================================================
+
+📊 **Overall Statistics**:
+• Total Skills: 7
+• Training Sessions: 3
+• Last Training: 2025-06-01 14:30:25
+• Voice Profile: ✅ Active
+
+🎤 **Voice Integration Status**:
+  • Academic Style Score: 4/6
+  • Academic Proficiency: Intermediate
+  • Sentence Complexity: 18.6 words/sentence
+  • Technical Frequency: 0.7%
+  • Voice Skills Ready: ✅
+
+🏆 **Skill Proficiency Breakdown**:
+  🔵 **Academic Writing**: Advanced 🎤87%
+     └─ Academic prose and documentation style
+     └─ Success Rate: 92.0%
+     └─ Sessions: 2
+
+🚀 **Recommended Actions**:
+  1. Practice ieee_formatting skill with voice integration
+  2. Conduct teaching session for academic_writing
+  3. Leverage voice patterns for 4 voice-integrated skills
+```
 
 ### Blog Post Generation
 
