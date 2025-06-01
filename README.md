@@ -21,6 +21,7 @@ Transform your daily development work into polished blog posts, social media con
 - **🎤 Interactive Interviews** - Extract narrative context through structured interviews
 - **❓ Q&A Preparation** - Practice presentations with audience-specific questions
 - **🥋 Sensei Learning System** - AI teaching framework with skill gap analysis and voice integration
+- **🥚 tamagoro (Eternal Egg System)** - Gamified local model training with overingestion protection
 - **🔒 Privacy-First** - Optional local-only usage tracking
 - **📊 Development Analytics** - Track your growth and patterns over time
 
@@ -90,25 +91,45 @@ Transform your daily development work into polished blog posts, social media con
 - **No telemetry or phone-home** functionality
 - **Full data ownership** - export and analyze your own development patterns
 
+#### 🥚 Revolutionary tamagoro System (Eternal Eggs)
+- **Gamified model training** - Grow your own personalized AI models locally
+- **Overingestion protection** - Comprehensive safeguards against the "ouroboros problem"
+- **Content deduplication** - Prevents repetitive training data from degrading model quality
+- **Quality trend monitoring** - Stops feeding if data quality degrades over time
+- **Health monitoring** - Real-time egg health status with early warning systems
+- **Privacy-first breeding** - All training data stays local, zero external dependencies
+- **Multiple egg types** - Academic, Voice, Technical writers specialized for different tasks
+- **Achievement system** - Unlock milestones as your eggs grow (First Century, Quality Master, etc.)
+- **Hatching criteria** - 2000+ examples, 7.0+ quality score, 3+ skill diversity required
+- **Local LoRA training** - Future: actual fine-tuned models from your personalized datasets
+
 ---
 
-## 🎬 Live Demos
+## 🎬 Demos
 
-### Core Workflow Demo
+### Core Workflow
 ![Core Workflow Demo](assets/uroboro_demo_core.gif)
-*The essential uroboro experience: `uro capture` → `uro status` → `uro generate`*
+*Capture → Status → Generate: The essential uroboro workflow*
 
-### Git Integration Demo  
+### Git Integration  
 ![Git Integration Demo](assets/uroboro_demo_git.gif)
-*Install hooks, analyze patterns, auto-capture commits*
+*Auto-capture commits, analyze patterns, install hooks*
 
-### Project Templates Demo
+### Project Templates
 ![Project Templates Demo](assets/uroboro_demo_templates.gif)
-*Quick setup with AI-optimized configurations*
+*Quick project setup with AI-optimized templates*
 
-### Complete Feature Overview
+### tamagoro System
+![tamagoro Demo](assets/uroboro_demo_tamagoro.gif)
+*Gamified AI training - spawn eggs, watch them grow, hatch personalized models*
+
+### Health Monitoring
+![Health Monitoring Demo](assets/uroboro_demo_tamagoro_health.gif)
+*Overingestion protection and farm health checks prevent data degradation*
+
+### Full Feature Overview
 ![Full Demo](assets/uroboro_demo.gif)
-*Complete walkthrough of all uroboro capabilities*
+*Complete walkthrough of uroboro capabilities*
 
 ---
 
@@ -123,6 +144,8 @@ Before diving into installation, see uroboro in action:
 | [**🎯 Core Workflow**](assets/uroboro_demo_core.gif) | Essential capture → status → generate flow | 15s |
 | [**🔗 Git Integration**](assets/uroboro_demo_git.gif) | Hook installation and commit analysis | 20s |
 | [**📋 Project Templates**](assets/uroboro_demo_templates.gif) | Quick project setup with AI context | 25s |
+| [**🥚 tamagoro System**](assets/uroboro_demo_tamagoro.gif) | Gamified AI training with egg spawning and growth | 30s |
+| [**🏥 Health Monitoring**](assets/uroboro_demo_tamagoro_health.gif) | Overingestion protection and health checks | 20s |
 | [**🎬 Complete Overview**](assets/uroboro_demo.gif) | Full feature tour and workflow | 45s |
 
 ### Installation
@@ -177,6 +200,7 @@ uro git --hook-install
 - **`uro dojo`** - Skill gap analysis and training preparation
 - **`uro sensei`** - AI teaching and knowledge transfer
 - **`uro apprentice`** - Learning through observation and practice
+- **`uro egg`** - tamagoro system for gamified local model training
 - **`uro tracking`** - Privacy-first usage analytics
 
 ### Sensei Learning System
@@ -200,14 +224,38 @@ uro sensei --teach --skill content_transformation --voice professional
 uro apprentice --practice-skill --skill voice_mimicry --materials ./samples/
 ```
 
-Available skills:
-- **ieee_formatting** - Academic citation and formatting standards
-- **academic_writing** - Professional prose and documentation style
-- **content_transformation** - Converting structured data to flowing prose
-- **voice_mimicry** - Matching authentic voice patterns and tone
-- **anti_ai_patterns** - Removing AI-generated language markers
-- **technical_documentation** - Clear technical specification writing
-- **research_synthesis** - Combining multiple sources into coherent analysis
+### tamagoro System (Eternal Eggs)
+
+Grow your own personalized AI models with gamified local training:
+
+```bash
+# Spawn your first egg
+uro egg --spawn academic-writer --type academic
+
+# View farm status
+uro egg --list
+
+# Check detailed egg stats and health
+uro egg --stats --name academic-writer
+uro egg --health
+
+# Feed an egg manually with training data
+uro egg --feed --name academic-writer \
+  --input "Transform bullet points into flowing prose" \
+  --output "The implementation demonstrates substantial improvements..." \
+  --skills academic_writing content_transformation \
+  --quality 8.5
+
+# Test auto-feeding system
+uro egg --test-auto-feed
+
+# Hatch your trained model (when ready)
+uro egg --hatch academic-writer
+
+# Configure auto-feeding protection
+uro egg --auto-feed-threshold 7.0
+uro egg --auto-feed-enable
+```
 
 ### Project Templates
 
@@ -468,6 +516,37 @@ uro git --analyze --days 30
     .py: 23 files
     .md: 12 files
     .js: 8 files
+```
+
+### tamagoro System
+
+```bash
+# Spawn your first AI egg
+uro egg --spawn academic-writer --type academic
+
+# Check its growth progress
+uro egg --stats academic-writer
+
+# Output:
+🥚 **academic-writer Egg Status**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Dataset Size: 847/2000 examples (42.4% to hatching)
+🎯 Quality Score: 8.7/10.0 (Excellent)
+🧬 Specializations:
+   • Academic Writing: [████████░░] 85% (425 examples)
+   • IEEE Formatting: [███████░░░] 72% (360 examples)
+   • Content Transform: [█████░░░░░] 52% (260 examples)
+
+🏆 Achievements: First Century, Quality Master, High Diversity
+🥚 Growing... 1153 more examples needed
+
+# Monitor farm health (overingestion protection)
+uro egg --health
+
+# Output:
+🏥 **tamagoro Farm Health Report**
+🛡️ Protection Systems: 🟢 All Active
+🥚 Farm Summary: 🟢 1 Healthy, 🟡 0 Warning, 🔴 0 Unhealthy
 ```
 
 ## 🎬 Demos

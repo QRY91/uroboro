@@ -152,8 +152,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the spectacular uroboro animation
     initUroboroAnimation();
     
-    // Initialize feature carousel
-    initFeatureCarousel();
+    // Initialize unified carousel system
+    initCarousels();
     
     // Initialize dynamic tickertape
     initTickertape();
@@ -230,42 +230,103 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Feature Carousel functionality
-function initFeatureCarousel() {
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const featureSlides = document.querySelectorAll('.feature-slide');
+// Unified Carousel System with backward compatibility
+function initCarousels() {
+    // Find all carousels on the page
+    const carouselContainers = document.querySelectorAll('.carousel-container');
     
-    // Debug logging
-    console.log('Carousel initialization:', {
-        navButtons: navButtons.length,
-        featureSlides: featureSlides.length
-    });
-    
-    // Ensure first slide is active on load
-    if (featureSlides.length > 0) {
-        featureSlides[0].classList.add('active');
-    }
-    
-    navButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const feature = this.getAttribute('data-feature');
-            console.log('Switching to feature:', feature);
+    carouselContainers.forEach(container => {
+        // Handle both old and new button classes
+        const navButtons = container.querySelectorAll('.carousel-nav-btn, .nav-btn');
+        const slides = container.querySelectorAll('.carousel-slide, .feature-slide, .demo-slide');
+        
+        console.log('Initializing carousel:', {
+            navButtons: navButtons.length,
+            slides: slides.length,
+            slideIds: Array.from(slides).map(s => s.id)
+        });
+        
+        // Aggressively hide all slides and show first one
+        slides.forEach((slide, index) => {
+            slide.classList.remove('active');
+            slide.style.display = 'none';
+            slide.style.visibility = 'hidden';
+            slide.style.opacity = '0';
+            slide.style.position = 'absolute';
+            slide.style.height = '0';
+            slide.style.overflow = 'hidden';
             
-            // Remove active class from all buttons and slides
-            navButtons.forEach(btn => btn.classList.remove('active'));
-            featureSlides.forEach(slide => slide.classList.remove('active'));
-            
-            // Add active class to clicked button
-            this.classList.add('active');
-            
-            // Show corresponding slide
-            const targetSlide = document.getElementById(`${feature}-slide`);
-            if (targetSlide) {
-                targetSlide.classList.add('active');
-                console.log('Activated slide:', targetSlide.id);
-            } else {
-                console.error('Could not find slide for feature:', feature);
+            if (index === 0) {
+                slide.classList.add('active');
+                slide.style.display = 'block';
+                slide.style.visibility = 'visible';
+                slide.style.opacity = '1';
+                slide.style.position = 'relative';
+                slide.style.height = 'auto';
+                slide.style.overflow = 'visible';
             }
+        });
+        
+        // Set first nav button as active
+        navButtons.forEach((btn, index) => {
+            btn.classList.remove('active');
+            if (index === 0) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Add click handlers with compatibility for old and new data attributes
+        navButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Handle both new and old data attribute formats
+                let targetId = this.getAttribute('data-carousel-target');
+                
+                // Fallback to old format
+                if (!targetId) {
+                    const feature = this.getAttribute('data-feature');
+                    const demo = this.getAttribute('data-demo');
+                    
+                    if (feature) {
+                        targetId = `${feature}-slide`;
+                    } else if (demo) {
+                        targetId = `${demo}-demo`;
+                    }
+                }
+                
+                console.log('Switching to:', targetId);
+                
+                // Remove active from all buttons and slides in this carousel
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Aggressively hide all slides
+                slides.forEach(slide => {
+                    slide.classList.remove('active');
+                    slide.style.display = 'none';
+                    slide.style.visibility = 'hidden';
+                    slide.style.opacity = '0';
+                    slide.style.position = 'absolute';
+                    slide.style.height = '0';
+                    slide.style.overflow = 'hidden';
+                });
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Show target slide
+                const targetSlide = document.getElementById(targetId);
+                if (targetSlide) {
+                    targetSlide.classList.add('active');
+                    targetSlide.style.display = 'block';
+                    targetSlide.style.visibility = 'visible';
+                    targetSlide.style.opacity = '1';
+                    targetSlide.style.position = 'relative';
+                    targetSlide.style.height = 'auto';
+                    targetSlide.style.overflow = 'visible';
+                    console.log('Activated slide:', targetSlide.id);
+                } else {
+                    console.error('Could not find slide:', targetId);
+                }
+            });
         });
     });
 }

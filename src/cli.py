@@ -20,6 +20,7 @@ from .research_organizer import ResearchOrganizer
 from .academic_voice import AcademicVoiceGenerator
 from .interview_system import InteractiveInterviewer
 from .qa_system import InteractiveQASession, QASystemModes
+from .egg_system import EggFarm, create_academic_egg, create_voice_egg, create_tech_egg, auto_feed_eggs, AutoFeeder
 
 
 def track_command_usage(command: str, subcommand: str = None, success: bool = True):
@@ -86,6 +87,10 @@ def cmd_generate(args):
                 voice=args.voice
             )
             
+            # Auto-feed eggs with generated content
+            input_summary = f"Generate {args.format} blog post from {args.days} days of activity"
+            auto_feed_eggs(input_summary, blog_post, f"generate_blog_{args.voice or 'default'}")
+            
             if args.preview:
                 generator.preview_content(blog_post, "blog")
             else:
@@ -95,6 +100,12 @@ def cmd_generate(args):
         if args.output in ["social", "all"]:
             print("📱 Generating social media hooks...")
             social_hooks = generator.create_social_hooks(activity, voice=args.voice)
+            
+            # Auto-feed eggs with social content
+            input_summary = f"Generate social hooks from {args.days} days of activity"
+            social_content = "\n".join(f"{i}. {hook}" for i, hook in enumerate(social_hooks, 1))
+            auto_feed_eggs(input_summary, social_content, "generate_social")
+            
             print("--- SOCIAL HOOKS ---")
             for i, hook in enumerate(social_hooks, 1):
                 print(f"{i}. {hook}")
@@ -592,6 +603,10 @@ def cmd_academic(args):
             
             academic_devlog = generator.generate_academic_devlog(research_materials, args.focus)
             
+            # Auto-feed eggs with academic content
+            input_summary = f"Generate academic devlog for {args.days} days, focus: {args.focus}"
+            auto_feed_eggs(input_summary, academic_devlog, f"academic_devlog_{args.focus}")
+            
             if args.save:
                 output_dir = Path("output") / "academic"
                 output_dir.mkdir(parents=True, exist_ok=True)
@@ -944,6 +959,10 @@ def cmd_sensei(args):
             print(f"🧠 Teaching session for '{args.skill}':")
             print(teaching_session)
             
+            # Auto-feed eggs with teaching content
+            input_summary = f"Teach skill: {args.skill} to {args.student_type or 'user'}"
+            auto_feed_eggs(input_summary, teaching_session, f"sensei_teach_{args.skill}")
+            
             # Save teaching session for apprentice to learn from
             if args.save_session:
                 session_path = sensei.save_teaching_session(teaching_session, args.skill)
@@ -1010,6 +1029,282 @@ def cmd_apprentice(args):
     except Exception as e:
         track_command_usage("apprentice", success=False)
         print(f"❌ Apprentice error: {e}")
+        raise
+
+
+def cmd_egg(args):
+    """Handle egg system subcommand - gamified model training"""
+    try:
+        farm = EggFarm()
+        
+        if args.auto_feed_enable:
+            # Enable auto-feeding
+            feeder = AutoFeeder(farm)
+            feeder.enable_auto_feeding()
+            print("🍼 Auto-feeding enabled! Eggs will now grow automatically from uroboro interactions.")
+            
+        elif args.auto_feed_disable:
+            # Disable auto-feeding
+            feeder = AutoFeeder(farm)
+            feeder.disable_auto_feeding()
+            print("🚫 Auto-feeding disabled. Eggs will only grow from manual feeding.")
+            
+        elif args.auto_feed_threshold:
+            # Set quality threshold
+            feeder = AutoFeeder(farm)
+            threshold = float(args.auto_feed_threshold)
+            feeder.set_quality_threshold(threshold)
+            print(f"🎯 Auto-feeding quality threshold set to {threshold}/10")
+            
+        elif args.test_auto_feed:
+            # Test auto-feeding with sample content
+            print("🧪 Testing auto-feeding system...")
+            
+            test_cases = [
+                {
+                    "input": "Generate academic report section",
+                    "output": "The implementation demonstrates substantial improvements across multiple performance metrics. Our methodology included comprehensive analysis of system architecture and systematic evaluation of results through rigorous testing protocols. The findings indicate significant enhancement in operational efficiency.",
+                    "context": "academic_test"
+                },
+                {
+                    "input": "Transform bullet points to prose",
+                    "output": "The system features enhanced user interface design with intuitive navigation elements. Performance optimization resulted in faster response times and improved user experience. Implementation follows industry best practices for maintainability and scalability.",
+                    "context": "content_transformation_test"
+                }
+            ]
+            
+            for i, test in enumerate(test_cases, 1):
+                print(f"\n🔬 Test Case {i}: {test['context']}")
+                result = auto_feed_eggs(test["input"], test["output"], test["context"])
+                print(f"   📊 Fed {result.get('total_fed', 0)} eggs with skills: {result.get('detected_skills', [])}")
+            
+        elif args.spawn:
+            # Spawn a new egg
+            egg_type = args.type or "general"
+            
+            if egg_type == "academic":
+                result = create_academic_egg(args.name)
+            elif egg_type == "voice":
+                result = create_voice_egg(args.name)
+            elif egg_type == "tech":
+                result = create_tech_egg(args.name)
+            else:
+                # Custom egg with specified focus areas
+                focus_areas = args.focus or ["academic_writing", "content_transformation"]
+                result = farm.spawn_egg(args.name, focus_areas, egg_type)
+            
+            if result["success"]:
+                print(f"🥚 {result['message']}")
+                print(f"   Type: {result['egg_type']}")
+                print(f"   Focus: {', '.join(result['focus_areas'])}")
+                print(f"   Target: {result['target_examples']} examples to hatch")
+            else:
+                print(f"❌ {result['reason']}")
+        
+        elif args.list:
+            # List all eggs
+            result = farm.list_eggs()
+            
+            if result["total_eggs"] == 0:
+                print("🥚 No eggs in the farm yet!")
+                print("   Create your first egg with: uro egg --spawn my-egg --type academic")
+            else:
+                print(f"🥚 Egg Farm Status: {result['total_eggs']} eggs, {result['hatched_models']} hatched")
+                print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                
+                for name, info in result["eggs"].items():
+                    status_icon = "🐣" if info["hatched"] else ("🟢" if info["hatching_ready"] else "🥚")
+                    progress_bar = "█" * int(info["progress"] * 10) + "░" * (10 - int(info["progress"] * 10))
+                    
+                    print(f"{status_icon} {name:<15} [{progress_bar}] {info['progress']:.1%}")
+                    print(f"   {info['type']:<12} {info['examples']:>4} examples, {info['quality']:.1f}/10 quality")
+                    
+                    if info["hatched"]:
+                        print(f"   🎉 Hatched! Model available")
+                    elif info["hatching_ready"]:
+                        print(f"   🎯 Ready to hatch!")
+                    print()
+        
+        elif args.stats:
+            # Show detailed stats for a specific egg
+            result = farm.get_egg_stats(args.name)
+            
+            if not result["success"]:
+                print(f"❌ {result['reason']}")
+                return
+            
+            # Beautiful egg stats display
+            egg = result
+            status_icon = "🐣" if egg["hatched"] else ("🟢" if egg["hatching_ready"] else "🥚")
+            
+            print(f"{status_icon} **{egg['name']} Egg Status**")
+            print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            print(f"📊 Dataset Size: {egg['total_examples']}/{egg['target_examples']} examples ({egg['overall_progress']:.1%} to hatching)")
+            print(f"🎯 Quality Score: {egg['quality_average']:.1f}/10.0 ({'Excellent' if egg['quality_average'] >= 8 else 'Good' if egg['quality_average'] >= 6 else 'Developing'})")
+            print(f"📅 Age: {egg['age_days']} days")
+            
+            if egg["specializations"]:
+                print(f"🧬 Specializations:")
+                for skill, spec in egg["specializations"].items():
+                    progress_bar = "█" * int(spec["progress"] * 10) + "░" * (10 - int(spec["progress"] * 10))
+                    print(f"   • {skill.replace('_', ' ').title()}: [{progress_bar}] {spec['progress']:.1%} ({spec['examples']} examples)")
+            
+            if egg["achievements"]:
+                print(f"🏆 Achievements: {', '.join(egg['achievements'])}")
+            
+            # Show egg health status
+            if args.name in farm.eggs:
+                actual_egg = farm.eggs[args.name]
+                health = actual_egg.check_data_health()
+                
+                health_icon = "🟢" if health["status"] == "healthy" else ("🟡" if health["status"] == "warning" else "🔴")
+                print(f"🏥 Health Status: {health_icon} {health['status'].title()}")
+                
+                if health["warnings"]:
+                    print(f"⚠️ Warnings:")
+                    for warning in health["warnings"]:
+                        print(f"   • {warning}")
+                
+                print(f"📈 Quality Trend: {health['quality_trend']}")
+                print(f"🌈 Diversity Score: {health['diversity_score']:.1%}")
+                print(f"🆕 Freshness Score: {health['freshness_score']:.1%}")
+            
+            if egg["hatching_ready"]:
+                print(f"🎯 Ready to hatch! Use: uro egg --hatch {args.name}")
+            elif egg["hatched"]:
+                print(f"🎉 Hatched! Model available for use")
+            else:
+                needed = egg['target_examples'] - egg['total_examples']
+                print(f"🥚 Growing... {needed} more examples needed")
+        
+        elif args.health:
+            # Show farm-wide health status and protection status
+            print("🏥 **tamagoro Farm Health Report**")
+            print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            
+            # Auto-feeder protection status
+            feeder = AutoFeeder(farm)
+            protection = feeder.get_protection_status()
+            
+            print(f"🛡️ **Protection Systems Status:**")
+            print(f"   Auto-feeding: {'🟢 Enabled' if protection['feeding_enabled'] else '🔴 Disabled'}")
+            print(f"   Quality threshold: {protection['quality_threshold']:.1f}/10.0")
+            print(f"   Content cache: {protection['cache_size']}/100 items")
+            print(f"   Quality samples: {protection['quality_samples']}")
+            if protection['recent_quality_avg'] > 0:
+                print(f"   Recent quality avg: {protection['recent_quality_avg']:.1f}/10.0")
+            
+            print(f"\n🔒 **Active Protections:**")
+            for protection_name, enabled in protection['protections'].items():
+                status = "🟢 Active" if enabled else "🔴 Inactive"
+                print(f"   {protection_name.replace('_', ' ').title()}: {status}")
+            
+            # Individual egg health
+            eggs = farm.list_eggs()
+            if eggs["total_eggs"] > 0:
+                print(f"\n🥚 **Individual Egg Health:**")
+                
+                healthy_eggs = 0
+                warning_eggs = 0
+                unhealthy_eggs = 0
+                
+                for egg_name in eggs["eggs"].keys():
+                    if egg_name in farm.eggs:
+                        health = farm.eggs[egg_name].check_data_health()
+                        health_icon = "🟢" if health["status"] == "healthy" else ("🟡" if health["status"] == "warning" else "🔴")
+                        
+                        if health["status"] == "healthy":
+                            healthy_eggs += 1
+                        elif health["status"] == "warning":
+                            warning_eggs += 1
+                        else:
+                            unhealthy_eggs += 1
+                        
+                        print(f"   {health_icon} {egg_name}: {health['status']}")
+                        if health["warnings"]:
+                            for warning in health["warnings"][:2]:  # Show first 2 warnings
+                                print(f"      ⚠️ {warning}")
+                
+                print(f"\n📊 **Farm Summary:**")
+                print(f"   🟢 Healthy: {healthy_eggs}")
+                print(f"   🟡 Warning: {warning_eggs}")
+                print(f"   🔴 Unhealthy: {unhealthy_eggs}")
+                
+                if unhealthy_eggs > 0:
+                    print(f"\n💡 **Recommendations:**")
+                    print(f"   • Consider reducing auto-feeding quality threshold")
+                    print(f"   • Manually feed high-quality content to unhealthy eggs")
+                    print(f"   • Check for content repetition in training data")
+            else:
+                print(f"\n🥚 No eggs in the farm yet!")
+                print(f"   Create your first egg with: uro egg --spawn my-egg --type academic")
+        
+        elif args.feed:
+            # Feed an egg with training data
+            if not all([args.input, args.output, args.skills]):
+                print("❌ Feed requires --input, --output, and --skills")
+                return
+            
+            skills = args.skills if isinstance(args.skills, list) else [args.skills]
+            quality = float(args.quality) if args.quality else 8.0
+            
+            result = farm.feed_egg(
+                args.name,
+                args.input,
+                args.output,
+                skills,
+                quality,
+                args.feedback
+            )
+            
+            if result["success"]:
+                print(f"🍼 Fed {args.name}: {result['total_examples']} total examples")
+                if result["specialization_growth"]:
+                    for growth in result["specialization_growth"]:
+                        print(f"   📈 {growth}")
+                
+                if result["new_achievements"]:
+                    print(f"🏆 New achievements: {', '.join(result['new_achievements'])}")
+                
+                if result["hatching_ready"]:
+                    print(f"🎯 {args.name} is ready to hatch!")
+                
+                print(f"📊 Overall progress: {result['overall_progress']:.1%}, Quality: {result['quality_average']:.1f}/10")
+            else:
+                print(f"❌ {result['reason']}")
+        
+        elif args.hatch:
+            # Attempt to hatch an egg
+            result = farm.hatch_egg(args.name)
+            
+            if result["success"]:
+                print(f"🎉 SUCCESS! {args.name} has hatched!")
+                print(f"🤖 Model: {result['model_name']}")
+                print(f"📁 Path: {result['model_path']}")
+                print(f"📊 Training dataset: {result['training_dataset_size']} examples")
+                print(f"🧬 Specializations: {', '.join(result['specializations_learned'])}")
+                print(f"⏱️ Estimated training time: {result['estimated_training_time']}")
+                print(f"📅 Hatched: {result['hatch_date']}")
+                print()
+                print("🚀 Your personalized model is ready!")
+                print(f"   Use: uro generate --model {result['model_name']} (future feature)")
+            else:
+                print(f"❌ Cannot hatch {args.name}: {result['reason']}")
+                
+                if "requirements" in result:
+                    req = result["requirements"]
+                    if req["examples_needed"] > 0:
+                        print(f"   📊 Need {req['examples_needed']} more examples")
+                    if req["quality_needed"] > 0:
+                        print(f"   🎯 Need {req['quality_needed']:.1f} better quality")
+                    if req["diversity_needed"] > 0:
+                        print(f"   🧬 Need {req['diversity_needed']} more skill types")
+        
+        track_command_usage("egg", args.spawn or args.list or args.stats or args.feed or args.hatch or args.health, success=True)
+        
+    except Exception as e:
+        track_command_usage("egg", success=False)
+        print(f"❌ Egg system error: {e}")
         raise
 
 
@@ -1185,6 +1480,27 @@ def main():
     apprentice_parser.add_argument('--voice-profile', help='Voice profile to update with learning')
     apprentice_parser.add_argument('--integrate-voice', action='store_true', help='Integrate insights into voice profile')
     
+    # Egg command - gamified model training
+    egg_parser = subparsers.add_parser('egg', help='🥚 Egg system subcommand - gamified model training')
+    egg_parser.add_argument('--spawn', action='store_true', help='Spawn a new egg')
+    egg_parser.add_argument('--list', action='store_true', help='List all eggs')
+    egg_parser.add_argument('--stats', action='store_true', help='Show detailed stats for a specific egg')
+    egg_parser.add_argument('--feed', action='store_true', help='Feed an egg with training data')
+    egg_parser.add_argument('--hatch', action='store_true', help='Attempt to hatch an egg')
+    egg_parser.add_argument('--name', help='Egg name')
+    egg_parser.add_argument('--type', help='Egg type')
+    egg_parser.add_argument('--focus', nargs='+', help='Focus areas for custom egg')
+    egg_parser.add_argument('--input', help='Input path for training data')
+    egg_parser.add_argument('--output', help='Output path for training data')
+    egg_parser.add_argument('--skills', nargs='+', help='Skills to train')
+    egg_parser.add_argument('--quality', help='Desired quality score')
+    egg_parser.add_argument('--feedback', help='Feedback for training')
+    egg_parser.add_argument('--auto-feed-enable', action='store_true', help='Enable auto-feeding')
+    egg_parser.add_argument('--auto-feed-disable', action='store_true', help='Disable auto-feeding')
+    egg_parser.add_argument('--auto-feed-threshold', help='Set auto-feeding quality threshold')
+    egg_parser.add_argument('--test-auto-feed', action='store_true', help='Test auto-feeding with sample content')
+    egg_parser.add_argument('--health', action='store_true', help='Show farm-wide health status and protection status')
+    
     # Parse args and dispatch
     args = parser.parse_args()
     
@@ -1220,6 +1536,7 @@ def main():
         'dojo': cmd_dojo,
         'sensei': cmd_sensei,
         'apprentice': cmd_apprentice,
+        'egg': cmd_egg,
     }
     
     if args.command in commands:

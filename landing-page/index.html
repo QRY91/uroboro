@@ -78,8 +78,8 @@
                         <span>Git integration</span>
                     </div>
                     <div class="prop">
-                        <span class="prop-icon">📋</span>
-                        <span>Project templates</span>
+                        <span class="prop-icon">🥚</span>
+                        <span>tamagoro training</span>
                     </div>
                 </div>
                 
@@ -217,16 +217,17 @@
             
             <div class="carousel-container">
                 <div class="carousel-nav">
-                    <button class="nav-btn active" data-feature="capture">Capture</button>
-                    <button class="nav-btn" data-feature="git">Git Integration</button>
-                    <button class="nav-btn" data-feature="templates">Project Templates</button>
-                    <button class="nav-btn" data-feature="voice">Voice Training</button>
-                    <button class="nav-btn" data-feature="mining">Knowledge Mining</button>
-                    <button class="nav-btn" data-feature="privacy">Privacy First</button>
+                    <button class="carousel-nav-btn active" data-carousel-target="capture-slide">Capture</button>
+                    <button class="carousel-nav-btn" data-carousel-target="git-slide">Git Integration</button>
+                    <button class="carousel-nav-btn" data-carousel-target="templates-slide">Project Templates</button>
+                    <button class="carousel-nav-btn" data-carousel-target="voice-slide">Voice Training</button>
+                    <button class="carousel-nav-btn" data-carousel-target="mining-slide">Knowledge Mining</button>
+                    <button class="carousel-nav-btn" data-carousel-target="privacy-slide">Privacy First</button>
+                    <button class="carousel-nav-btn" data-carousel-target="tamagoro-slide">🥚 tamagoro</button>
                 </div>
                 
                 <div class="carousel-content">
-                    <div class="feature-slide active" id="capture-slide">
+                    <div class="carousel-slide active" id="capture-slide">
                         <div class="feature-grid">
                             <div class="feature-demo">
                                 <h3>⚡ Smart Capture</h3>
@@ -261,7 +262,7 @@
                         </div>
                     </div>
                     
-                    <div class="feature-slide" id="git-slide">
+                    <div class="carousel-slide" id="git-slide">
                         <div class="feature-grid">
                             <div class="feature-demo">
                                 <h3>🔗 Git Integration</h3>
@@ -297,7 +298,7 @@
                         </div>
                     </div>
                     
-                    <div class="feature-slide" id="templates-slide">
+                    <div class="carousel-slide" id="templates-slide">
                         <div class="feature-grid">
                             <div class="feature-demo">
                                 <h3>📋 Project Templates</h3>
@@ -333,7 +334,7 @@
                         </div>
                     </div>
                     
-                    <div class="feature-slide" id="voice-slide">
+                    <div class="carousel-slide" id="voice-slide">
                         <div class="feature-grid">
                             <div class="feature-demo">
                                 <h3>🎨 Voice Training</h3>
@@ -372,7 +373,7 @@
                         </div>
                     </div>
                     
-                    <div class="feature-slide" id="mining-slide">
+                    <div class="carousel-slide" id="mining-slide">
                         <div class="feature-grid">
                             <div class="feature-demo">
                                 <h3>🧠 Knowledge Mining</h3>
@@ -407,7 +408,7 @@
                         </div>
                     </div>
                     
-                    <div class="feature-slide" id="privacy-slide">
+                    <div class="carousel-slide" id="privacy-slide">
                         <div class="feature-grid">
                             <div class="feature-demo">
                                 <h3>🔒 Privacy First</h3>
@@ -444,6 +445,45 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="carousel-slide" id="tamagoro-slide">
+                        <div class="feature-grid">
+                            <div class="feature-demo">
+                                <h3>🥚 tamagoro System</h3>
+                                <div class="demo-terminal">
+                                    <div class="terminal-header">
+                                        <div class="terminal-buttons">
+                                            <span class="btn-red"></span>
+                                            <span class="btn-yellow"></span>
+                                            <span class="btn-green"></span>
+                                        </div>
+                                        <span class="terminal-title">Egg Farm</span>
+                                    </div>
+                                    <div class="terminal-body">
+                                        <p><span class="prompt">$</span> uro egg --spawn academic-writer --type academic</p>
+                                        <p class="output">🥚 Spawned new academic egg: academic-writer</p>
+                                        <p><span class="prompt">$</span> uro egg --stats academic-writer</p>
+                                        <p class="output">📊 Dataset: 847/2000 examples (42.4%)</p>
+                                        <p class="output">🎯 Quality: 8.7/10.0 (Excellent)</p>
+                                        <p class="output">🏆 Achievements: First Century, Quality Master</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <h4>Gamified Local AI Training</h4>
+                                <ul>
+                                    <li><strong>Grow AI eggs</strong> - Tamagotchi-style model training</li>
+                                    <li><strong>Auto-feeding</strong> - Normal usage automatically feeds eggs</li>
+                                    <li><strong>Overingestion protection</strong> - Prevents data degradation</li>
+                                    <li><strong>Achievement system</strong> - Progress bars and milestones</li>
+                                    <li><strong>Hatching</strong> - Create personalized models (coming soon)</li>
+                                </ul>
+                                <div class="feature-code">
+                                    <code>uro egg --health</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -457,73 +497,152 @@
                 <p class="section-subtitle">Watch real workflows in under 30 seconds each</p>
             </div>
             
-            <div class="demos-grid">
-                <!-- Non-featured demos in horizontal row -->
-                <div class="demos-row">
-                    <div class="demo-card">
-                        <div class="demo-video">
-                            <img src="assets/uroboro_demo_core.gif" alt="Core workflow demo showing capture, status, and generate commands" loading="lazy">
-                            <div class="demo-overlay">
-                                <span class="demo-duration">15s</span>
-                            </div>
-                        </div>
-                        <div class="demo-info">
-                            <h3>⚡ Core Workflow</h3>
-                            <p>The essential uroboro experience: capture insights, check status, and generate content in seconds.</p>
-                            <div class="demo-commands">
-                                <code>uro capture → uro status → uro generate</code>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="demo-card">
-                        <div class="demo-video">
-                            <img src="assets/uroboro_demo_git.gif" alt="Git integration demo showing hook installation and automatic commit capture" loading="lazy">
-                            <div class="demo-overlay">
-                                <span class="demo-duration">20s</span>
-                            </div>
-                        </div>
-                        <div class="demo-info">
-                            <h3>🔗 Git Integration</h3>
-                            <p>Install hooks, analyze commit patterns, and automatically capture development insights from your git workflow.</p>
-                            <div class="demo-commands">
-                                <code>uro git --hook-install</code>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="demo-card">
-                        <div class="demo-video">
-                            <img src="assets/uroboro_demo_templates.gif" alt="Project templates demo showing creation of new projects with AI context" loading="lazy">
-                            <div class="demo-overlay">
-                                <span class="demo-duration">25s</span>
-                            </div>
-                        </div>
-                        <div class="demo-info">
-                            <h3>📋 Project Templates</h3>
-                            <p>Quick project setup with AI-optimized configurations for web, API, game, tool, research, and mobile projects.</p>
-                            <div class="demo-commands">
-                                <code>uro project create my-app --template web</code>
-                            </div>
-                        </div>
-                    </div>
+            <div class="carousel-container">
+                <div class="carousel-nav">
+                    <button class="carousel-nav-btn active" data-carousel-target="core-demo">⚡ Core Workflow</button>
+                    <button class="carousel-nav-btn" data-carousel-target="git-demo">🔗 Git Integration</button>
+                    <button class="carousel-nav-btn" data-carousel-target="templates-demo">📋 Templates</button>
+                    <button class="carousel-nav-btn" data-carousel-target="tamagoro-demo">🥚 tamagoro</button>
+                    <button class="carousel-nav-btn" data-carousel-target="health-demo">🏥 Health Monitor</button>
+                    <button class="carousel-nav-btn" data-carousel-target="complete-demo">🎬 Complete Tour</button>
                 </div>
                 
-                <!-- Featured demo in its own row -->
-                <div class="demos-row">
-                    <div class="demo-card featured">
-                        <div class="demo-video">
-                            <img src="assets/uroboro_demo.gif" alt="Complete uroboro demo showing full feature set and workflow" loading="lazy">
-                            <div class="demo-overlay">
-                                <span class="demo-duration">45s</span>
-                                <span class="demo-badge">Complete Tour</span>
+                <div class="carousel-content">
+                    <div class="carousel-slide" id="core-demo">
+                        <div class="demo-featured">
+                            <div class="demo-video-large">
+                                <img src="assets/uroboro_demo_core.gif" alt="Core workflow demo showing capture, status, and generate commands" loading="lazy">
+                                <div class="demo-overlay">
+                                    <span class="demo-duration">15s</span>
+                                </div>
+                            </div>
+                            <div class="demo-info-large">
+                                <h3>⚡ Core Workflow</h3>
+                                <p>The essential uroboro experience: capture insights during development, check your status, and generate polished content in seconds. This is the foundation of the self-documenting pipeline.</p>
+                                <div class="demo-commands">
+                                    <code>uro capture → uro status → uro generate</code>
+                                </div>
+                                <div class="demo-highlights">
+                                    <span class="highlight">5-second captures</span>
+                                    <span class="highlight">Auto-categorization</span>
+                                    <span class="highlight">Instant content generation</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="demo-info">
-                            <h3>🎬 Complete Feature Overview</h3>
-                            <p>The full uroboro experience showcasing all major features: capture, git integration, voice training, and content generation.</p>
-                            <div class="demo-commands">
-                                <code>The complete developer content pipeline</code>
+                    </div>
+                    
+                    <div class="carousel-slide" id="git-demo">
+                        <div class="demo-featured">
+                            <div class="demo-video-large">
+                                <img src="assets/uroboro_demo_git.gif" alt="Git integration demo showing hook installation and automatic commit capture" loading="lazy">
+                                <div class="demo-overlay">
+                                    <span class="demo-duration">20s</span>
+                                </div>
+                            </div>
+                            <div class="demo-info-large">
+                                <h3>🔗 Git Integration</h3>
+                                <p>Install hooks, analyze commit patterns, and automatically capture development insights from your git workflow. Zero-friction integration that works with your existing habits.</p>
+                                <div class="demo-commands">
+                                    <code>uro git --hook-install</code>
+                                </div>
+                                <div class="demo-highlights">
+                                    <span class="highlight">Auto-capture commits</span>
+                                    <span class="highlight">Pattern analysis</span>
+                                    <span class="highlight">Branch awareness</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="carousel-slide" id="templates-demo">
+                        <div class="demo-featured">
+                            <div class="demo-video-large">
+                                <img src="assets/uroboro_demo_templates.gif" alt="Project templates demo showing creation of new projects with AI context" loading="lazy">
+                                <div class="demo-overlay">
+                                    <span class="demo-duration">25s</span>
+                                </div>
+                            </div>
+                            <div class="demo-info-large">
+                                <h3>📋 Project Templates</h3>
+                                <p>Quick project setup with AI-optimized configurations for web, API, game, tool, research, and mobile projects. Get productive immediately with pre-configured contexts.</p>
+                                <div class="demo-commands">
+                                    <code>uro project create my-app --template web</code>
+                                </div>
+                                <div class="demo-highlights">
+                                    <span class="highlight">6 template types</span>
+                                    <span class="highlight">AI-optimized configs</span>
+                                    <span class="highlight">Instant setup</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="carousel-slide" id="tamagoro-demo">
+                        <div class="demo-featured">
+                            <div class="demo-video-large">
+                                <img src="assets/uroboro_demo_tamagoro.gif" alt="tamagoro system demo showing gamified AI training with egg spawning and health monitoring" loading="lazy">
+                                <div class="demo-overlay">
+                                    <span class="demo-duration">30s</span>
+                                </div>
+                            </div>
+                            <div class="demo-info-large">
+                                <h3>🥚 tamagoro System</h3>
+                                <p>Gamified local AI training - grow your own personalized models with Tamagotchi-style progression. Watch your eggs develop specialized skills and eventually hatch into custom models.</p>
+                                <div class="demo-commands">
+                                    <code>uro egg --spawn academic-writer --type academic</code>
+                                </div>
+                                <div class="demo-highlights">
+                                    <span class="highlight">Gamified training</span>
+                                    <span class="highlight">Achievement system</span>
+                                    <span class="highlight">Personal models</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="carousel-slide" id="health-demo">
+                        <div class="demo-featured">
+                            <div class="demo-video-large">
+                                <img src="assets/uroboro_demo_tamagoro_health.gif" alt="Health monitoring demo showing overingestion protection and farm health checks" loading="lazy">
+                                <div class="demo-overlay">
+                                    <span class="demo-duration">20s</span>
+                                </div>
+                            </div>
+                            <div class="demo-info-large">
+                                <h3>🏥 Health Monitoring</h3>
+                                <p>Advanced overingestion protection and farm health checks prevent data degradation. Solves the "ouroboros problem" of AI eating itself with comprehensive safeguards.</p>
+                                <div class="demo-commands">
+                                    <code>uro egg --health</code>
+                                </div>
+                                <div class="demo-highlights">
+                                    <span class="highlight">Content deduplication</span>
+                                    <span class="highlight">Quality monitoring</span>
+                                    <span class="highlight">Rate limiting</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="carousel-slide" id="complete-demo">
+                        <div class="demo-featured">
+                            <div class="demo-video-large">
+                                <img src="assets/uroboro_demo.gif" alt="Complete uroboro demo showing full feature set and workflow" loading="lazy">
+                                <div class="demo-overlay">
+                                    <span class="demo-duration">45s</span>
+                                    <span class="demo-badge">Complete Tour</span>
+                                </div>
+                            </div>
+                            <div class="demo-info-large">
+                                <h3>🎬 Complete Feature Overview</h3>
+                                <p>The full uroboro experience showcasing all major features: capture, git integration, voice training, content generation, and the revolutionary tamagoro system. Everything in one comprehensive demo.</p>
+                                <div class="demo-commands">
+                                    <code>The complete developer content pipeline</code>
+                                </div>
+                                <div class="demo-highlights">
+                                    <span class="highlight">All features</span>
+                                    <span class="highlight">End-to-end workflow</span>
+                                    <span class="highlight">45-second tour</span>
+                                </div>
                             </div>
                         </div>
                     </div>

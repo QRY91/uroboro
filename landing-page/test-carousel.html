@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carousel Test</title>
+    <style>
+        body { 
+            background: #1e1b2e; 
+            color: white; 
+            font-family: monospace; 
+            padding: 20px;
+        }
+        .carousel-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-btn {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        .nav-btn.active {
+            background: orange;
+            color: black;
+        }
+        .carousel-content {
+            position: relative;
+            min-height: 300px;
+            border: 2px solid #555;
+            overflow: hidden;
+        }
+        .demo-slide {
+            display: none !important;
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100% !important;
+            background: #2a1f3d;
+            padding: 20px;
+            border: 2px solid red;
+        }
+        .demo-slide.active {
+            display: block !important;
+            position: relative !important;
+            border: 2px solid green;
+        }
+        .demo-slide:not(.active) {
+            display: none !important;
+            visibility: hidden !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>Demo Carousel Test</h1>
+    
+    <div class="carousel-nav">
+        <button class="nav-btn active" data-demo="core">Core</button>
+        <button class="nav-btn" data-demo="git">Git</button>
+        <button class="nav-btn" data-demo="templates">Templates</button>
+    </div>
+    
+    <div class="carousel-content">
+        <div class="demo-slide" id="core-demo">
+            <h2>🚀 Core Demo</h2>
+            <p>This is the core workflow demo content.</p>
+        </div>
+        
+        <div class="demo-slide" id="git-demo">
+            <h2>🔗 Git Demo</h2>
+            <p>This is the git integration demo content.</p>
+        </div>
+        
+        <div class="demo-slide" id="templates-demo">
+            <h2>📋 Templates Demo</h2>
+            <p>This is the templates demo content.</p>
+        </div>
+    </div>
+
+    <script>
+        function initDemoCarousel() {
+            const demoNavButtons = document.querySelectorAll('[data-demo]');
+            const demoSlides = document.querySelectorAll('.demo-slide');
+            
+            console.log('Initializing with:', {
+                buttons: demoNavButtons.length,
+                slides: demoSlides.length
+            });
+            
+            // Force initial state
+            demoSlides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                slide.style.display = 'none';
+                
+                if (index === 0) {
+                    slide.classList.add('active');
+                    slide.style.display = 'block';
+                    console.log('Activated:', slide.id);
+                }
+            });
+            
+            demoNavButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const demo = this.getAttribute('data-demo');
+                    console.log('Clicking:', demo);
+                    
+                    // Remove active from all
+                    demoNavButtons.forEach(btn => btn.classList.remove('active'));
+                    demoSlides.forEach(slide => {
+                        slide.classList.remove('active');
+                        slide.style.display = 'none';
+                    });
+                    
+                    // Activate clicked
+                    this.classList.add('active');
+                    const targetSlide = document.getElementById(`${demo}-demo`);
+                    if (targetSlide) {
+                        targetSlide.classList.add('active');
+                        targetSlide.style.display = 'block';
+                        console.log('Activated slide:', targetSlide.id);
+                    }
+                });
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', initDemoCarousel);
+    </script>
+</body>
+</html> 

@@ -41,6 +41,7 @@ venv.bak/
 output/
 config/settings.json
 *.log
+DUMP_HERE/
 
 # OS
 .DS_Store
