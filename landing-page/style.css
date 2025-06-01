@@ -337,6 +337,28 @@ section {
     margin-top: var(--space-sm);
 }
 
+/* TV commercial subtitle styling */
+.problem .section-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: var(--space-md);
+}
+
+.problem .section-subtitle em {
+    color: var(--accent);
+    font-style: italic;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+}
+
+.problem .section-subtitle strong {
+    color: var(--primary);
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(139, 122, 168, 0.3);
+}
+
 /* Problem Section */
 .problem {
     background: rgba(30, 27, 46, 0.6);
@@ -368,27 +390,170 @@ section {
 
 .problem-text {
     color: var(--text-secondary);
-}
-
-.problem-cost {
-    max-width: 600px;
-    margin: 0 auto;
+    line-height: 1.8;
     text-align: center;
 }
 
-.problem-cost h3 {
-    margin-bottom: var(--space-md);
+.problem-text strong {
     color: var(--text-primary);
+    font-weight: 600;
+    display: block;
+    margin-bottom: var(--space-xs);
+}
+
+.problem-text em {
+    color: var(--text-muted);
+    font-style: italic;
+    display: block;
+    margin-top: var(--space-xs);
+    font-size: 1.1rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Orange arrows */
+.problem-text .arrow {
+    color: var(--accent);
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: block;
+    margin: var(--space-sm) 0;
+    text-shadow: 0 2px 6px rgba(217, 119, 6, 0.4);
+    animation: arrow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes arrow-pulse {
+    0%, 100% { transform: translateY(0); opacity: 0.8; }
+    50% { transform: translateY(2px); opacity: 1; }
+}
+
+/* Reaction emojis - larger and not italic */
+.problem-text .reaction-emoji {
+    font-style: normal !important;
+    font-size: 1.5rem;
+    margin-left: 0.5rem;
+    display: inline-block;
+    transform: scale(1);
+    transition: transform 0.2s ease;
+}
+
+/* Make the arrow orange and prominent */
+.problem-text br + br:before {
+    content: "";
+}
+
+.problem-text:contains("↓") {
+    color: var(--accent);
+}
+
+/* Target the arrow character specifically */
+.problem-text br:nth-of-type(1) + br:before {
+    content: "";
+}
+
+/* Fix emojis - they inherit italic but shouldn't be slanted */
+.problem-text em {
+    font-feature-settings: "kern" 1;
+    -webkit-font-feature-settings: "kern" 1;
+    -moz-font-feature-settings: "kern" 1;
+}
+
+.problem-cost {
+    max-width: 700px;
+    margin: var(--space-2xl) auto 0;
+    text-align: left;
+    background: linear-gradient(135deg, 
+        rgba(220, 38, 38, 0.1) 0%, 
+        rgba(185, 28, 28, 0.15) 100%);
+    border: 2px solid rgba(220, 38, 38, 0.3);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.problem-cost::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        #dc2626 0%, 
+        #f59e0b 50%, 
+        #dc2626 100%);
+    animation: pulse-border 3s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.problem-cost h3 {
+    margin-bottom: var(--space-lg);
+    color: #fca5a5;
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: center;
+    text-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+    position: relative;
+}
+
+.problem-cost h3::after {
+    content: "💔";
+    position: absolute;
+    right: -2.5rem;
+    top: 0;
+    font-size: 1.5rem;
+    animation: heartbeat 2s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 .problem-cost ul {
     text-align: left;
     list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
 .problem-cost li {
-    padding: var(--space-xs) 0;
-    color: var(--text-secondary);
+    padding: var(--space-md) 0;
+    color: #fecaca;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    position: relative;
+    padding-left: var(--space-xl);
+    border-bottom: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.problem-cost li:last-child {
+    border-bottom: none;
+}
+
+.problem-cost li::before {
+    content: "⚠️";
+    position: absolute;
+    left: 0;
+    top: var(--space-md);
+    font-size: 1.25rem;
+    animation: warning-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes warning-pulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+}
+
+.problem-cost li strong {
+    color: #fef2f2;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* Solution Section */
