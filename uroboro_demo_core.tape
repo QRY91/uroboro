@@ -1,5 +1,5 @@
 # uroboro_demo_core.tape
-# Core workflow: capture → status → generate
+# Sacred workflow: capture → publish → status
 
 # Output GIF file
 Output assets/uroboro_demo_core.gif
@@ -19,48 +19,47 @@ Hide
 Type "cd /tmp && rm -rf uroboro_demo && mkdir uroboro_demo && cd uroboro_demo" Enter Sleep 1s
 Type "cp -r /home/qry/stuff/projects/uroboro/* ." Enter Sleep 1s
 Type "pip install -e . --quiet" Enter Sleep 3s
-Type "mkdir -p my-project/.devlog" Enter Sleep 500ms
-Type "echo '# My Web App' > my-project/README.md" Enter Sleep 500ms
 Type "clear" Enter Sleep 500ms
 Show
 
-# --- Show initial help ---
-Type "uro --help" Sleep 1s Enter
+# --- Show the sacred commands ---
+Type "uroboro --help" Sleep 1s Enter
 Sleep 4s
 
 Hide
 Type "clear" Enter Sleep 1s
 Show
 
-# --- Demo: Capture Development Work ---
-Type "# Capturing development insights" Sleep 1s Enter Sleep 1s
-Type "uro capture 'Implemented user authentication with OAuth2 and JWT tokens'" Sleep 1.5s Enter
+# --- Demo: Capture Development Work (10 seconds) ---
+Type "# Sacred Command 1: CAPTURE (10 seconds)" Sleep 1s Enter Sleep 1s
+Type "uroboro capture 'Implemented user authentication with OAuth2 and JWT tokens'" Sleep 1.5s Enter
 Sleep 3s
 
-Type "uro capture 'Fixed critical memory leak in WebSocket connections' --tags bugfix performance" Sleep 1.5s Enter  
+Type "uroboro capture 'Fixed critical memory leak in WebSocket connections - cut memory usage by 40%'" Sleep 1.5s Enter  
 Sleep 3s
 
-Type "uro capture 'Added real-time collaboration features' --project my-project --tags feature realtime" Sleep 1.5s Enter
+Type "uroboro capture 'Added real-time collaboration features using WebSockets'" Sleep 1.5s Enter
 Sleep 3s
 
-# --- Demo: Check Status ---
+# --- Demo: Check Status (complete overview) ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "uro status" Sleep 1s Enter
+Type "# Sacred Command 3: STATUS (complete overview)" Sleep 1s Enter Sleep 1s
+Type "uroboro status" Sleep 1s Enter
 Sleep 4s
 
-# --- Demo: Generate Content ---
+# --- Demo: Publish Content (2 minutes) ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "# Generate content from captured insights" Sleep 1s Enter Sleep 1s
-Type "uro generate --preview --output devlog" Sleep 1.5s Enter
-Sleep 6s
+Type "# Sacred Command 2: PUBLISH (2 minutes)" Sleep 1s Enter Sleep 1s
+Type "uroboro publish --blog" Sleep 1.5s Enter
+Sleep 8s
 
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "# That's the core uroboro workflow!" Sleep 1s Enter Sleep 1s
-Type "echo '🐍 Capture → Generate → Share'" Sleep 1s Enter
+Type "# That's the sacred workflow - three commands that's it!" Sleep 1s Enter Sleep 1s
+Type "echo '🎯 capture → publish → status'" Sleep 1s Enter
 Sleep 2s 

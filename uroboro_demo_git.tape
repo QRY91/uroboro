@@ -1,5 +1,5 @@
 # uroboro_demo_git.tape
-# Git integration workflow demo
+# Sacred workflow with git integration
 
 # Output GIF file
 Output assets/uroboro_demo_git.gif
@@ -25,53 +25,46 @@ Type "git config user.email 'demo@uroboro.dev'" Enter Sleep 500ms
 Type "echo '# My Project' > README.md" Enter Sleep 500ms
 Type "git add README.md" Enter Sleep 500ms
 Type "git commit -m 'Initial commit'" Enter Sleep 1s
-Type "echo 'Some code changes' >> app.py" Enter Sleep 500ms
-Type "git add app.py" Enter Sleep 500ms
-Type "git commit -m 'Add core functionality'" Enter Sleep 1s
+Type "echo 'def authenticate_user(): pass' > auth.py" Enter Sleep 500ms
+Type "git add auth.py" Enter Sleep 500ms
+Type "git commit -m 'Add authentication system'" Enter Sleep 1s
 Type "clear" Enter Sleep 500ms
 Show
 
-# --- Demo: Git Status ---
-Type "# uroboro git integration" Sleep 1s Enter Sleep 1s
-Type "uro git" Sleep 1s Enter
-Sleep 4s
-
-# --- Demo: Install Git Hook ---
-Hide
-Type "clear" Enter Sleep 1s
-Show
-Type "# Install git hook for auto-capture" Sleep 1s Enter Sleep 1s
-Type "uro git --hook-install" Sleep 1.5s Enter
+# --- Demo: Capture with Git Context ---
+Type "# Sacred workflow with git integration" Sleep 1s Enter Sleep 1s
+Type "uroboro capture 'Implemented OAuth2 authentication system with JWT tokens'" Sleep 1.5s Enter
 Sleep 3s
 
-# --- Demo: Analyze Git History ---
-Hide
-Type "clear" Enter Sleep 1s
-Show
-Type "# Analyze commit patterns" Sleep 1s Enter Sleep 1s
-Type "uro git --analyze --days 7" Sleep 1.5s Enter
-Sleep 4s
+Type "git add -A && git commit -m 'Add OAuth2 authentication'" Sleep 1.5s Enter Sleep 1s
 
-# --- Demo: Manual Commit Capture ---
-Hide
-Type "clear" Enter Sleep 1s
-Show
-Type "# Manually capture recent commits" Sleep 1s Enter Sleep 1s
-Type "uro git --capture-commits --days 1" Sleep 1.5s Enter
-Sleep 4s
-
-# --- Demo: Test Auto-Capture ---
-Hide
-Type "clear" Enter Sleep 1s
-Show
-Type "# Test the hook with a new commit" Sleep 1s Enter Sleep 1s
-Type "echo 'Hook test' >> test.md" Sleep 1s Enter Sleep 1s
-Type "git add test.md" Sleep 1s Enter Sleep 1s
-Type "git commit -m 'Test auto-capture hook'" Sleep 1.5s Enter
+Type "uroboro capture 'Fixed race condition in session management - prevents concurrent logins'" Sleep 1.5s Enter
 Sleep 3s
 
+# --- Demo: Status Shows Git Integration ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "echo '🔗 Git + uroboro = Automatic development documentation'" Sleep 1.5s Enter
+Type "# STATUS shows git integration automatically" Sleep 1s Enter Sleep 1s
+Type "uroboro status" Sleep 1.5s Enter
+Sleep 5s
+
+# --- Demo: Publish With Git Context ---
+Hide
+Type "clear" Enter Sleep 1s
+Show
+Type "# PUBLISH includes git context in content" Sleep 1s Enter Sleep 1s
+Type "uroboro publish --blog" Sleep 1.5s Enter
+Sleep 8s
+
+# --- Demo: Show Generated Content ---
+Hide
+Type "ls output/posts/" Enter Sleep 2s
+Type "echo '# Content includes git context automatically'" Sleep 1.5s Enter
+Show
+
+Hide
+Type "clear" Enter Sleep 1s
+Show
+Type "echo '🔗 Sacred workflow + Git = Seamless documentation'" Sleep 1.5s Enter
 Sleep 2s 

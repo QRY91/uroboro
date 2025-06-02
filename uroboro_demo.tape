@@ -1,5 +1,5 @@
 # uroboro_demo.tape
-# Essential uroboro workflow with proper timing
+# The Self-Documenting Content Pipeline - Sacred Workflow
 
 # Output GIF file
 Output assets/uroboro_demo.gif
@@ -19,56 +19,56 @@ Hide
 Type "cd /tmp && rm -rf uroboro_demo && mkdir uroboro_demo && cd uroboro_demo" Enter Sleep 1s
 Type "cp -r /home/qry/stuff/projects/uroboro/* ." Enter Sleep 1s
 Type "pip install -e . --quiet" Enter Sleep 3s
-Type "mkdir -p .devlog" Enter Sleep 500ms
 Type "clear" Enter Sleep 500ms
 Show
 
 # --- Demo: First Time Experience ---
-Type "# Welcome to uroboro - The Self-Documenting Pipeline 🐍" Sleep 1.5s Enter Sleep 2s
-Type "uro --help" Sleep 1s Enter
+Type "# Welcome to uroboro - The Self-Documenting Content Pipeline 🐍" Sleep 1.5s Enter Sleep 2s
+Type "uroboro --help" Sleep 1s Enter
 Sleep 5s
 
 Hide
 Type "clear" Enter Sleep 1s
 Show
 
-# --- Demo: Quick Capture ---
-Type "# Capture development insights as you work" Sleep 1.5s Enter Sleep 1s
-Type "uro capture 'Implemented user authentication with OAuth2'" Sleep 1.5s Enter
+# --- Demo: Sacred Command 1 - CAPTURE (10 seconds) ---
+Type "# Sacred Command 1: CAPTURE (10 seconds)" Sleep 1.5s Enter Sleep 1s
+Type "uroboro capture 'Implemented user authentication with OAuth2 and secure sessions'" Sleep 1.5s Enter
 Sleep 4s
 
-Type "uro capture 'Fixed critical payment processing bug' --tags bugfix critical" Sleep 1.5s Enter
+Type "uroboro capture 'Fixed critical payment processing bug - prevented data corruption'" Sleep 1.5s Enter
 Sleep 4s
 
-# --- Demo: Status Check ---
+Type "uroboro capture 'Added real-time notifications using WebSockets - 3x faster than polling'" Sleep 1.5s Enter
+Sleep 4s
+
+# --- Demo: Sacred Command 3 - STATUS (complete overview) ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "# Check your recent activity" Sleep 1s Enter Sleep 1s
-Type "uro status" Sleep 1s Enter
+Type "# Sacred Command 3: STATUS (complete overview)" Sleep 1s Enter Sleep 1s
+Type "uroboro status" Sleep 1s Enter
 Sleep 5s
 
-# --- Demo: Generate Content ---
+# --- Demo: Sacred Command 2 - PUBLISH (2 minutes) ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "# Transform captures into polished content" Sleep 1.5s Enter Sleep 1s
-Type "uro generate --preview --output devlog" Sleep 1.5s Enter
-Sleep 20s
+Type "# Sacred Command 2: PUBLISH (2 minutes)" Sleep 1.5s Enter Sleep 1s
+Type "uroboro publish --blog" Sleep 1.5s Enter
+Sleep 8s
 
-# --- Demo: More Features ---
+# --- Demo: Show the generated content ---
 Hide
-Type "clear" Enter Sleep 2s
+Type "ls output/posts/" Enter Sleep 2s
+Type "head -20 output/posts/dev-update-*.md" Enter Sleep 5s
 Show
-Type "# Explore more features" Sleep 1s Enter Sleep 1s
-Type "uro project --list" Sleep 1s Enter
-Sleep 4s
 
-# --- End with flourish ---
+# --- End with the truth ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "echo '🐍 uroboro: Where development work becomes content'" Sleep 1.5s Enter
+Type "echo '🎯 Three commands beats seventeen - thats the sacred workflow'" Sleep 1.5s Enter
 Sleep 2s
-Type "echo 'Visit uroboro.dev for more!'" Sleep 1s Enter
+Type "echo '🐍 uroboro: The tool that documents itself'" Sleep 1s Enter
 Sleep 3s 
