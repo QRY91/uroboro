@@ -85,14 +85,12 @@
       {
         "command": "uroboro.capture",
         "key": "ctrl+shift+u",
-        "mac": "cmd+shift+u",
-        "when": "editorTextFocus"
+        "mac": "cmd+shift+u"
       },
       {
-        "command": "uroboro.capture",
-        "key": "ctrl+shift+c",
-        "mac": "cmd+shift+c",
-        "when": "vim.mode == 'Normal'"
+        "command": "uroboro.capture", 
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c"
       },
       {
         "command": "uroboro.status",
@@ -101,15 +99,14 @@
       },
       {
         "command": "uroboro.quickPublish",
-        "key": "ctrl+shift+p",
-        "mac": "cmd+shift+p",
-        "when": "vim.mode == 'Normal'"
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p"
       },
       {
         "command": "uroboro.captureSelection",
-        "key": "ctrl+shift+x",
-        "mac": "cmd+shift+x",
-        "when": "editorHasSelection && vim.mode == 'Visual'"
+        "key": "ctrl+alt+x",
+        "mac": "cmd+alt+x",
+        "when": "editorHasSelection"
       }
     ],
     "configuration": {
@@ -117,7 +114,7 @@
       "properties": {
         "uroboro.pythonPath": {
           "type": "string",
-          "default": "python",
+          "default": "python3",
           "description": "Path to Python executable with uroboro installed"
         },
         "uroboro.autoGitCapture": {

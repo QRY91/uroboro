@@ -14,7 +14,7 @@ interface UroboroConfig {
 
 class UroboroExtension {
     private statusBarItem: vscode.StatusBarItem;
-    private config: UroboroConfig;
+    private config!: UroboroConfig; // Use definite assignment assertion
     private outputChannel: vscode.OutputChannel;
 
     constructor(context: vscode.ExtensionContext) {
@@ -71,13 +71,14 @@ class UroboroExtension {
     }
 
     private async runUroboroCommand(command: string): Promise<string> {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-        const cwd = workspaceFolder ? workspaceFolder.uri.fsPath : process.cwd();
+        // Always run from the uroboro project root (parent of extension directory)
+        const extensionPath = __dirname; // .../uroboro/vscode-extension/out
+        const uroboroRoot = path.resolve(extensionPath, '../..'); // .../uroboro
         
         try {
             const { stdout, stderr } = await execAsync(
                 `${this.config.pythonPath} -m src.cli ${command}`,
-                { cwd }
+                { cwd: uroboroRoot }
             );
             
             if (stderr) {
@@ -87,26 +88,74 @@ class UroboroExtension {
             return stdout;
         } catch (error: any) {
             this.log(`Error running uroboro: ${error.message}`);
+            this.log(`Working directory: ${uroboroRoot}`);
+            this.log(`Command: ${this.config.pythonPath} -m src.cli ${command}`);
             throw error;
         }
     }
 
     // Command implementations
     async capture() {
-        const insight = await vscode.window.showInputBox({
-            prompt: 'What insight did you just discover?',
-            placeholder: 'Fixed auth timeout - cut query time from 3s to 200ms',
-            valueSelection: [0, 0]
-        });
-
-        if (!insight) return;
-
         try {
-            await this.runUroboroCommand(`capture "${insight}"`);
-            vscode.window.showInformationMessage(`✅ Captured: ${insight.substring(0, 50)}...`);
-            this.updateStatusBar();
-        } catch (error) {
-            vscode.window.showErrorMessage('Failed to capture insight');
+            // Create actual temp file on disk to avoid save dialog
+            const extensionPath = __dirname;
+            const uroboroRoot = path.resolve(extensionPath, '../..');
+            const tempFilePath = path.join(uroboroRoot, '.uroboro-capture-temp.md');
+            
+            const tempContent = '# Enter your development insight above this line\n# Lines starting with # are ignored\n# Save (Ctrl+S) when done - no folder selection needed!\n';
+            
+            // Write temp file using VS Code's file system API
+            const tempFileUri = vscode.Uri.file(tempFilePath);
+            const encoder = new TextEncoder();
+            await vscode.workspace.fs.writeFile(tempFileUri, encoder.encode(tempContent));
+            
+            // Open the actual file
+            const doc = await vscode.workspace.openTextDocument(tempFileUri);
+            const editor = await vscode.window.showTextDocument(doc);
+            
+            // Position cursor at top for typing
+            const position = new vscode.Position(0, 0);
+            editor.selection = new vscode.Selection(position, position);
+            
+            // Show instruction message
+            vscode.window.showInformationMessage('💡 Type insight above # lines, then Ctrl+S to capture');
+            
+            // Listen for save to process the capture
+            const saveListener = vscode.workspace.onDidSaveTextDocument(async (savedDoc) => {
+                if (savedDoc.uri.fsPath === tempFilePath) {
+                    saveListener.dispose(); // Clean up listener
+                    
+                    // Extract insight from temp file
+                    const lines = savedDoc.getText().split('\n');
+                    const insightLines = lines.filter(line => !line.startsWith('#') && line.trim());
+                    const insight = insightLines.join(' ').trim();
+                    
+                    if (insight) {
+                        try {
+                            await this.runUroboroCommand(`capture "${insight}"`);
+                            vscode.window.showInformationMessage(`✅ Captured: ${insight.substring(0, 50)}...`);
+                            this.updateStatusBar();
+                        } catch (error) {
+                            vscode.window.showErrorMessage('Failed to capture insight');
+                        }
+                    } else {
+                        vscode.window.showWarningMessage('No insight entered - capture cancelled');
+                    }
+                    
+                    // Close and cleanup
+                    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                    try {
+                        await vscode.workspace.fs.delete(tempFileUri); // Delete temp file
+                    } catch (e) {
+                        // Ignore cleanup errors
+                        this.log(`Cleanup error: ${e}`);
+                    }
+                }
+            });
+            
+        } catch (error: any) {
+            this.log(`Capture error: ${error.message}`);
+            vscode.window.showErrorMessage('Failed to create capture file');
         }
     }
 
@@ -121,7 +170,7 @@ class UroboroExtension {
 
         const insight = await vscode.window.showInputBox({
             prompt: 'Describe your insight about this code:',
-            placeholder: 'This pattern solves the race condition we were seeing',
+            placeHolder: 'This pattern solves the race condition we were seeing',
             valueSelection: [0, 0]
         });
 
@@ -182,15 +231,26 @@ class UroboroExtension {
                 // For markdown content, try to open the generated file
                 const pathMatch = result.match(/saved to: (.+)/);
                 if (pathMatch) {
-                    const filePath = pathMatch[1].trim();
+                    let filePath = pathMatch[1].trim();
+                    this.log(`Raw file path from command: ${filePath}`);
+                    
+                    // If path is relative, make it absolute from uroboro root
+                    if (!path.isAbsolute(filePath)) {
+                        const extensionPath = __dirname;
+                        const uroboroRoot = path.resolve(extensionPath, '../..');
+                        filePath = path.resolve(uroboroRoot, filePath);
+                    }
+                    
+                    this.log(`Attempting to open file: ${filePath}`);
+                    
                     try {
                         const uri = vscode.Uri.file(filePath);
                         const doc = await vscode.workspace.openTextDocument(uri);
                         await vscode.window.showTextDocument(doc);
-                        vscode.window.showInformationMessage(`✅ ${choice} opened for editing: ${path.basename(filePath)}`);
+                        vscode.window.showInformationMessage(`✅ Blog post ready for editing: ${path.basename(filePath)}`);
+                        return;
                     } catch (fileError) {
-                        this.log(`Could not open file: ${filePath}, error: ${fileError}`);
-                        vscode.window.showWarningMessage(`Content generated but could not open file: ${filePath}`);
+                        this.log(`Could not open generated file: ${filePath}, error: ${fileError}`);
                     }
                 } else {
                     // If no file path found, create a new untitled document with the content
@@ -219,37 +279,55 @@ class UroboroExtension {
 
     async quickPublish() {
         try {
-            vscode.window.showInformationMessage('🔄 Quick publishing blog post...');
-            const result = await this.runUroboroCommand('publish --type blog --format markdown');
+            // Ask for format preference
+            const formatOptions = ['Markdown (.md)', 'Text (.txt)'];
+            const formatChoice = await vscode.window.showQuickPick(formatOptions, {
+                placeHolder: 'Choose output format'
+            });
             
-            // Try to open the generated markdown file
+            if (!formatChoice) return;
+            
+            const format = formatChoice.includes('Markdown') ? 'markdown' : 'text';
+            const fileExtension = format === 'markdown' ? 'md' : 'txt';
+            
+            vscode.window.showInformationMessage('🔄 Quick publishing blog post...');
+            const result = await this.runUroboroCommand(`publish --type blog --format ${format}`);
+            
+            // Try to open the generated file
             const pathMatch = result.match(/saved to: (.+)/);
             if (pathMatch) {
-                const filePath = pathMatch[1].trim();
+                let filePath = pathMatch[1].trim();
+                this.log(`Raw file path from command: ${filePath}`);
+                
+                // If path is relative, make it absolute from uroboro root
+                if (!path.isAbsolute(filePath)) {
+                    const extensionPath = __dirname;
+                    const uroboroRoot = path.resolve(extensionPath, '../..');
+                    filePath = path.resolve(uroboroRoot, filePath);
+                }
+                
+                this.log(`Attempting to open file: ${filePath}`);
+                
                 try {
                     const uri = vscode.Uri.file(filePath);
                     const doc = await vscode.workspace.openTextDocument(uri);
                     await vscode.window.showTextDocument(doc);
                     vscode.window.showInformationMessage(`✅ Blog post ready for editing: ${path.basename(filePath)}`);
+                    return;
                 } catch (fileError) {
-                    this.log(`Could not open generated file: ${filePath}`);
-                    // Fallback: create new document with content
-                    const doc = await vscode.workspace.openTextDocument({
-                        content: result,
-                        language: 'markdown'
-                    });
-                    await vscode.window.showTextDocument(doc);
-                    vscode.window.showInformationMessage('✅ Blog post generated and opened for editing');
+                    this.log(`Could not open generated file: ${filePath}, error: ${fileError}`);
                 }
-            } else {
-                // No file path found, show content in new document
-                const doc = await vscode.workspace.openTextDocument({
-                    content: result,
-                    language: 'markdown'
-                });
-                await vscode.window.showTextDocument(doc);
-                vscode.window.showInformationMessage('✅ Blog post generated and opened for editing');
             }
+            
+            // Fallback: create new document with content
+            this.log('Using fallback - creating new document with content');
+            const doc = await vscode.workspace.openTextDocument({
+                content: result,
+                language: format === 'markdown' ? 'markdown' : 'plaintext'
+            });
+            await vscode.window.showTextDocument(doc);
+            vscode.window.showInformationMessage('✅ Blog post generated and opened for editing');
+            
         } catch (error: any) {
             this.log(`Quick publish error: ${error.message}`);
             vscode.window.showErrorMessage(`Failed to quick publish: ${error.message}`);
