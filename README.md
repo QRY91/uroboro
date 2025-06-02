@@ -41,14 +41,14 @@ uro status
 
 ## 🧹 The Great CLI Cleanup
 
-We started with **17 commands** and **1,558 lines** of bloated complexity. We cleaned up 14 commands, kept 3 core ones, and found that **focus beats features**: improve core functionality instead of adding new complexity.
+We started with **17 commands** and **1,558 lines** of bloated complexity. We removed 14 commands, kept 3 essential ones, and found that **focus beats features**: improve core functionality instead of adding new complexity.
 
 ### What We Kept (Core Commands)
 - **`uro capture`** - 10-second insight logging
 - **`uro publish`** - Generate blog posts, social content, dev logs  
 - **`uro status`** - Complete pipeline overview
 
-### What We Cleaned Up (Feature Bloat)
+### What We Cleaned Out (Feature Bloat)
 - ❌ 14 unnecessary commands
 - ❌ tamagoro egg system fantasy
 - ❌ sensei learning complexity
