@@ -6,7 +6,7 @@ Transform development insights into professional content that gets you noticed. 
 
 ![Demo](assets/uroboro_demo.gif)
 
-## 🎯 The Sacred Workflow
+## 🎯 The Core Workflow
 
 **Three commands beats seventeen.** We discovered this by cutting uroboro from 1,558 lines to 270 lines, removing 14 commands, and keeping only what delivers acknowledgment for your actual work.
 
@@ -23,7 +23,7 @@ uro status
 
 ## ✨ What Actually Works
 
-- **🎯 3 Sacred Commands** - capture, publish, status. That's it.
+- **🎯 3 Core Commands** - capture, publish, status. That's it.
 - **⚡ 10-Second Capture** - Zero flow state interruption
 - **📝 2-Minute Publish** - Professional content generation
 - **🏠 100% Local AI** - Ollama, no external APIs
@@ -43,7 +43,7 @@ uro status
 
 We started with **17 commands** and **1,558 lines** of bloated complexity. We murdered 14 commands, kept 3 sacred ones, and found that **focus beats features**: improve core functionality instead of adding new complexity.
 
-### What We Kept (Sacred Commands)
+### What We Kept (Core Commands)
 - **`uro capture`** - 10-second insight logging
 - **`uro publish`** - Generate blog posts, social content, dev logs  
 - **`uro status`** - Complete pipeline overview
@@ -76,7 +76,7 @@ uro capture "Your development insight here"
 uro publish --blog
 ```
 
-## 📋 Sacred Commands Reference
+## 📋 Core Commands Reference
 
 ### `uro capture`
 **Purpose**: Lightning-fast insight logging during development

@@ -1107,85 +1107,94 @@ section {
 
 /* uroboro Animation */
 .uroboro-animation {
-    margin: var(--space-xl) 0 var(--space-2xl);
+    position: relative;
+    width: 100%;
     height: 200px;
+    margin: var(--space-xl) 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    /* GPU acceleration */
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 .uroboro-container {
     position: relative;
     width: 300px;
     height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transform-origin: center center;
+    /* GPU acceleration */
+    will-change: transform;
 }
 
 .uroboro-circle {
     position: relative;
-    width: 180px;
-    height: 180px;
-    transform-origin: center center;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto;
+    /* GPU acceleration */
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 .uroboro-letter {
     position: absolute;
-    font-family: var(--font-sans);
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--primary);
-    user-select: none;
-    transition: color 0.3s ease;
-    text-transform: lowercase;
-    left: 50%;
     top: 50%;
+    left: 50%;
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: lowercase;
+    pointer-events: none;
     transform-origin: center;
+    /* Use translate3d for hardware acceleration */
+    transition: color 0.3s ease;
 }
 
-/* Position letters in a circle using simple calculations */
+/* Letter positions - using translate3d for hardware acceleration */
 .uroboro-letter:nth-child(1) { 
-    transform: translate(-50%, -50%) rotate(0deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(0deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(2) { 
-    transform: translate(-50%, -50%) rotate(25.7deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(25.7deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(3) { 
-    transform: translate(-50%, -50%) rotate(51.4deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(51.4deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(4) { 
-    transform: translate(-50%, -50%) rotate(77.1deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(77.1deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(5) { 
-    transform: translate(-50%, -50%) rotate(102.8deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(102.8deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(6) { 
-    transform: translate(-50%, -50%) rotate(128.5deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(128.5deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(7) { 
-    transform: translate(-50%, -50%) rotate(154.2deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(154.2deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(8) { 
-    transform: translate(-50%, -50%) rotate(180deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(180deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(9) { 
-    transform: translate(-50%, -50%) rotate(205.7deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(205.7deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(10) { 
-    transform: translate(-50%, -50%) rotate(231.4deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(231.4deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(11) { 
-    transform: translate(-50%, -50%) rotate(257.1deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(257.1deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(12) { 
-    transform: translate(-50%, -50%) rotate(282.8deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(282.8deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(13) { 
-    transform: translate(-50%, -50%) rotate(308.5deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(308.5deg) translateY(-80px); 
 }
 .uroboro-letter:nth-child(14) { 
-    transform: translate(-50%, -50%) rotate(334.2deg) translateY(-80px); 
+    transform: translate3d(-50%, -50%, 0) rotate(334.2deg) translateY(-80px); 
 }
 
 .inversion-mask {
@@ -1195,9 +1204,16 @@ section {
     width: 50%;
     height: 100%;
     background: linear-gradient(135deg, var(--accent) 0%, var(--primary-dark) 100%);
-    mix-blend-mode: difference;
     border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
     z-index: 10;
+    display: none;
+}
+
+/* Only show mask on high-performance devices */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+    .inversion-mask {
+        display: block;
+    }
 }
 
 /* Animation states for color transitions */
@@ -1228,46 +1244,46 @@ section {
     
     /* Adjust letter positions for smaller screens */
     .uroboro-letter:nth-child(1) { 
-        transform: translate(-50%, -50%) rotate(0deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(0deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(2) { 
-        transform: translate(-50%, -50%) rotate(25.7deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(25.7deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(3) { 
-        transform: translate(-50%, -50%) rotate(51.4deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(51.4deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(4) { 
-        transform: translate(-50%, -50%) rotate(77.1deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(77.1deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(5) { 
-        transform: translate(-50%, -50%) rotate(102.8deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(102.8deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(6) { 
-        transform: translate(-50%, -50%) rotate(128.5deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(128.5deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(7) { 
-        transform: translate(-50%, -50%) rotate(154.2deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(154.2deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(8) { 
-        transform: translate(-50%, -50%) rotate(180deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(180deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(9) { 
-        transform: translate(-50%, -50%) rotate(205.7deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(205.7deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(10) { 
-        transform: translate(-50%, -50%) rotate(231.4deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(231.4deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(11) { 
-        transform: translate(-50%, -50%) rotate(257.1deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(257.1deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(12) { 
-        transform: translate(-50%, -50%) rotate(282.8deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(282.8deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(13) { 
-        transform: translate(-50%, -50%) rotate(308.5deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(308.5deg) translateY(-60px); 
     }
     .uroboro-letter:nth-child(14) { 
-        transform: translate(-50%, -50%) rotate(334.2deg) translateY(-60px); 
+        transform: translate3d(-50%, -50%, 0) rotate(334.2deg) translateY(-60px); 
     }
 }
 
@@ -1286,7 +1302,7 @@ section {
     font-size: 1rem;
 }
 
-/* Tickertape Animations - Seamless Infinite Scroll */
+/* Tickertape Animations - Optimized for performance */
 .tickertape {
     position: relative;
     width: 100%;
@@ -1299,6 +1315,9 @@ section {
     font-size: 0.75rem;
     font-weight: 300;
     letter-spacing: 0.1em;
+    /* GPU acceleration */
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 .tickertape-top {
@@ -1317,12 +1336,13 @@ section {
         rgba(196, 181, 217, 0.15) 80%, 
         transparent 100%);
     color: rgba(196, 181, 217, 0.8);
+    /* Bottom ticker is upside down for uroboro effect */
+    transform: rotate(180deg);
 }
 
 .tickertape-rotation-wrapper {
     width: 100%;
     height: 100%;
-    transform: rotate(180deg);
 }
 
 .tickertape-content {
@@ -1333,52 +1353,53 @@ section {
     animation-iteration-count: infinite;
     animation-fill-mode: none;
     white-space: nowrap;
+    /* GPU acceleration */
+    will-change: transform;
+    transform: translate3d(0, -50%, 0);
 }
 
-/* Seamless scrolling - right to left for top (starts with no gaps) */
+/* Seamless scrolling - top goes right to left, bottom goes left to right (but upside down) */
 .tickertape-top .tickertape-content {
     animation: tickertape-scroll-right 120s linear infinite;
-    /* Start positioned to fill screen immediately */
-    transform: translateY(-50%) translateX(0);
 }
 
-/* Seamless scrolling - for bottom ticker content (inside rotated wrapper) */
 .tickertape-bottom .tickertape-content {
-    animation: tickertape-scroll-right 120s linear infinite; /* Use same as top */
-    /* Start positioned to fill screen immediately */
-    transform: translateY(-50%) translateX(0);
+    animation: tickertape-scroll-right 120s linear infinite;
 }
 
-/* Perfect seamless animations - top ticker */
+/* Optimized keyframes with translate3d */
 @keyframes tickertape-scroll-right {
     0% {
-        transform: translateY(-50%) translateX(0);
+        transform: translate3d(0, -50%, 0);
     }
     100% {
-        transform: translateY(-50%) translateX(-100%);
+        transform: translate3d(-100%, -50%, 0);
     }
 }
 
-/* Responsive adjustments for tickertape */
-@media (max-width: 768px) {
-    .tickertape {
-        height: 20px;
-        font-size: 0.625rem;
+@keyframes tickertape-scroll-left {
+    0% {
+        transform: translate3d(-100%, -50%, 0);
     }
-    
-    /* Faster animation on mobile for better visibility */
-    .tickertape-top .tickertape-content {
-        animation-duration: 90s;
-    }
-    
-    .tickertape-bottom .tickertape-content {
-        animation-duration: 90s;
+    100% {
+        transform: translate3d(0, -50%, 0);
     }
 }
 
+/* Performance optimizations */
 @media (prefers-reduced-motion: reduce) {
     .tickertape-content {
-        animation-duration: 300s;
+        animation: none;
+        transform: translate3d(0, -50%, 0);
+    }
+    
+    .uroboro-animation {
+        display: none;
+    }
+    
+    /* Show simple text instead */
+    .brand-name {
+        display: block !important;
     }
 }
 
@@ -1748,4 +1769,26 @@ section {
 
 .workflow-truth p:last-child {
     margin-bottom: 0;
+}
+
+/* Responsive adjustments for tickertape */
+@media (max-width: 768px) {
+    .tickertape {
+        height: 20px;
+        font-size: 0.625rem;
+    }
+    
+    /* Slower animations on mobile for better performance */
+    .tickertape-top .tickertape-content {
+        animation-duration: 180s;
+    }
+    
+    .tickertape-bottom .tickertape-content {
+        animation-duration: 180s;
+    }
+    
+    /* Hide complex animations on small screens */
+    .uroboro-animation {
+        display: none;
+    }
 } 
