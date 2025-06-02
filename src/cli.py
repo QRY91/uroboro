@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 uroboro - The Self-Documenting Content Pipeline
-North Star CLI - 3 sacred commands only
+North Star CLI - 3 core commands only
 """
 
 import argparse
@@ -13,18 +13,7 @@ from datetime import datetime
 # Import existing modules
 from .aggregator import ContentAggregator
 from .processors.content_generator import ContentGenerator
-from .usage_tracker import get_tracker
 from .git_integration import GitIntegration
-
-
-def track_command_usage(command: str, subcommand: str = None, success: bool = True):
-    """Track command usage if enabled"""
-    try:
-        tracker = get_tracker()
-        tracker.track_command(command, subcommand, success)
-    except Exception:
-        # Silently fail if tracking has issues - don't break user workflow
-        pass
 
 
 def cmd_capture(args):
@@ -48,10 +37,8 @@ def cmd_capture(args):
         
         aggregator.quick_capture(content, project=args.project, tags=args.tags)
         print(f"✅ Captured: {content[:60]}{'...' if len(content) > 60 else ''}")
-        track_command_usage("capture", success=True)
         
     except Exception as e:
-        track_command_usage("capture", success=False)
         print(f"❌ Capture failed: {e}")
 
 
@@ -67,7 +54,6 @@ def cmd_publish(args):
         if total_items == 0:
             print("❌ No recent activity found to process")
             print("💡 Try: uro capture 'your development insight' first")
-            track_command_usage("publish", args.type, success=False)
             return
         
         print(f"✅ Found activity from {len(activity.get('projects', {}))} projects")
@@ -137,10 +123,7 @@ def cmd_publish(args):
                 print(devlog)
                 print("--- END DEVLOG ---")
         
-        track_command_usage("publish", args.type, success=True)
-        
     except Exception as e:
-        track_command_usage("publish", args.type, success=False)
         print(f"❌ Publish failed: {e}")
 
 
@@ -162,6 +145,59 @@ def cmd_status(args):
         if args.verbose:
             for project, data in activity.get("projects", {}).items():
                 print(f"  📁 {project}: {len(data.get('devlog', []))} devlog entries")
+        
+        # Show recent capture content if requested
+        if hasattr(args, 'recent') and args.recent:
+            print(f"\n📝 Recent Captures (last {args.days} days):")
+            captures_shown = 0
+            
+            # Parse daily notes for captures
+            for daily_note in activity.get("daily_notes", []):
+                content = daily_note.get("content", "")
+                lines = content.split('\n')
+                
+                for i, line in enumerate(lines):
+                    if line.startswith('## ') and 'T' in line:  # Timestamp marker
+                        # Extract timestamp and capture content
+                        timestamp = line.replace('## ', '').strip()
+                        capture_content = []
+                        j = i + 1
+                        
+                        # Collect content until next timestamp or end
+                        while j < len(lines) and not lines[j].startswith('## '):
+                            if lines[j].strip():  # Skip empty lines
+                                capture_content.append(lines[j])
+                            j += 1
+                        
+                        if capture_content:
+                            # Format timestamp for display
+                            try:
+                                dt = datetime.fromisoformat(timestamp)
+                                friendly_time = dt.strftime("%b %d, %H:%M")
+                            except:
+                                friendly_time = timestamp
+                            
+                            print(f"  🕐 {friendly_time}")
+                            for content_line in capture_content[:3]:  # Show first 3 lines max
+                                if content_line.startswith('Tags:'):
+                                    print(f"    🏷️  {content_line}")
+                                else:
+                                    print(f"    📄 {content_line.strip()}")
+                            if len(capture_content) > 3:
+                                print(f"    ... ({len(capture_content) - 3} more lines)")
+                            print()
+                            
+                            captures_shown += 1
+                            if captures_shown >= 10:  # Limit to 10 most recent
+                                break
+                
+                if captures_shown >= 10:
+                    break
+            
+            if captures_shown == 0:
+                print("  No recent captures found")
+            elif captures_shown == 10:
+                print(f"  (Showing 10 most recent captures)")
         
         # Git status (if in git repo)
         try:
@@ -186,21 +222,6 @@ def cmd_status(args):
         except Exception:
             print("  Status: Voice not analyzed yet (run with --analyze-voice)")
         
-        # Usage tracking (if enabled)
-        try:
-            tracker = get_tracker()
-            if tracker._check_enabled():
-                stats = tracker.get_stats()
-                print(f"\n📊 Usage Stats:")
-                print(f"  Total commands: {stats.get('total_commands', 0)}")
-                print(f"  Most used: {stats.get('most_used_command', 'None')}")
-                if args.verbose:
-                    print("  Command breakdown:")
-                    for cmd, count in stats.get('command_breakdown', {}).items():
-                        print(f"    {cmd}: {count}")
-        except Exception:
-            print("\n📊 Usage tracking: Disabled")
-        
         # Analyze voice if requested
         if args.analyze_voice:
             print("\n🎤 Analyzing voice patterns...")
@@ -213,10 +234,7 @@ def cmd_status(args):
             except Exception as e:
                 print(f"❌ Voice analysis failed: {e}")
         
-        track_command_usage("status", success=True)
-        
     except Exception as e:
-        track_command_usage("status", success=False)
         print(f"❌ Status check failed: {e}")
 
 
@@ -267,6 +285,8 @@ def main():
                               help='Show detailed information')
     status_parser.add_argument('--analyze-voice', action='store_true',
                               help='Analyze and update voice profile')
+    status_parser.add_argument('--recent', action='store_true',
+                              help='Show recent captures')
     
     # Parse and dispatch
     args = parser.parse_args()
