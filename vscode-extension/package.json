@@ -4,6 +4,11 @@
   "description": "Capture development insights without breaking flow. Three commands, zero friction.",
   "version": "0.1.0",
   "publisher": "uroboro",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/QRY91/uroboro.git",
+    "directory": "vscode-extension"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -20,10 +25,12 @@
     "local AI"
   ],
   "activationEvents": [
-    "onStartupFinished",
     "onCommand:uroboro.capture",
+    "onCommand:uroboro.captureAdvanced",
+    "onCommand:uroboro.captureSelection",
     "onCommand:uroboro.status",
-    "onCommand:uroboro.publish"
+    "onCommand:uroboro.publish",
+    "onCommand:uroboro.quickPublish"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -31,6 +38,11 @@
       {
         "command": "uroboro.capture",
         "title": "🎯 Capture Insight",
+        "category": "uroboro"
+      },
+      {
+        "command": "uroboro.captureAdvanced",
+        "title": "📝 Capture Insight (Advanced)",
         "category": "uroboro"
       },
       {
@@ -65,6 +77,9 @@
       "commandPalette": [
         {
           "command": "uroboro.capture"
+        },
+        {
+          "command": "uroboro.captureAdvanced"
         },
         {
           "command": "uroboro.captureSelection",
