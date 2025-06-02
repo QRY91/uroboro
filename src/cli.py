@@ -35,11 +35,175 @@ def cmd_capture(args):
             except Exception:
                 pass  # Git integration is optional
         
-        aggregator.quick_capture(content, project=args.project, tags=args.tags)
-        print(f"✅ Captured: {content[:60]}{'...' if len(content) > 60 else ''}")
+        # EXPERIMENTAL: Interactive QA enhancement
+        enhanced_content = content
+        if hasattr(args, 'qa') and args.qa:
+            enhanced_content = _enhance_capture_with_qa(content, args.qa)
+        
+        aggregator.quick_capture(enhanced_content, project=args.project, tags=args.tags)
+        print(f"✅ Captured: {enhanced_content[:60]}{'...' if len(enhanced_content) > 60 else ''}")
         
     except Exception as e:
         print(f"❌ Capture failed: {e}")
+
+
+def _enhance_capture_with_qa(content: str, num_questions: int) -> str:
+    """EXPERIMENTAL: Enhance capture with interactive follow-up questions"""
+    if num_questions < 1 or num_questions > 3:
+        print("⚠️  QA questions limited to 1-3")
+        return content
+    
+    print(f"\n🤔 {num_questions} quick question(s) to enhance your capture:")
+    print(f"📝 Original: {content}")
+    
+    # Simple question templates based on content analysis
+    questions = _get_smart_questions(content, num_questions)
+    
+    enhanced_parts = [content]
+    
+    for i, question in enumerate(questions, 1):
+        try:
+            answer = input(f"\n{i}. {question}\n> ").strip()
+            if answer:
+                enhanced_parts.append(answer)
+            else:
+                print("   (skipped)")
+        except KeyboardInterrupt:
+            print("\n⏭️  Skipping remaining questions")
+            break
+    
+    if len(enhanced_parts) > 1:
+        enhanced_content = enhanced_parts[0] + "\n\n" + "\n".join(f"• {part}" for part in enhanced_parts[1:])
+        return enhanced_content
+    
+    return content
+
+
+def _get_smart_questions(content: str, num_questions: int) -> list:
+    """Generate smart follow-up questions based on capture content"""
+    content_lower = content.lower()
+    available_questions = []
+    
+    # Check for conventional commit patterns first
+    commit_type = _detect_commit_type(content)
+    if commit_type:
+        available_questions.extend(_get_commit_type_questions(commit_type))
+    
+    # Context-aware question suggestions (fallback if no commit type)
+    if not available_questions:
+        if any(word in content_lower for word in ['fix', 'bug', 'error', 'issue']):
+            available_questions.extend([
+                "What was the root cause?",
+                "How did you discover this?",
+                "What's the impact/scope?"
+            ])
+        
+        if any(word in content_lower for word in ['implement', 'add', 'create', 'build']):
+            available_questions.extend([
+                "What problem does this solve?",
+                "What was the key insight?",
+                "What's the next step?"
+            ])
+        
+        if any(word in content_lower for word in ['optimize', 'improve', 'performance']):
+            available_questions.extend([
+                "What metrics improved?",
+                "What was the bottleneck?", 
+                "How much faster/better?"
+            ])
+    
+    # Fallback general questions
+    if not available_questions:
+        available_questions = [
+            "What was the main challenge?",
+            "What did you learn?",
+            "What's the impact?",
+            "What would you do differently?",
+            "What's next?"
+        ]
+    
+    # Return up to num_questions, avoiding duplicates
+    return list(dict.fromkeys(available_questions))[:num_questions]
+
+
+def _detect_commit_type(content: str) -> str:
+    """Detect conventional commit type from content"""
+    content_lower = content.lower()
+    
+    # Direct conventional commit patterns
+    if content_lower.startswith('feat:') or content_lower.startswith('feature:'):
+        return 'feat'
+    elif content_lower.startswith('fix:'):
+        return 'fix'
+    elif content_lower.startswith('refactor:'):
+        return 'refactor'
+    elif content_lower.startswith('docs:'):
+        return 'docs'
+    elif content_lower.startswith('test:'):
+        return 'test'
+    elif content_lower.startswith('style:'):
+        return 'style'
+    elif content_lower.startswith('perf:'):
+        return 'perf'
+    
+    # Infer from git commit context
+    if 'git commit:' in content_lower:
+        # Extract the actual commit message
+        if 'git commit:' in content_lower:
+            commit_msg = content.split('git commit:', 1)[1].strip()
+            return _detect_commit_type(commit_msg)
+    
+    return None
+
+
+def _get_commit_type_questions(commit_type: str) -> list:
+    """Get targeted questions based on conventional commit type"""
+    questions_by_type = {
+        'feat': [
+            "What user problem does this solve?",
+            "What's the key user benefit?",
+            "What's the next enhancement?",
+            "How will users discover this?"
+        ],
+        'fix': [
+            "What was the root cause?",
+            "How did you discover this bug?",
+            "What's the user impact?",
+            "How can this be prevented?"
+        ],
+        'refactor': [
+            "What was the technical debt?",
+            "What's cleaner/better now?",
+            "What risk did this reduce?",
+            "What does this enable next?"
+        ],
+        'docs': [
+            "What was unclear before?",
+            "Who will benefit from this?",
+            "What examples help most?",
+            "What questions does this answer?"
+        ],
+        'test': [
+            "What edge case does this cover?",
+            "What bug could this catch?",
+            "How much confidence does this add?",
+            "What scenario worried you?"
+        ],
+        'perf': [
+            "What metrics improved?",
+            "What was the bottleneck?",
+            "How much faster/better?",
+            "What's the user impact?"
+        ],
+        'style': [
+            "What's more consistent now?",
+            "What standard does this follow?",
+            "What's easier to read?",
+            "What confusion does this prevent?"
+        ]
+    }
+    
+    return questions_by_type.get(commit_type, [])
 
 
 def cmd_publish(args):
@@ -256,6 +420,8 @@ def main():
     capture_parser.add_argument('--tags', '-t', nargs='+', help='Tags for categorization')
     capture_parser.add_argument('--auto-git', action='store_true', 
                                help='Auto-capture recent git commits')
+    capture_parser.add_argument('--qa', type=int, metavar='N', 
+                               help='[EXPERIMENTAL] Ask N follow-up questions (1-3) to enhance capture')
     
     # PUBLISH - generate professional content 
     publish_parser = subparsers.add_parser('publish',
@@ -293,11 +459,15 @@ def main():
     
     if not args.command:
         print("🐍 uroboro - The Self-Documenting Content Pipeline")
+        print("🧪 EXPERIMENTAL BRANCH - Features being tested")
         print("")
         print("🎯 North Star Workflow (3 commands, that's it):")
         print("  uro capture 'Fixed database timeout - cut query time from 3s to 200ms'")
         print("  uro publish --blog")
         print("  uro status")
+        print("")
+        print("🧪 Experimental features:")
+        print("  uro capture 'content' --qa 2  # Interactive follow-up questions")
         print("")
         print("Get acknowledged for your actual work. 🔥")
         parser.print_help()
