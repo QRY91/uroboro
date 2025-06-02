@@ -1,0 +1,136 @@
+{
+  "name": "uroboro-vscode",
+  "displayName": "uroboro - Self-Documenting Pipeline",
+  "description": "Capture development insights without breaking flow. Three commands, zero friction.",
+  "version": "0.1.0",
+  "publisher": "uroboro",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Snippets",
+    "SCM Providers"
+  ],
+  "keywords": [
+    "developer productivity",
+    "documentation",
+    "insights",
+    "git integration",
+    "local AI"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:uroboro.capture",
+    "onCommand:uroboro.status",
+    "onCommand:uroboro.publish"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "uroboro.capture",
+        "title": "🎯 Capture Insight",
+        "category": "uroboro"
+      },
+      {
+        "command": "uroboro.captureSelection",
+        "title": "🎯 Capture with Code Context",
+        "category": "uroboro"
+      },
+      {
+        "command": "uroboro.status",
+        "title": "📊 Show Status",
+        "category": "uroboro"
+      },
+      {
+        "command": "uroboro.publish",
+        "title": "📝 Publish Content",
+        "category": "uroboro"
+      },
+      {
+        "command": "uroboro.quickPublish",
+        "title": "⚡ Quick Publish Blog",
+        "category": "uroboro"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorHasSelection",
+          "command": "uroboro.captureSelection",
+          "group": "uroboro@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "uroboro.capture"
+        },
+        {
+          "command": "uroboro.captureSelection",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "uroboro.status"
+        },
+        {
+          "command": "uroboro.publish"
+        },
+        {
+          "command": "uroboro.quickPublish"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "uroboro.capture",
+        "key": "ctrl+shift+u",
+        "mac": "cmd+shift+u",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "uroboro.status",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s"
+      }
+    ],
+    "configuration": {
+      "title": "uroboro",
+      "properties": {
+        "uroboro.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to Python executable with uroboro installed"
+        },
+        "uroboro.autoGitCapture": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically capture git commits with context"
+        },
+        "uroboro.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show uroboro status in status bar"
+        },
+        "uroboro.captureTemplate": {
+          "type": "string",
+          "default": "{insight} (in {file}:{line})",
+          "description": "Template for code context captures"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "child_process": "^1.0.2"
+  }
+} 
