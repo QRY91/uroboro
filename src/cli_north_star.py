@@ -163,6 +163,59 @@ def cmd_status(args):
             for project, data in activity.get("projects", {}).items():
                 print(f"  📁 {project}: {len(data.get('devlog', []))} devlog entries")
         
+        # Show recent capture content if requested
+        if hasattr(args, 'recent') and args.recent:
+            print(f"\n📝 Recent Captures (last {args.days} days):")
+            captures_shown = 0
+            
+            # Parse daily notes for captures
+            for daily_note in activity.get("daily_notes", []):
+                content = daily_note.get("content", "")
+                lines = content.split('\n')
+                
+                for i, line in enumerate(lines):
+                    if line.startswith('## ') and 'T' in line:  # Timestamp marker
+                        # Extract timestamp and capture content
+                        timestamp = line.replace('## ', '').strip()
+                        capture_content = []
+                        j = i + 1
+                        
+                        # Collect content until next timestamp or end
+                        while j < len(lines) and not lines[j].startswith('## '):
+                            if lines[j].strip():  # Skip empty lines
+                                capture_content.append(lines[j])
+                            j += 1
+                        
+                        if capture_content:
+                            # Format timestamp for display
+                            try:
+                                dt = datetime.fromisoformat(timestamp)
+                                friendly_time = dt.strftime("%b %d, %H:%M")
+                            except:
+                                friendly_time = timestamp
+                            
+                            print(f"  🕐 {friendly_time}")
+                            for content_line in capture_content[:3]:  # Show first 3 lines max
+                                if content_line.startswith('Tags:'):
+                                    print(f"    🏷️  {content_line}")
+                                else:
+                                    print(f"    📄 {content_line.strip()}")
+                            if len(capture_content) > 3:
+                                print(f"    ... ({len(capture_content) - 3} more lines)")
+                            print()
+                            
+                            captures_shown += 1
+                            if captures_shown >= 10:  # Limit to 10 most recent
+                                break
+                
+                if captures_shown >= 10:
+                    break
+            
+            if captures_shown == 0:
+                print("  No recent captures found")
+            elif captures_shown == 10:
+                print(f"  (Showing 10 most recent captures)")
+        
         # Git status (if in git repo)
         try:
             git = GitIntegration()
@@ -267,6 +320,8 @@ def main():
                               help='Show detailed information')
     status_parser.add_argument('--analyze-voice', action='store_true',
                               help='Analyze and update voice profile')
+    status_parser.add_argument('--recent', '-r', action='store_true',
+                              help='Show recent capture content')
     
     # Parse and dispatch
     args = parser.parse_args()

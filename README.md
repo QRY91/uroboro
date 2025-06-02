@@ -39,16 +39,16 @@ uro status
 | [**🔗 Git Integration**](assets/uroboro_demo_git.gif) | Auto-capture commits | Optional but functional |
 | [**🎬 Complete Overview**](assets/uroboro_demo.gif) | Full workflow | Tool that documents itself |
 
-## 🔪 The Great CLI Bloodbath
+## 🧹 The Great CLI Cleanup
 
-We started with **17 commands** and **1,558 lines** of bloated complexity. We murdered 14 commands, kept 3 sacred ones, and found that **focus beats features**: improve core functionality instead of adding new complexity.
+We started with **17 commands** and **1,558 lines** of bloated complexity. We cleaned up 14 commands, kept 3 core ones, and found that **focus beats features**: improve core functionality instead of adding new complexity.
 
 ### What We Kept (Core Commands)
 - **`uro capture`** - 10-second insight logging
 - **`uro publish`** - Generate blog posts, social content, dev logs  
 - **`uro status`** - Complete pipeline overview
 
-### What We Murdered (Feature Bloat)
+### What We Cleaned Up (Feature Bloat)
 - ❌ 14 unnecessary commands
 - ❌ tamagoro egg system fantasy
 - ❌ sensei learning complexity
@@ -182,7 +182,7 @@ This isn't just philosophy - it's what we learned. We took a bloated 17-command 
 
 ## 🤝 Contributing
 
-Found a bug in one of the sacred commands? Want to improve the core workflow? 
+Found a bug in one of the core commands? Want to improve the core workflow? 
 
 1. **Keep it simple** - If it adds complexity, we probably don't want it
 2. **Drunk user test** - Can someone slightly impaired use it?
