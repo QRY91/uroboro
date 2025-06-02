@@ -2,9 +2,90 @@
 
 **The Self-Documenting Content Pipeline**
 
-Transform development insights into professional content that gets you noticed. **Three commands. That's it.** Local AI only, zero API costs.
+Transform your development insights into professional content that gets you acknowledged for your actual work.
 
-![Demo](assets/uroboro_demo.gif)
+## 🚀 Quick Start (Go CLI - Primary)
+
+```bash
+# Core workflow - 3 commands, that's it
+./uro capture "Fixed auth timeout - cut query time from 3s to 200ms"
+./uro publish --blog --format html
+./uro status
+```
+
+### Format Support
+- `--format markdown` (default)
+- `--format html` (with styling)  
+- `--format text` (clean output)
+
+### Examples
+```bash
+# Capture insights
+./uro capture "Implemented OAuth2 with JWT tokens"
+./uro capture "Reduced bundle size by 40% using tree shaking" --project frontend
+
+# Generate content  
+./uro publish --blog --preview
+./uro publish --blog --format html --title "This Week's Wins"
+./uro publish --devlog
+
+# Check status
+./uro status --days 7
+```
+
+## 🎯 North Star Workflow
+
+1. **Capture** (10 seconds): Document insights as you work
+2. **Publish** (2 minutes): Generate professional content 
+3. **Get acknowledged**: Share your expertise and get noticed
+
+No feature creep. No complexity. Just results.
+
+## 📦 Installation
+
+### Option 1: Go Install (Recommended)
+```bash
+go install github.com/QRY91/uroboro@latest
+# Binary available as 'uroboro' in your $GOPATH/bin
+```
+
+### Option 2: Clone & Build
+```bash
+git clone https://github.com/qry91/uroboro
+cd uroboro
+# Use the pre-built binary
+./uro capture "test"
+
+# Or build from source
+go build -o uro ./cmd/uroboro
+```
+
+### Option 3: Direct Download
+Download the latest binary from [Releases](https://github.com/QRY91/uroboro/releases).
+
+## 🔧 Development
+
+### Go (Primary Implementation)
+- **Fast**: Sub-second startup
+- **Clean**: No dependencies beyond Go stdlib + Ollama
+- **Complete**: Full format support, capture, publish, status
+
+### Python (Reference - Archived)
+Available in `archive/python-reference/` for feature reference and experimentation.
+
+## 🎮 VSCode Extension
+
+The extension automatically finds and uses the Go binary. Install from `vscode-extension/`.
+
+## 🧭 Philosophy
+
+> "I solve practical problems. Use a gun. If that don't work, use more gun." - TF2 Engineer
+
+- **Practical over philosophical** - tools that work, not theories
+- **More gun principle** - improve core features, don't add new ones  
+- **Ship working solutions** - real impact over impressive demos
+
+Three commands. That's it. 🎯
 
 ## 🎯 The Core Workflow
 
@@ -62,8 +143,11 @@ We started with **17 commands** and **1,558 lines** of bloated complexity. We re
 
 ### 1. Install
 ```bash
-git clone https://github.com/qry91/uroboro
-cd uroboro && pip install -e .
+# Option 1: Go install
+go install github.com/QRY91/uroboro@latest
+
+# Option 2: Clone and use
+git clone https://github.com/qry91/uroboro && cd uroboro
 ```
 
 ### 2. Capture Your Work

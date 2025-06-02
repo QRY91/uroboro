@@ -26,9 +26,12 @@ export function activate(context: vscode.ExtensionContext) {
 
                 // Find binary
                 const binaryPaths = [
-                    '/home/qry/stuff/projects/uroboro/go/uroboro',
-                    path.join(__dirname, 'go-uroboro'),
-                    '/home/qry/stuff/projects/uroboro/uroboro-go'
+                    'uroboro', // System PATH (from go install)
+                    path.join(__dirname, 'uroboro'),
+                    '/home/qry/stuff/projects/uroboro/uro', // Local development
+                    './uro', // Current directory
+                    path.join(__dirname, '../uro'),
+                    '/home/qry/stuff/projects/uroboro/uroboro-go' // Legacy
                 ];
                 
                 let goBinaryPath = '';
