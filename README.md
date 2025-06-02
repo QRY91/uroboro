@@ -182,7 +182,7 @@ This isn't just philosophy - it's what we learned. We took a bloated 17-command 
 
 ## 🤝 Contributing
 
-Found a bug in one of the sacred commands? Want to improve the core workflow? 
+Found a bug in one of the core commands? Want to improve the core workflow? 
 
 1. **Keep it simple** - If it adds complexity, we probably don't want it
 2. **Drunk user test** - Can someone slightly impaired use it?
