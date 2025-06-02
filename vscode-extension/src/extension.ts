@@ -176,31 +176,83 @@ class UroboroExtension {
 
         try {
             vscode.window.showInformationMessage('🔄 Generating content...');
-            const result = await this.runUroboroCommand(`publish --type ${typeMap[choice]}`);
+            const result = await this.runUroboroCommand(`publish --type ${typeMap[choice]} --format markdown`);
             
-            if (typeMap[choice] === 'blog') {
-                // For blog posts, try to open the generated file
+            if (typeMap[choice] === 'blog' || typeMap[choice] === 'devlog') {
+                // For markdown content, try to open the generated file
                 const pathMatch = result.match(/saved to: (.+)/);
                 if (pathMatch) {
-                    const filePath = pathMatch[1];
-                    const uri = vscode.Uri.file(filePath);
-                    await vscode.window.showTextDocument(uri);
+                    const filePath = pathMatch[1].trim();
+                    try {
+                        const uri = vscode.Uri.file(filePath);
+                        const doc = await vscode.workspace.openTextDocument(uri);
+                        await vscode.window.showTextDocument(doc);
+                        vscode.window.showInformationMessage(`✅ ${choice} opened for editing: ${path.basename(filePath)}`);
+                    } catch (fileError) {
+                        this.log(`Could not open file: ${filePath}, error: ${fileError}`);
+                        vscode.window.showWarningMessage(`Content generated but could not open file: ${filePath}`);
+                    }
+                } else {
+                    // If no file path found, create a new untitled document with the content
+                    const doc = await vscode.workspace.openTextDocument({
+                        content: result,
+                        language: 'markdown'
+                    });
+                    await vscode.window.showTextDocument(doc);
+                    vscode.window.showInformationMessage(`✅ ${choice} generated and opened for editing`);
                 }
+            } else {
+                // For social content, show in output channel
+                this.outputChannel.clear();
+                this.outputChannel.appendLine(`=== ${choice.toUpperCase()} CONTENT ===`);
+                this.outputChannel.appendLine(result);
+                this.outputChannel.appendLine(`=== END ${choice.toUpperCase()} ===`);
+                this.outputChannel.show();
+                vscode.window.showInformationMessage(`✅ ${choice} generated - check output panel`);
             }
             
-            vscode.window.showInformationMessage(`✅ Published ${choice.toLowerCase()}`);
-        } catch (error) {
-            vscode.window.showErrorMessage('Failed to publish content');
+        } catch (error: any) {
+            this.log(`Publish error: ${error.message}`);
+            vscode.window.showErrorMessage(`Failed to publish ${choice.toLowerCase()}: ${error.message}`);
         }
     }
 
     async quickPublish() {
         try {
             vscode.window.showInformationMessage('🔄 Quick publishing blog post...');
-            await this.runUroboroCommand('publish --type blog');
-            vscode.window.showInformationMessage('✅ Blog post published');
-        } catch (error) {
-            vscode.window.showErrorMessage('Failed to quick publish');
+            const result = await this.runUroboroCommand('publish --type blog --format markdown');
+            
+            // Try to open the generated markdown file
+            const pathMatch = result.match(/saved to: (.+)/);
+            if (pathMatch) {
+                const filePath = pathMatch[1].trim();
+                try {
+                    const uri = vscode.Uri.file(filePath);
+                    const doc = await vscode.workspace.openTextDocument(uri);
+                    await vscode.window.showTextDocument(doc);
+                    vscode.window.showInformationMessage(`✅ Blog post ready for editing: ${path.basename(filePath)}`);
+                } catch (fileError) {
+                    this.log(`Could not open generated file: ${filePath}`);
+                    // Fallback: create new document with content
+                    const doc = await vscode.workspace.openTextDocument({
+                        content: result,
+                        language: 'markdown'
+                    });
+                    await vscode.window.showTextDocument(doc);
+                    vscode.window.showInformationMessage('✅ Blog post generated and opened for editing');
+                }
+            } else {
+                // No file path found, show content in new document
+                const doc = await vscode.workspace.openTextDocument({
+                    content: result,
+                    language: 'markdown'
+                });
+                await vscode.window.showTextDocument(doc);
+                vscode.window.showInformationMessage('✅ Blog post generated and opened for editing');
+            }
+        } catch (error: any) {
+            this.log(`Quick publish error: ${error.message}`);
+            vscode.window.showErrorMessage(`Failed to quick publish: ${error.message}`);
         }
     }
 

@@ -89,9 +89,27 @@
         "when": "editorTextFocus"
       },
       {
+        "command": "uroboro.capture",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "vim.mode == 'Normal'"
+      },
+      {
         "command": "uroboro.status",
         "key": "ctrl+shift+s",
         "mac": "cmd+shift+s"
+      },
+      {
+        "command": "uroboro.quickPublish",
+        "key": "ctrl+shift+p",
+        "mac": "cmd+shift+p",
+        "when": "vim.mode == 'Normal'"
+      },
+      {
+        "command": "uroboro.captureSelection",
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+x",
+        "when": "editorHasSelection && vim.mode == 'Visual'"
       }
     ],
     "configuration": {
