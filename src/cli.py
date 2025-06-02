@@ -281,7 +281,7 @@ def main():
         epilog="Three commands. That's it. 🎯"
     )
     
-    subparsers = parser.add_subparsers(dest='command', help='Sacred commands')
+    subparsers = parser.add_subparsers(dest='command', help='Core commands')
     
     # CAPTURE - 10-second insight capture
     capture_parser = subparsers.add_parser('capture', 
