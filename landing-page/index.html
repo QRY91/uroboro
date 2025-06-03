@@ -334,7 +334,11 @@
                     <div class="step-content">
                         <h3>Install</h3>
                         <div class="code-block">
-                            <code>git clone https://github.com/qry91/uroboro<br>cd uroboro && pip install -e .</code>
+                            <code>go install github.com/QRY91/uroboro@latest</code>
+                        </div>
+                        <p><em>Or clone and use the binary:</em></p>
+                        <div class="code-block">
+                            <code>git clone https://github.com/qry91/uroboro<br>cd uroboro && ./uro capture "test"</code>
                         </div>
                     </div>
                 </div>
@@ -363,11 +367,11 @@
             <div class="requirements">
                 <h3>Requirements</h3>
                 <ul>
-                    <li>Python 3.8+</li>
-                    <li>Ollama (for local AI)</li>
-                    <li>Git (for git integration)</li>
-                    <li>16GB+ RAM (recommended)</li>
+                    <li><strong>Ollama</strong> (for local AI)</li>
+                    <li><strong>Git</strong> (for git integration)</li>
+                    <li><strong>8GB+ RAM</strong> (recommended for AI models)</li>
                 </ul>
+                <p><em>Go 1.19+ needed only for `go install` method</em></p>
             </div>
         </div>
     </section>

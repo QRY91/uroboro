@@ -232,10 +232,9 @@ One goal: help developers get acknowledged for their actual work. Everything els
 ## 🏠 Local AI Setup
 
 ### Requirements
-- **Python 3.8+**
 - **Ollama** (for local AI)
 - **Git** (for git integration)
-- **16GB+ RAM** (recommended)
+- **8GB+ RAM** (recommended for AI models)
 
 ### Install Ollama
 ```bash
@@ -280,4 +279,4 @@ MIT License - Use it, modify it, ship it. Just get acknowledged for your work.
 
 **uroboro**: The tool that documents itself while helping you document everything else 🐍
 
-*Made by developers, for developers who deserve acknowledgment.*
+*Made by developers, for developers who deserve acknowledgment.* 

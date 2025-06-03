@@ -159,3 +159,6 @@ dmypy.json
 
 # VS Code extension temp files
 .uroboro-capture-temp.md
+
+# Preferences
+.trash/
