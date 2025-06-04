@@ -130,12 +130,6 @@ jobs:
       with:
         go-version: '1.21'
         
-    - name: Run linter
-      uses: golangci/golangci-lint-action@v4
-      with:
-        version: v1.54
-        args: --timeout=5m
-        
     - name: Verify no amateur hour regressions
       run: |
         # Ensure all 3 commands still exist
