@@ -25,25 +25,39 @@ func NewStatusService() *StatusService {
 func (s *StatusService) ShowStatus(days int) error {
 	fmt.Println("🐍 uroboro status")
 
+	// Get XDG data directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	dataDir := filepath.Join(homeDir, ".local", "share", "uroboro", "daily")
+
 	// Count recent activity
 	cutoff := time.Now().AddDate(0, 0, -days)
 	activityCount := 0
 
-	entries, err := os.ReadDir(".")
-	if err == nil {
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
-				continue
-			}
+	entries, err := os.ReadDir(dataDir)
+	if err != nil {
+		// Data directory doesn't exist yet
+		fmt.Printf("Recent activity (%d days): 0 items\n", days)
+		fmt.Printf("\n📝 Recent Captures (last %d days):\n", days)
+		fmt.Println("  No recent captures found")
+		return nil
+	}
 
-			info, err := entry.Info()
-			if err != nil {
-				continue
-			}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
 
-			if info.ModTime().After(cutoff) {
-				activityCount++
-			}
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+
+		if info.ModTime().After(cutoff) {
+			activityCount++
 		}
 	}
 
@@ -64,7 +78,8 @@ func (s *StatusService) ShowStatus(days int) error {
 		}
 
 		if info.ModTime().After(cutoff) {
-			content, err := os.ReadFile(entry.Name())
+			fullPath := filepath.Join(dataDir, entry.Name())
+			content, err := os.ReadFile(fullPath)
 			if err != nil {
 				continue
 			}

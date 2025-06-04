@@ -3,6 +3,7 @@ package capture
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -15,9 +16,20 @@ func NewCaptureService() *CaptureService {
 func (c *CaptureService) Capture(content, project, tags string) error {
 	timestamp := time.Now().Format("2006-01-02T15:04:05")
 
+	// Get XDG data directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	dataDir := filepath.Join(homeDir, ".local", "share", "uroboro", "daily")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		return fmt.Errorf("failed to create data directory: %w", err)
+	}
+
 	// Create daily note filename
 	today := time.Now().Format("2006-01-02")
-	filename := fmt.Sprintf("daily-notes-%s.md", today)
+	filename := filepath.Join(dataDir, fmt.Sprintf("%s.md", today))
 
 	// Prepare entry
 	entry := fmt.Sprintf("\n## %s\n\n%s\n", timestamp, content)

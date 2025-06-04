@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/QRY91/uroboro/internal/capture"
@@ -17,15 +18,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	switch os.Args[1] {
-	case "capture":
+	command := os.Args[1]
+
+	// Support short flags for core commands
+	switch command {
+	case "capture", "-c":
 		handleCapture(os.Args[2:])
-	case "publish":
+	case "publish", "-p":
 		handlePublish(os.Args[2:])
-	case "status":
+	case "status", "-s":
 		handleStatus(os.Args[2:])
 	default:
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		printUsage()
 		os.Exit(1)
 	}
@@ -104,17 +108,27 @@ func handleStatus(args []string) {
 }
 
 func printUsage() {
+	// Detect command name from how binary was called
+	binaryName := filepath.Base(os.Args[0])
+
 	fmt.Println("uroboro - The Self-Documenting Content Pipeline")
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println("  uroboro capture \"your insight here\" [--project name] [--tags tag1,tag2]")
-	fmt.Println("  uroboro publish --blog [--title \"Title\"] [--days N] [--preview]")
-	fmt.Println("  uroboro publish --devlog [--days N]")
-	fmt.Println("  uroboro status [--days N]")
+	fmt.Printf("  %s capture \"your insight here\" [--project name] [--tags tag1,tag2]\n", binaryName)
+	fmt.Printf("  %s publish --blog [--title \"Title\"] [--days N] [--preview]\n", binaryName)
+	fmt.Printf("  %s publish --devlog [--days N]\n", binaryName)
+	fmt.Printf("  %s status [--days N]\n", binaryName)
+	fmt.Println()
+	fmt.Println("Short flags:")
+	fmt.Printf("  %s -c \"your insight here\"    # capture\n", binaryName)
+	fmt.Printf("  %s -p --blog                  # publish blog\n", binaryName)
+	fmt.Printf("  %s -s                         # status\n", binaryName)
 	fmt.Println()
 	fmt.Println("Examples:")
-	fmt.Println("  uroboro capture \"Fixed auth timeout - cut query time from 3s to 200ms\"")
-	fmt.Println("  uroboro publish --blog --title \"This Week's Fixes\"")
-	fmt.Println("  uroboro publish --devlog")
-	fmt.Println("  uroboro status")
+	fmt.Printf("  %s capture \"Fixed auth timeout - cut query time from 3s to 200ms\"\n", binaryName)
+	fmt.Printf("  %s -c \"Implemented OAuth2 with JWT tokens\"\n", binaryName)
+	fmt.Printf("  %s publish --blog --title \"This Week's Fixes\"\n", binaryName)
+	fmt.Printf("  %s -p --blog\n", binaryName)
+	fmt.Printf("  %s status\n", binaryName)
+	fmt.Printf("  %s -s\n", binaryName)
 }

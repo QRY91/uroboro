@@ -116,12 +116,17 @@ func (p *PublishService) GenerateBlog(days int, title string, preview bool, form
 }
 
 func (p *PublishService) collectRecentActivity(days int) ([]string, error) {
-	// Look for daily notes in current directory
+	// Get XDG data directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	dataDir := filepath.Join(homeDir, ".local", "share", "uroboro", "daily")
+
 	var activity []string
 
-	// Simple approach: look for recent uroboro captures in current directory
-	// This matches the Python version's approach
-	entries, err := os.ReadDir(".")
+	entries, err := os.ReadDir(dataDir)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +144,8 @@ func (p *PublishService) collectRecentActivity(days int) ([]string, error) {
 		}
 
 		if info.ModTime().After(cutoff) {
-			content, err := os.ReadFile(entry.Name())
+			fullPath := filepath.Join(dataDir, entry.Name())
+			content, err := os.ReadFile(fullPath)
 			if err != nil {
 				continue
 			}

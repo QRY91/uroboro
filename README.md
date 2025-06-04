@@ -8,9 +8,9 @@ Transform your development insights into professional content that gets you ackn
 
 ```bash
 # Core workflow - 3 commands, that's it
-./uro capture "Fixed auth timeout - cut query time from 3s to 200ms"
-./uro publish --blog --format html
-./uro status
+uroboro capture "Fixed auth timeout - cut query time from 3s to 200ms"
+uroboro publish --blog --format html
+uroboro status
 ```
 
 ### Format Support
@@ -21,16 +21,16 @@ Transform your development insights into professional content that gets you ackn
 ### Examples
 ```bash
 # Capture insights
-./uro capture "Implemented OAuth2 with JWT tokens"
-./uro capture "Reduced bundle size by 40% using tree shaking" --project frontend
+uroboro capture "Implemented OAuth2 with JWT tokens"
+uroboro capture "Reduced bundle size by 40% using tree shaking" --project frontend
 
 # Generate content  
-./uro publish --blog --preview
-./uro publish --blog --format html --title "This Week's Wins"
-./uro publish --devlog
+uroboro publish --blog --preview
+uroboro publish --blog --format html --title "This Week's Wins"
+uroboro publish --devlog
 
 # Check status
-./uro status --days 7
+uroboro status --days 7
 ```
 
 ## 🎯 North Star Workflow
@@ -53,8 +53,8 @@ go install github.com/QRY91/uroboro@latest
 ```bash
 git clone https://github.com/qry91/uroboro
 cd uroboro
-# Use the pre-built binary
-./uro capture "test"
+# Use the pre-built binary (recommended for development)
+./uroboro capture "test"
 
 # Or build from source
 go build -o uro ./cmd/uroboro
@@ -93,13 +93,13 @@ Three commands. That's it. 🎯
 
 ```bash
 # 1. Capture your work (10 seconds)
-uro capture "Fixed auth timeout - cut query time from 3s to 200ms"
+uroboro capture "Fixed auth timeout - cut query time from 3s to 200ms"
 
 # 2. Publish content (2 minutes)  
-uro publish --blog
+uroboro publish --blog
 
 # 3. Check everything (complete overview)
-uro status
+uroboro status
 ```
 
 ## ✨ What Actually Works
@@ -125,9 +125,9 @@ uro status
 We started with **17 commands** and **1,558 lines** of bloated complexity. We removed 14 commands, kept 3 essential ones, and found that **focus beats features**: improve core functionality instead of adding new complexity.
 
 ### What We Kept (Core Commands)
-- **`uro capture`** - 10-second insight logging
-- **`uro publish`** - Generate blog posts, social content, dev logs  
-- **`uro status`** - Complete pipeline overview
+- **`uroboro capture`** - 10-second insight logging
+- **`uroboro publish`** - Generate blog posts, social content, dev logs  
+- **`uroboro status`** - Complete pipeline overview
 
 ### What We Cleaned Out (Feature Bloat)
 - ❌ 14 unnecessary commands
@@ -143,34 +143,42 @@ We started with **17 commands** and **1,558 lines** of bloated complexity. We re
 
 ### 1. Install
 ```bash
-# Option 1: Go install
+# Option 1: Go install (creates 'uroboro' command)
 go install github.com/QRY91/uroboro@latest
 
-# Option 2: Clone and use
+# Option 2: Clone and use (creates './uroboro' command)
 git clone https://github.com/qry91/uroboro && cd uroboro
 ```
 
 ### 2. Capture Your Work
 ```bash
-uro capture "Your development insight here"
+# If installed via go install:
+uroboro capture "Your development insight here"
+
+# If using cloned repo:
+./uroboro capture "Your development insight here"
 ```
 
 ### 3. Publish & Get Acknowledged
 ```bash
-uro publish --blog
+# If installed via go install:
+uroboro publish --blog
+
+# If using cloned repo:
+./uroboro publish --blog
 ```
 
 ## 📋 Core Commands Reference
 
-### `uro capture`
+### `uroboro capture`
 **Purpose**: Lightning-fast insight logging during development
 
 ```bash
 # Basic capture
-uro capture "Fixed memory leak in connection pool"
+uroboro capture "Fixed memory leak in connection pool"
 
 # With context (optional)
-uro capture "Implemented WebSocket reconnection" --project my-app
+uroboro capture "Implemented WebSocket reconnection" --project my-app
 ```
 
 **Features that actually work**:
@@ -179,21 +187,21 @@ uro capture "Implemented WebSocket reconnection" --project my-app
 - Project organization (when needed)
 - Zero flow state interruption
 
-### `uro publish`
+### `uroboro publish`
 **Purpose**: Transform captures into professional content
 
 ```bash
 # Generate blog post
-uro publish --blog
+uroboro publish --blog
 
 # Generate dev log
-uro publish --devlog
+uroboro publish --devlog
 
 # Generate social content
-uro publish --social
+uroboro publish --social
 
 # Custom timeframe
-uro publish --blog --days 7
+uroboro publish --blog --days 7
 ```
 
 **Features that actually work**:
@@ -203,12 +211,12 @@ uro publish --blog --days 7
 - Auto-voice detection (sounds like you, not AI)
 - 2-minute generation time
 
-### `uro status`
+### `uroboro status`
 **Purpose**: Complete overview of your development pipeline
 
 ```bash
 # See everything
-uro status
+uroboro status
 ```
 
 **Shows you**:
