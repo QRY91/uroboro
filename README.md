@@ -65,7 +65,7 @@ Download the latest binary from [Releases](https://github.com/QRY91/uroboro/rele
 
 ## 🔧 Development
 
-### Go (Primary Implementation)
+### Go Implementation
 - **Fast**: Sub-second startup
 - **Clean**: No dependencies beyond Go stdlib + Ollama
 - **Complete**: Full format support, capture, publish, status
@@ -93,8 +93,8 @@ go build -o uroboro ./cmd/uroboro && ln -sf uroboro uro
 
 The pipeline ensures no "amateur hour" regressions - all 3 commands must work, every release.
 
-### Python (Reference - Archived)
-Available in `archive/python-reference/` for feature reference and experimentation.
+### Historical Reference
+Python reference implementation available in `archive/python-reference/` for archaeological purposes.
 
 ## 🎮 VSCode Extension
 
