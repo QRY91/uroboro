@@ -20,33 +20,14 @@ jobs:
       with:
         go-version: '1.21'
         
-    - name: Cache Go modules
-      uses: actions/cache@v4
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version || '1.21' }}-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version || '1.21' }}-
-          ${{ runner.os }}-go-
-        
-    - name: Download dependencies
-      run: go mod download
-      
     - name: Run unit tests
       run: go test -v ./internal/...
       
     - name: Run tests with coverage
       run: go test -race -coverprofile=coverage.out -covermode=atomic ./internal/...
-      
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.out
-        flags: unittests
-        name: codecov-umbrella
 
-  build:
-    name: Build Binaries
+  build-and-test:
+    name: Build & Integration Tests
     runs-on: ubuntu-latest
     needs: test
     
@@ -62,45 +43,15 @@ jobs:
     - name: Build uroboro binary
       run: go build -o uroboro ./cmd/uroboro
       
-    - name: Create uro symlink
-      run: ln -sf uroboro uro
+    - name: Build uro binary (separate build)
+      run: go build -o uro ./cmd/uroboro
       
-    - name: Test binary functionality
+    - name: Test local binaries
       run: |
-        ./uroboro capture "CI test capture - ensuring binary works in automated environment"
+        ./uroboro capture "CI test capture - ensuring binary works"
         ./uro -s
         ./uro -c "Short flag test from CI"
         
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: uroboro-binaries
-        path: |
-          uroboro
-          uro
-
-  integration-test:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: build
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
-        
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: uroboro-binaries
-        
-    - name: Make binaries executable
-      run: chmod +x uroboro uro
-      
     - name: Test full workflow
       run: |
         # Test capture functionality
@@ -117,10 +68,29 @@ jobs:
         
         echo "✅ All integration tests passed!"
 
+    # System-wide installation regression test
+    - name: Test system installation (regression test)
+      run: |
+        # Install to PATH
+        mkdir -p ~/.local/bin
+        cp ./uroboro ~/.local/bin/
+        cp ./uro ~/.local/bin/
+        export PATH="$HOME/.local/bin:$PATH"
+        
+        # Test system commands work (prevent Python regression)
+        uroboro --help | grep -q "The Self-Documenting Content Pipeline"
+        uro --help | grep -q "The Self-Documenting Content Pipeline"
+        
+        # Test core workflow doesn't crash
+        uroboro capture "CI regression test - system installation works"
+        uroboro status | grep -q "Recent activity"
+        uro -c "CI regression test - short command works"
+        uro -s | grep -q "Recent activity"
+
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
-    needs: [test, build, integration-test]
+    needs: build-and-test
     
     steps:
     - name: Checkout code
@@ -145,24 +115,4 @@ jobs:
       if: success()
       run: |
         echo "🎉 Uroboro CI pipeline completed successfully!"
-        echo "📊 Ready for doggowoof monitoring integration"
-
-    # NEW: System-wide installation regression test
-    - name: Test system installation (regression test)
-      run: |
-        # Install to PATH
-        mkdir -p ~/.local/bin
-        cp ./uroboro ~/.local/bin/
-        ln -sf ~/.local/bin/uroboro ~/.local/bin/uro
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-        
-        # Test system commands work (prevent Python regression)
-        export PATH="$HOME/.local/bin:$PATH"
-        uroboro --help | grep -q "The Self-Documenting Content Pipeline"
-        uro --help | grep -q "The Self-Documenting Content Pipeline"
-        
-        # Test core workflow doesn't crash
-        uroboro capture "CI regression test - system installation works"
-        uroboro status | grep -q "Recent activity"
-        uro -c "CI regression test - short command works"
-        uro -s | grep -q "Recent activity" 
+        echo "📊 Ready for doggowoof monitoring integration" 
