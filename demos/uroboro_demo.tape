@@ -1,74 +1,72 @@
 # uroboro_demo.tape
-# The Self-Documenting Content Pipeline - Sacred Workflow
+# Complete uroboro workflow - Professional quality assurance (mobile-friendly)
 
 # Output GIF file
-Output assets/uroboro_demo.gif
+Output landing-page/assets/uroboro_demo.gif
 
-# Terminal Setup
+# Mobile-Friendly Terminal Setup
 Set Theme "Dracula"
 Set FontFamily "JetBrains Mono"
-Set FontSize 22
-Set Width 1100
-Set Height 650
-Set TypingSpeed 60ms
-Set LoopOffset "10%"
-Set LineHeight 1.3
+Set FontSize 18
+Set Width 1200
+Set Height 800
+Set TypingSpeed 50ms
+Set LoopOffset "8%"
+Set LineHeight 1.4
 
-# --- Setup Demo Environment ---
+# --- Demo: Complete Overview ---
 Hide
-Type "cd /tmp && rm -rf uroboro_demo && mkdir uroboro_demo && cd uroboro_demo" Enter Sleep 1s
-Type "cp -r /home/qry/stuff/projects/uroboro/* ." Enter Sleep 1s
-Type "pip install -e . --quiet" Enter Sleep 3s
+Type "cd /home/qry/stuff/projects/uroboro" Enter Sleep 500ms
 Type "clear" Enter Sleep 500ms
 Show
 
-# --- Demo: First Time Experience ---
-Type "# Welcome to uroboro - The Self-Documenting Content Pipeline 🐍" Sleep 1.5s Enter Sleep 2s
-Type "uroboro --help" Sleep 1s Enter
-Sleep 5s
+Type "# uroboro: The Self-Documenting Content Pipeline 🐍" Sleep 1.5s Enter Sleep 1s
+Type "# Professional tools, not amateur prototypes" Sleep 1s Enter Sleep 1s
 
+# --- Demo: Dual Command Interface ---
+Type "# Both uroboro and uro work seamlessly:" Sleep 1s Enter Sleep 1s
+
+Type "uroboro capture 'Fixed memory leak in connection handler'" Sleep 1.5s Enter
+Sleep 3s
+
+Type "uro -c 'Added rate limiting to prevent abuse'" Sleep 1.5s Enter
+Sleep 3s
+
+Type "# XDG-compliant unified data storage:" Sleep 1s Enter
+Type "uro -c 'All data in ~/.local/share/uroboro/daily/'" Sleep 1.5s Enter
+Sleep 3s
+
+# --- Demo: Status Shows Professional Development ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
+Type "# Complete development pipeline overview:" Sleep 1s Enter Sleep 1s
 
-# --- Demo: Sacred Command 1 - CAPTURE (10 seconds) ---
-Type "# Sacred Command 1: CAPTURE (10 seconds)" Sleep 1.5s Enter Sleep 1s
-Type "uroboro capture 'Implemented user authentication with OAuth2 and secure sessions'" Sleep 1.5s Enter
-Sleep 4s
-
-Type "uroboro capture 'Fixed critical payment processing bug - prevented data corruption'" Sleep 1.5s Enter
-Sleep 4s
-
-Type "uroboro capture 'Added real-time notifications using WebSockets - 3x faster than polling'" Sleep 1.5s Enter
-Sleep 4s
-
-# --- Demo: Sacred Command 3 - STATUS (complete overview) ---
-Hide
-Type "clear" Enter Sleep 1s
-Show
-Type "# Sacred Command 3: STATUS (complete overview)" Sleep 1s Enter Sleep 1s
 Type "uroboro status" Sleep 1s Enter
 Sleep 5s
 
-# --- Demo: Sacred Command 2 - PUBLISH (2 minutes) ---
+# --- Demo: Quality Assurance in Action ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "# Sacred Command 2: PUBLISH (2 minutes)" Sleep 1.5s Enter Sleep 1s
-Type "uroboro publish --blog" Sleep 1.5s Enter
+Type "# Quality assurance: Full test coverage + CI/CD" Sleep 1s Enter Sleep 1s
+Type "make test" Sleep 1s Enter
+Sleep 4s
+
+Type "# Professional publishing with local AI:" Sleep 1s Enter
+Type "uro -p --blog" Sleep 1.5s Enter
 Sleep 8s
 
-# --- Demo: Show the generated content ---
-Hide
-Type "ls output/posts/" Enter Sleep 2s
-Type "head -20 output/posts/dev-update-*.md" Enter Sleep 5s
-Show
-
-# --- End with the truth ---
+# --- Demo: Show the transformation ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "echo '🎯 Three commands beats seventeen - thats the sacred workflow'" Sleep 1.5s Enter
+Type "echo '✅ Removed 2,497 lines of Python code (60.8% cleanup)'" Sleep 1.5s Enter
+Type "echo '🛡️ Full unit test coverage + GitHub Actions CI'" Sleep 1s Enter
+Type "echo '📁 XDG compliance: ~/.local/share/uroboro/daily/'" Sleep 1s Enter
+Type "echo '⚡ Dual interface: uroboro and uro from same codebase'" Sleep 1s Enter
 Sleep 2s
-Type "echo '🐍 uroboro: The tool that documents itself'" Sleep 1s Enter
-Sleep 3s 
+
+Type "echo '🎯 Three commands beats seventeen - Focus over features'" Sleep 1.5s Enter
+Type "echo '🐍 uroboro: Documents itself while helping you document everything else'" Sleep 1s Enter
+Sleep 4s 

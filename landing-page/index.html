@@ -4,27 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>uroboro - The Self-Documenting Content Pipeline</title>
+    <meta name="description" content="Transform development insights into professional content with three simple commands. Local AI, zero API costs, 100% private.">
+    <meta name="keywords" content="developer tools, documentation, content generation, local AI, programming, development workflow">
+    <meta name="author" content="uroboro">
+    
+    <!-- Accessibility Meta -->
+    <meta name="theme-color" content="#2a1f3d">
+    <meta name="color-scheme" content="dark">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="uroboro - The Self-Documenting Content Pipeline">
+    <meta property="og:description" content="Transform development insights into professional content. Three commands. Local AI. Zero API costs.">
+    <meta property="og:url" content="https://uroboro.dev">
+    
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
 </head>
 <body>
+    <!-- Skip to main content link for screen readers -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
     <!-- Top Tickertape -->
-    <div class="tickertape tickertape-top">
+    <div class="tickertape tickertape-top" aria-hidden="true" role="presentation">
         <div class="tickertape-content">
             uroboro
         </div>
     </div>
+    
     <!-- Hero Section -->
-    <header class="hero">
+    <header class="hero" role="banner">
         <div class="container">
             <div class="hero-content">
                 <!-- Brand Name -->
-                <div class="brand-name">uroboro</div>
+                <div class="brand-name" aria-label="uroboro brand name">uroboro</div>
                 
                 <!-- uroboro Animation -->
-                <div class="uroboro-animation">
+                <div class="uroboro-animation" aria-hidden="true" role="presentation">
                     <div class="uroboro-container">
                         <div class="uroboro-circle">
                             <span class="uroboro-letter">u</span>
@@ -55,51 +73,59 @@
                     <strong>Three commands. That's it.</strong> Local AI only, zero API costs.
                 </p>
                 
-                <div class="value-props">
-                    <div class="prop">
-                        <span class="prop-icon">🎯</span>
+                <div class="value-props" role="list" aria-label="Key features">
+                    <div class="prop" role="listitem">
+                        <span class="prop-icon" aria-hidden="true">🎯</span>
                         <span>3 core commands</span>
                     </div>
-                    <div class="prop">
-                        <span class="prop-icon">⚡</span>
+                    <div class="prop" role="listitem">
+                        <span class="prop-icon" aria-hidden="true">⚡</span>
                         <span>10-second capture</span>
                     </div>
-                    <div class="prop">
-                        <span class="prop-icon">📝</span>
+                    <div class="prop" role="listitem">
+                        <span class="prop-icon" aria-hidden="true">📝</span>
                         <span>2-minute publish</span>
                     </div>
-                    <div class="prop">
-                        <span class="prop-icon">🏠</span>
+                    <div class="prop" role="listitem">
+                        <span class="prop-icon" aria-hidden="true">🏠</span>
                         <span>100% Local AI</span>
                     </div>
-                    <div class="prop">
-                        <span class="prop-icon">💰</span>
+                    <div class="prop" role="listitem">
+                        <span class="prop-icon" aria-hidden="true">💰</span>
                         <span>$0/month costs</span>
                     </div>
-                    <div class="prop">
-                        <span class="prop-icon">🔒</span>
+                    <div class="prop" role="listitem">
+                        <span class="prop-icon" aria-hidden="true">🔒</span>
                         <span>Private by design</span>
                     </div>
                 </div>
                 
-                <div class="hero-demo">
+                <div class="hero-demo" role="region" aria-label="Workflow demonstration">
                     <div class="demo-workflow">
                         <div class="demo-step">
-                            <span class="step-number">1</span>
+                            <span class="step-number" aria-label="Step 1">1</span>
                             <div class="demo-input">
-                                <span class="terminal-prompt">$</span>
-                                <span class="demo-command">uro capture "Fixed auth timeout - cut query time from 3s to 200ms"</span>
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-command">uroboro capture "Fixed auth timeout - cut query time from 3s to 200ms"</span>
+                            </div>
+                            <div class="demo-alt">
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-command">uro -c "Fixed auth timeout - cut query time from 3s to 200ms"</span>
                             </div>
                         </div>
-                        <div class="demo-arrow">↓</div>
+                        <div class="demo-arrow" aria-hidden="true">↓</div>
                         <div class="demo-step">
-                            <span class="step-number">2</span>
+                            <span class="step-number" aria-label="Step 2">2</span>
                             <div class="demo-input">
-                                <span class="terminal-prompt">$</span>
-                                <span class="demo-command">uro publish --blog</span>
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-command">uroboro publish --blog</span>
+                            </div>
+                            <div class="demo-alt">
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-command">uro -p --blog</span>
                             </div>
                         </div>
-                        <div class="demo-arrow">↓</div>
+                        <div class="demo-arrow" aria-hidden="true">↓</div>
                         <div class="demo-output">
                             <p><strong>Blog post generated:</strong> "Optimizing Database Performance: From 3 Seconds to Lightning Fast"</p>
                             <p><em>Your expertise, documented and ready to share.</em></p>
@@ -107,54 +133,55 @@
                     </div>
                 </div>
                 
-                <div class="hero-cta">
+                <nav class="hero-cta" role="navigation" aria-label="Primary actions">
                     <a href="#how-it-works" class="btn btn-primary">See The Workflow</a>
-                    <a href="https://github.com/qry91/uroboro" class="btn btn-secondary">
-                        <span class="github-icon">⭐</span>
+                    <a href="https://github.com/qry91/uroboro" class="btn btn-secondary" aria-label="View uroboro project on GitHub">
+                        <span class="github-icon" aria-hidden="true">⭐</span>
                         View on GitHub
                     </a>
-                </div>
+                </nav>
             </div>
         </div>
     </header>
 
+    <main id="main-content" role="main">
     <!-- Problem Section -->
-    <section class="problem">
+    <section class="problem" aria-labelledby="problem-heading">
         <div class="container">
-            <div class="section-header">
-                <h2>You're Amazing at Building.<br>Terrible at Talking About It.</h2>
+            <header class="section-header">
+                <h2 id="problem-heading">You're Amazing at Building.<br>Terrible at Talking About It.</h2>
                 <p class="section-subtitle">Has <em>this</em> ever happened to <strong>you</strong>? 😏</p>
+            </header>
+            
+            <div class="problem-grid" role="list" aria-label="Common developer documentation problems">
+                <div class="problem-item" role="listitem">
+                    <div class="problem-icon" aria-hidden="true">🧠</div>
+                    <div class="problem-text">
+                        <strong>Brilliant technical work</strong><br><span class="arrow" aria-hidden="true">↓</span><br><em>Forgotten in a week <span class="reaction-emoji" aria-hidden="true">🤔</span></em>
+                    </div>
+                </div>
+                <div class="problem-item" role="listitem">
+                    <div class="problem-icon" aria-hidden="true">⏰</div>
+                    <div class="problem-text">
+                        <strong>8 hours coding</strong><br><span class="arrow" aria-hidden="true">↓</span><br><em>8 minutes explaining what you built <span class="reaction-emoji" aria-hidden="true">😤</span></em>
+                    </div>
+                </div>
+                <div class="problem-item" role="listitem">
+                    <div class="problem-icon" aria-hidden="true">💡</div>
+                    <div class="problem-text">
+                        <strong>Amazing insights during development</strong><br><span class="arrow" aria-hidden="true">↓</span><br><em>Can't remember them later <span class="reaction-emoji" aria-hidden="true">😩</span></em>
+                    </div>
+                </div>
+                <div class="problem-item" role="listitem">
+                    <div class="problem-icon" aria-hidden="true">📱</div>
+                    <div class="problem-text">
+                        <strong>Social media feels like marketing BS</strong><br><span class="arrow" aria-hidden="true">↓</span><br><em>You just want to share cool tech <span class="reaction-emoji" aria-hidden="true">😮‍💨</span></em>
+                    </div>
+                </div>
             </div>
             
-            <div class="problem-grid">
-                <div class="problem-item">
-                    <div class="problem-icon">🧠</div>
-                    <div class="problem-text">
-                        <strong>Brilliant technical work</strong><br><span class="arrow">↓</span><br><em>Forgotten in a week <span class="reaction-emoji">🤔</span></em>
-                    </div>
-                </div>
-                <div class="problem-item">
-                    <div class="problem-icon">⏰</div>
-                    <div class="problem-text">
-                        <strong>8 hours coding</strong><br><span class="arrow">↓</span><br><em>8 minutes explaining what you built <span class="reaction-emoji">😤</span></em>
-                    </div>
-                </div>
-                <div class="problem-item">
-                    <div class="problem-icon">💡</div>
-                    <div class="problem-text">
-                        <strong>Amazing insights during development</strong><br><span class="arrow">↓</span><br><em>Can't remember them later <span class="reaction-emoji">😩</span></em>
-                    </div>
-                </div>
-                <div class="problem-item">
-                    <div class="problem-icon">📱</div>
-                    <div class="problem-text">
-                        <strong>Social media feels like marketing BS</strong><br><span class="arrow">↓</span><br><em>You just want to share cool tech <span class="reaction-emoji">😮‍💨</span></em>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="problem-cost">
-                <h3>The Real Cost:</h3>
+            <div class="problem-cost" role="region" aria-labelledby="cost-heading">
+                <h3 id="cost-heading">The Real Cost:</h3>
                 <ul>
                     <li><strong>Lost opportunities</strong> - Amazing work goes unnoticed</li>
                     <li><strong>Imposter syndrome</strong> - No record of your growth</li>
@@ -166,20 +193,23 @@
     </section>
 
     <!-- Solution Section -->
-    <section id="how-it-works" class="solution">
+    <section id="how-it-works" class="solution" aria-labelledby="solution-heading">
         <div class="container">
-            <div class="section-header">
-                <h2>The Core Workflow</h2>
+            <header class="section-header">
+                <h2 id="solution-heading">The Core Workflow</h2>
                 <p class="section-subtitle">Three commands. That's it. 🎯</p>
-            </div>
+            </header>
             
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
+            <div class="steps" role="list" aria-label="Three-step workflow">
+                <article class="step" role="listitem">
+                    <div class="step-number" aria-label="Step 1">1</div>
                     <div class="step-content">
-                        <h3>capture <br>(10 seconds)</h3>
-                        <div class="code-block">
-                            <code>uro capture "Implemented real-time notifications using WebSockets"</code>
+                        <h3>capture <br><span class="step-time">(10 seconds)</span></h3>
+                        <div class="code-block" role="region" aria-label="Capture command example">
+                            <code>uroboro capture "Implemented real-time notifications using WebSockets"</code>
+                        </div>
+                        <div class="code-alt" role="region" aria-label="Alternative capture command">
+                            <code>uro -c "Implemented real-time notifications using WebSockets"</code>
                         </div>
                         <ul>
                             <li>Quick terminal command during development</li>
@@ -188,14 +218,17 @@
                             <li>Auto-git integration when you need it</li>
                         </ul>
                     </div>
-                </div>
+                </article>
                 
-                <div class="step">
-                    <div class="step-number">2</div>
+                <article class="step" role="listitem">
+                    <div class="step-number" aria-label="Step 2">2</div>
                     <div class="step-content">
-                        <h3>publish <br>(2 minutes)</h3>
-                        <div class="code-block">
-                            <code>uro publish --blog</code>
+                        <h3>publish <br><span class="step-time">(2 minutes)</span></h3>
+                        <div class="code-block" role="region" aria-label="Publish command example">
+                            <code>uroboro publish --blog</code>
+                        </div>
+                        <div class="code-alt" role="region" aria-label="Alternative publish command">
+                            <code>uro -p --blog</code>
                         </div>
                         <p>Local AI transforms your captures into:</p>
                         <ul>
@@ -205,14 +238,17 @@
                             <li><strong>Auto-voice detection</strong> - Sounds like you, not AI</li>
                         </ul>
                     </div>
-                </div>
+                </article>
                 
-                <div class="step">
-                    <div class="step-number">3</div>
+                <article class="step" role="listitem">
+                    <div class="step-number" aria-label="Step 3">3</div>
                     <div class="step-content">
-                        <h3>status <br>(Everything you need)</h3>
-                        <div class="code-block">
-                            <code>uro status</code>
+                        <h3>status <br><span class="step-time">(Everything you need)</span></h3>
+                        <div class="code-block" role="region" aria-label="Status command example">
+                            <code>uroboro status</code>
+                        </div>
+                        <div class="code-alt" role="region" aria-label="Alternative status command">
+                            <code>uro -s</code>
                         </div>
                         <p>Complete overview of your development pipeline:</p>
                         <ul>
@@ -222,64 +258,81 @@
                             <li><strong>Usage tracking</strong> - Local-only analytics</li>
                         </ul>
                     </div>
-                </div>
+                </article>
             </div>
             
-            <div class="workflow-truth">
-                <h3>🎯 North Star Principle</h3>
-                <p><strong>Three commands beats seventeen.</strong> We discovered this by cutting uroboro from 1,558 lines to 270 lines, 
-                removing 14 commands, and keeping only what delivers acknowledgment for your actual work.</p>
-                <p><em>Focus principle: Improve core features, don't add new ones.</em></p>
+            <div class="workflow-truth" role="region" aria-labelledby="truth-heading">
+                <h3 id="truth-heading">🎯 North Star Principle</h3>
+                <p><strong>Three commands beats seventeen.</strong> We transformed uroboro from a mixed Python/Go prototype 
+                into a clean, professional Go-only tool with comprehensive testing and CI/CD.</p>
+                <div class="achievement-grid" role="list" aria-label="Major achievements">
+                    <div class="achievement" role="listitem">
+                        <strong>🧹 Repository Cleanup:</strong> Removed 2,497 lines of outdated Python code (60.8% of codebase)
+                    </div>
+                    <div class="achievement" role="listitem">
+                        <strong>🛡️ Quality Assurance:</strong> Full unit test coverage + GitHub Actions CI pipeline
+                    </div>
+                    <div class="achievement" role="listitem">
+                        <strong>📁 XDG Compliance:</strong> Unified data storage in <code>~/.local/share/uroboro/daily/</code>
+                    </div>
+                    <div class="achievement" role="listitem">
+                        <strong>⚡ Dual Interface:</strong> Both <code>uroboro</code> and <code>uro</code> commands from same codebase
+                    </div>
+                </div>
+                <p><em>Focus principle: Ship professional tools, not amateur prototypes.</em></p>
             </div>
         </div>
     </section>
 
     <!-- Demo Carousel - Simplified -->
-    <section class="demo-carousel">
+    <section class="demo-carousel" aria-labelledby="demo-heading">
         <div class="container">
-            <div class="section-header">
-                <h2>See It in Action</h2>
+            <header class="section-header">
+                <h2 id="demo-heading">See It in Action</h2>
                 <p class="section-subtitle">The three-command workflow demonstrated</p>
-            </div>
+            </header>
             
             <div class="carousel-container">
-                <div class="carousel-nav">
-                    <button class="carousel-nav-btn active" data-carousel-target="core-demo">Core Workflow</button>
-                    <button class="carousel-nav-btn" data-carousel-target="git-demo">Git Integration</button>
-                    <button class="carousel-nav-btn" data-carousel-target="overview-demo">Complete Demo</button>
-                </div>
+                <nav class="carousel-nav" role="tablist" aria-label="Demo navigation">
+                    <button class="carousel-nav-btn active" data-carousel-target="core-demo" role="tab" aria-selected="true" aria-controls="core-demo" id="tab-core">Core Workflow</button>
+                    <button class="carousel-nav-btn" data-carousel-target="git-demo" role="tab" aria-selected="false" aria-controls="git-demo" id="tab-git">Git Integration</button>
+                    <button class="carousel-nav-btn" data-carousel-target="overview-demo" role="tab" aria-selected="false" aria-controls="overview-demo" id="tab-overview">Complete Demo</button>
+                </nav>
                 
                 <div class="carousel-content">
-                    <div class="carousel-slide active" id="core-demo">
+                    <div class="carousel-slide active" id="core-demo" role="tabpanel" aria-labelledby="tab-core">
                         <div class="demo-section">
-                            <img src="assets/uroboro_demo_core.gif" alt="Core workflow demo showing capture, status, and publish commands" loading="lazy">
+                            <img src="assets/uroboro_demo_core.gif" alt="Animated demonstration showing core uroboro workflow: capture command followed by status command followed by publish command, displaying terminal output for each step" loading="lazy">
                         </div>
                         <div class="demo-description">
                             <h3>⚡ Core Workflow</h3>
                             <p>The essential uroboro experience: capture insights, check status, publish content. Three commands that deliver acknowledgment for your work.</p>
-                            <code>uro capture → uro status → uro publish</code>
+                            <code>uroboro capture → uroboro status → uroboro publish</code>
+                            <div class="demo-alt-note">or use short flags: <code>uro -c → uro -s → uro -p</code></div>
                         </div>
                     </div>
                     
-                    <div class="carousel-slide" id="git-demo">
+                    <div class="carousel-slide" id="git-demo" role="tabpanel" aria-labelledby="tab-git">
                         <div class="demo-section">
-                            <img src="assets/uroboro_demo_git.gif" alt="Git integration demo showing automatic commit capture and analysis" loading="lazy">
+                            <img src="assets/uroboro_demo_git.gif" alt="Animated demonstration of git integration showing commit commands, automatic capture from git history, and status display with git context" loading="lazy">
                         </div>
                         <div class="demo-description">
                             <h3>🔗 Git Integration</h3>
                             <p>Seamless git workflow integration. Auto-capture commits, analyze patterns, never miss development insights.</p>
-                            <code>uro capture --auto-git</code>
+                            <code>uroboro capture --auto-git</code>
+                            <div class="demo-alt-note">or: <code>uro -c --auto-git</code></div>
                         </div>
                     </div>
                     
-                    <div class="carousel-slide" id="overview-demo">
+                    <div class="carousel-slide" id="overview-demo" role="tabpanel" aria-labelledby="tab-overview">
                         <div class="demo-section">
-                            <img src="assets/uroboro_demo.gif" alt="Complete uroboro workflow demonstration" loading="lazy">
+                            <img src="assets/uroboro_demo.gif" alt="Complete uroboro workflow demonstration showing capture commands, status overview, testing with make test, and publish functionality generating professional content" loading="lazy">
                         </div>
                         <div class="demo-description">
                             <h3>🎬 Complete Overview</h3>
                             <p>Full uroboro experience in action. From capture to published content, see how the tool documents itself while helping you document everything else.</p>
-                            <code>uro capture → publish → get acknowledged</code>
+                            <code>uroboro capture → publish → get acknowledged</code>
+                            <div class="demo-update-note">📱 <em>Demos recorded with mobile-friendly resolution and font sizes</em></div>
                         </div>
                     </div>
                 </div>
@@ -288,84 +341,85 @@
     </section>
 
     <!-- Truth Section -->
-    <section class="truth-section">
+    <section class="truth-section" aria-labelledby="truth-section-heading">
         <div class="container">
-            <div class="section-header">
-                <h2>Why Three Commands Work</h2>
+            <header class="section-header">
+                <h2 id="truth-section-heading">Why Three Commands Work</h2>
                 <p class="section-subtitle">Less is more when it comes to developer tools</p>
-            </div>
+            </header>
             
-            <div class="truth-grid">
-                <div class="truth-item">
-                    <div class="truth-icon">🧹</div>
-                    <h3>The Great CLI Cleanup</h3>
-                    <p>We started with 17 commands and 1,558 lines of code. We removed 14 commands, kept 3 essential ones, and found that simplicity beats complexity every time.</p>
-                </div>
-                <div class="truth-item">
-                    <div class="truth-icon">🎯</div>
-                    <h3>Drunk User Test</h3>
-                    <p>If someone slightly impaired can't use your tool successfully in under 2 minutes, it's too complex. Three commands pass this test.</p>
-                </div>
-                <div class="truth-item">
-                    <div class="truth-icon">⚡</div>
-                    <h3>Focus Principle</h3>
-                    <p>When in doubt, improve what you have instead of adding new features. Every new feature is a chance to confuse users and break what works.</p>
-                </div>
-                <div class="truth-item">
-                    <div class="truth-icon">🔥</div>
-                    <h3>Acknowledgment Pipeline</h3>
-                    <p>One goal: help developers get acknowledged for their actual work. Everything else is distraction. We removed the distractions.</p>
-                </div>
+            <div class="truth-grid" role="list" aria-label="Benefits of the three-command approach">
+                <article class="truth-item" role="listitem">
+                    <div class="truth-icon" aria-hidden="true">🧹</div>
+                    <h3>The Great Cleanup</h3>
+                    <p>Removed 2,497 lines of Python remnants (60.8% of the repo). Transformed from mixed Python/Go prototype into clean, professional Go-only codebase with comprehensive testing.</p>
+                </article>
+                <article class="truth-item" role="listitem">
+                    <div class="truth-icon" aria-hidden="true">🛡️</div>
+                    <h3>Quality Assurance</h3>
+                    <p>Full unit test coverage across all 3 commands. GitHub Actions CI pipeline with Test Suite → Build → Quality Gate workflow. No amateur hour regressions.</p>
+                </article>
+                <article class="truth-item" role="listitem">
+                    <div class="truth-icon" aria-hidden="true">⚡</div>
+                    <h3>Dual Interface</h3>
+                    <p>Both <code>uroboro</code> and <code>uro</code> commands built from same source. Seamless transition between full command and short alias without data loss.</p>
+                </article>
+                <article class="truth-item" role="listitem">
+                    <div class="truth-icon" aria-hidden="true">📁</div>
+                    <h3>XDG Compliance</h3>
+                    <p>Unified data storage in <code>~/.local/share/uroboro/daily/</code>. No more scattered data across multiple locations. Professional system integration.</p>
+                </article>
             </div>
         </div>
     </section>
 
     <!-- Getting Started -->
-    <section class="getting-started">
+    <section class="getting-started" aria-labelledby="getting-started-heading">
         <div class="container">
-            <div class="section-header">
-                <h2>Get Started in 3 Minutes</h2>
+            <header class="section-header">
+                <h2 id="getting-started-heading">Get Started in 3 Minutes</h2>
                 <p class="section-subtitle">Install, capture, publish</p>
-            </div>
+            </header>
             
-            <div class="install-steps">
-                <div class="install-step">
-                    <div class="step-number">1</div>
+            <div class="install-steps" role="list" aria-label="Installation steps">
+                <article class="install-step" role="listitem">
+                    <div class="step-number" aria-label="Step 1">1</div>
                     <div class="step-content">
                         <h3>Install</h3>
-                        <div class="code-block">
+                        <div class="code-block" role="region" aria-label="Installation command">
                             <code>go install github.com/QRY91/uroboro@latest</code>
                         </div>
-                        <p><em>Or clone and use the binary:</em></p>
-                        <div class="code-block">
+                        <p><em>Or clone and use the binary (installs both <code>uroboro</code> and <code>uro</code>):</em></p>
+                        <div class="code-block" role="region" aria-label="Alternative installation method">
                             <code>git clone https://github.com/qry91/uroboro<br>cd uroboro && ./uro capture "test"</code>
                         </div>
+                        <p class="quality-note">✅ <strong>Quality assured:</strong> Full test coverage, CI/CD pipeline, professional codebase</p>
                     </div>
-                </div>
+                </article>
                 
-                <div class="install-step">
-                    <div class="step-number">2</div>
+                <article class="install-step" role="listitem">
+                    <div class="step-number" aria-label="Step 2">2</div>
                     <div class="step-content">
                         <h3>Capture Your Work</h3>
-                        <div class="code-block">
-                            <code>uro capture "Your development insight here"</code>
+                        <div class="code-block" role="region" aria-label="Capture example command">
+                            <code>uroboro capture "Your development insight here"</code>
                         </div>
                     </div>
-                </div>
+                </article>
                 
-                <div class="install-step">
-                    <div class="step-number">3</div>
+                <article class="install-step" role="listitem">
+                    <div class="step-number" aria-label="Step 3">3</div>
                     <div class="step-content">
                         <h3>Publish & Get Acknowledged</h3>
-                        <div class="code-block">
-                            <code>uro publish --blog</code>
+                        <div class="code-block" role="region" aria-label="Publish example command">
+                            <code>uroboro publish --blog</code>
                         </div>
                     </div>
-                </div>
+                </article>
             </div>
             
-            <div class="requirements">
-                <h3>Requirements</h3>
+            <div class="requirements" role="region" aria-labelledby="requirements-heading">
+                <h3 id="requirements-heading">Requirements</h3>
                 <ul>
                     <li><strong>Ollama</strong> (for local AI)</li>
                     <li><strong>Git</strong> (for git integration)</li>
@@ -376,18 +430,20 @@
         </div>
     </section>
 
+    </main>
+
     <!-- Footer CTA -->
-    <footer class="footer">
+    <footer class="footer" role="contentinfo">
         <div class="container">
             <div class="footer-content">
                 <h2>Ready to Get Acknowledged?</h2>
                 <p>Three commands. Zero API costs. Maximum acknowledgment.</p>
-                <div class="footer-cta">
-                    <a href="https://github.com/qry91/uroboro" class="btn btn-primary">
-                        <span class="github-icon">⭐</span>
+                <nav class="footer-cta" aria-label="Footer actions">
+                    <a href="https://github.com/qry91/uroboro" class="btn btn-primary" aria-label="Start using uroboro on GitHub">
+                        <span class="github-icon" aria-hidden="true">⭐</span>
                         Start on GitHub
                     </a>
-                </div>
+                </nav>
                 <div class="footer-meta">
                     <p>uroboro: The tool that documents itself while helping you document everything else 🐍</p>
                     <p>Made by developers, for developers who deserve acknowledgment.</p>
@@ -397,7 +453,7 @@
     </footer>
 
     <!-- Bottom Tickertape -->
-    <div class="tickertape tickertape-bottom">
+    <div class="tickertape tickertape-bottom" aria-hidden="true" role="presentation">
         <div class="tickertape-content">
             three commands that's it
         </div>

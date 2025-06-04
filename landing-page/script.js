@@ -256,103 +256,214 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Unified Carousel System with backward compatibility
+// Unified Carousel System with Full Accessibility Support
 function initCarousels() {
-    // Find all carousels on the page
-    const carouselContainers = document.querySelectorAll('.carousel-container');
+    // Find all carousel containers
+    const carousels = document.querySelectorAll('.carousel-container');
     
-    carouselContainers.forEach(container => {
-        // Handle both old and new button classes
-        const navButtons = container.querySelectorAll('.carousel-nav-btn, .nav-btn');
-        const slides = container.querySelectorAll('.carousel-slide, .feature-slide, .demo-slide');
+    carousels.forEach(carousel => {
+        const navButtons = carousel.querySelectorAll('.carousel-nav-btn, .nav-btn');
+        const slides = carousel.querySelectorAll('.carousel-slide, .feature-slide, .demo-slide');
+        let currentSlide = 0;
         
-        console.log('Initializing carousel:', {
-            navButtons: navButtons.length,
-            slides: slides.length,
-            slideIds: Array.from(slides).map(s => s.id)
-        });
-        
-        // Aggressively hide all slides and show first one
-        slides.forEach((slide, index) => {
-            slide.classList.remove('active');
-            slide.style.display = 'none';
-            slide.style.visibility = 'hidden';
-            slide.style.opacity = '0';
-            slide.style.position = 'absolute';
-            slide.style.height = '0';
-            slide.style.overflow = 'hidden';
-            
-            if (index === 0) {
-                slide.classList.add('active');
-                slide.style.display = 'block';
-                slide.style.visibility = 'visible';
-                slide.style.opacity = '1';
-                slide.style.position = 'relative';
-                slide.style.height = 'auto';
-                slide.style.overflow = 'visible';
-            }
-        });
-        
-        // Set first nav button as active
-        navButtons.forEach((btn, index) => {
-            btn.classList.remove('active');
-            if (index === 0) {
-                btn.classList.add('active');
-            }
-        });
-        
-        // Add click handlers with compatibility for old and new data attributes
-        navButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Handle both new and old data attribute formats
-                let targetId = this.getAttribute('data-carousel-target');
-                
-                // Fallback to old format
-                if (!targetId) {
-                    const feature = this.getAttribute('data-feature');
-                    const demo = this.getAttribute('data-demo');
-                    
-                    if (feature) {
-                        targetId = `${feature}-slide`;
-                    } else if (demo) {
-                        targetId = `${demo}-demo`;
-                    }
-                }
-                
-                console.log('Switching to:', targetId);
-                
-                // Remove active from all buttons and slides in this carousel
-                navButtons.forEach(btn => btn.classList.remove('active'));
-                
-                // Aggressively hide all slides
-                slides.forEach(slide => {
-                    slide.classList.remove('active');
-                    slide.style.display = 'none';
-                    slide.style.visibility = 'hidden';
-                    slide.style.opacity = '0';
-                    slide.style.position = 'absolute';
-                    slide.style.height = '0';
-                    slide.style.overflow = 'hidden';
-                });
-                
-                // Add active class to clicked button
-                this.classList.add('active');
-                
-                // Show target slide
-                const targetSlide = document.getElementById(targetId);
-                if (targetSlide) {
-                    targetSlide.classList.add('active');
-                    targetSlide.style.display = 'block';
-                    targetSlide.style.visibility = 'visible';
-                    targetSlide.style.opacity = '1';
-                    targetSlide.style.position = 'relative';
-                    targetSlide.style.height = 'auto';
-                    targetSlide.style.overflow = 'visible';
-                    console.log('Activated slide:', targetSlide.id);
+        // Function to show specific slide with accessibility support
+        function showSlide(index, fromKeyboard = false) {
+            // Hide all slides
+            slides.forEach((slide, i) => {
+                if (i === index) {
+                    slide.classList.add('active');
+                    slide.setAttribute('aria-hidden', 'false');
+                    slide.setAttribute('tabindex', '0');
                 } else {
-                    console.error('Could not find slide:', targetId);
+                    slide.classList.remove('active');
+                    slide.setAttribute('aria-hidden', 'true');
+                    slide.setAttribute('tabindex', '-1');
                 }
             });
+            
+            // Update nav button states
+            navButtons.forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('active');
+                    btn.setAttribute('aria-selected', 'true');
+                    btn.setAttribute('tabindex', '0');
+                    if (fromKeyboard) {
+                        btn.focus();
+                    }
+                } else {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-selected', 'false');
+                    btn.setAttribute('tabindex', '-1');
+                }
+            });
+            
+            currentSlide = index;
+            
+            // Announce slide change to screen readers
+            if (fromKeyboard) {
+                const slideName = navButtons[index]?.textContent || `Slide ${index + 1}`;
+                announceToScreenReader(`Showing ${slideName}`);
+            }
+        }
+        
+        // Add click and keyboard event listeners to nav buttons
+        navButtons.forEach((btn, index) => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSlide(index);
+            });
+            
+            // Enhanced keyboard navigation
+            btn.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        const prevIndex = currentSlide > 0 ? currentSlide - 1 : navButtons.length - 1;
+                        showSlide(prevIndex, true);
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        const nextIndex = currentSlide < navButtons.length - 1 ? currentSlide + 1 : 0;
+                        showSlide(nextIndex, true);
+                        break;
+                    case 'Home':
+                        e.preventDefault();
+                        showSlide(0, true);
+                        break;
+                    case 'End':
+                        e.preventDefault();
+                        showSlide(navButtons.length - 1, true);
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        e.preventDefault();
+                        showSlide(index, true);
+                        break;
+                }
+            });
+        });
+        
+        // Initialize first slide
+        showSlide(0);
+        
+        // Auto-advance carousel if requested (with pause on focus/hover)
+        const autoAdvance = carousel.getAttribute('data-auto-advance');
+        if (autoAdvance) {
+            let autoAdvanceInterval;
+            const intervalTime = parseInt(autoAdvance) || 5000;
+            
+            function startAutoAdvance() {
+                autoAdvanceInterval = setInterval(() => {
+                    if (document.visibilityState === 'visible') {
+                        const nextIndex = currentSlide < navButtons.length - 1 ? currentSlide + 1 : 0;
+                        showSlide(nextIndex);
+                    }
+                }, intervalTime);
+            }
+            
+            function stopAutoAdvance() {
+                clearInterval(autoAdvanceInterval);
+            }
+            
+            // Start auto-advance
+            startAutoAdvance();
+            
+            // Pause on hover or focus (accessibility requirement)
+            carousel.addEventListener('mouseenter', stopAutoAdvance);
+            carousel.addEventListener('mouseleave', startAutoAdvance);
+            carousel.addEventListener('focusin', stopAutoAdvance);
+            carousel.addEventListener('focusout', startAutoAdvance);
+            
+            // Pause when page is hidden
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    stopAutoAdvance();
+                } else {
+                    startAutoAdvance();
+                }
+            });
+        }
+    });
+}
+
+// Screen reader announcement function
+function announceToScreenReader(message) {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.className = 'sr-only';
+    announcement.textContent = message;
+    
+    document.body.appendChild(announcement);
+    
+    // Remove after announcement
+    setTimeout(() => {
+        document.body.removeChild(announcement);
+    }, 1000);
+}
+
+// Enhanced reduced motion detection
+function respectsReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Initialize voice demo with accessibility improvements
+function initVoiceDemo() {
+    const voiceTabs = document.querySelectorAll('.voice-tab');
+    const voiceContent = document.getElementById('voice-content');
+    
+    voiceTabs.forEach((tab, index) => {
+        // Add ARIA attributes
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+        tab.setAttribute('tabindex', index === 0 ? '0' : '-1');
+        
+        tab.addEventListener('click', function() {
+            // Update all tabs
+            voiceTabs.forEach((t, i) => {
+                const isSelected = t === this;
+                t.classList.toggle('active', isSelected);
+                t.setAttribute('aria-selected', isSelected);
+                t.setAttribute('tabindex', isSelected ? '0' : '-1');
+            });
+            
+            // Get voice type and update content
+            const voiceType = this.getAttribute('data-voice');
+            const example = voiceExamples[voiceType];
+            
+            if (example && voiceContent) {
+                voiceContent.innerHTML = `
+                    <div class="voice-input">
+                        <h4>Input:</h4>
+                        <p>"Fixed memory leak in WebSocket connections - cut memory usage by 40%"</p>
+                    </div>
+                    <div class="voice-output">
+                        <h4>Generated ${example.title}:</h4>
+                        <p>${example.content}</p>
+                    </div>
+                `;
+                
+                // Announce change to screen readers
+                announceToScreenReader(`Showing ${example.title} writing style`);
+            }
+        });
+        
+        // Keyboard navigation for voice tabs
+        tab.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    const prevTab = index > 0 ? voiceTabs[index - 1] : voiceTabs[voiceTabs.length - 1];
+                    prevTab.click();
+                    prevTab.focus();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    const nextTab = index < voiceTabs.length - 1 ? voiceTabs[index + 1] : voiceTabs[0];
+                    nextTab.click();
+                    nextTab.focus();
+                    break;
+            }
         });
     });
 }

@@ -1,51 +1,45 @@
 # uroboro_demo_core.tape
-# Sacred workflow: capture → publish → status
+# Core workflow: capture → status → publish (mobile-friendly)
 
 # Output GIF file
-Output assets/uroboro_demo_core.gif
+Output landing-page/assets/uroboro_demo_core.gif
 
-# Terminal Setup
+# Mobile-Friendly Terminal Setup
 Set Theme "Dracula"
 Set FontFamily "JetBrains Mono"
-Set FontSize 22
-Set Width 1100
-Set Height 650
-Set TypingSpeed 60ms
-Set LoopOffset "10%"
-Set LineHeight 1.3
+Set FontSize 18
+Set Width 1200
+Set Height 800
+Set TypingSpeed 50ms
+Set LoopOffset "8%"
+Set LineHeight 1.4
 
-# --- Setup Demo Environment ---
+# --- Demo: Capture Development Work (10 seconds) ---
 Hide
-Type "cd /tmp && rm -rf uroboro_demo && mkdir uroboro_demo && cd uroboro_demo" Enter Sleep 1s
-Type "cp -r /home/qry/stuff/projects/uroboro/* ." Enter Sleep 1s
-Type "pip install -e . --quiet" Enter Sleep 3s
+Type "cd /home/qry/stuff/projects/uroboro" Enter Sleep 500ms
 Type "clear" Enter Sleep 500ms
 Show
 
-# --- Show the sacred commands ---
-Type "uroboro --help" Sleep 1s Enter
-Sleep 4s
+Type "# Core Workflow Demo - Three Commands That's It" Sleep 1s Enter Sleep 1s
+Type "# Command 1: CAPTURE (10 seconds)" Sleep 1s Enter Sleep 1s
 
-Hide
-Type "clear" Enter Sleep 1s
-Show
-
-# --- Demo: Capture Development Work (10 seconds) ---
-Type "# Sacred Command 1: CAPTURE (10 seconds)" Sleep 1s Enter Sleep 1s
-Type "uroboro capture 'Implemented user authentication with OAuth2 and JWT tokens'" Sleep 1.5s Enter
+Type "uroboro capture 'Implemented WebSocket real-time notifications'" Sleep 1.5s Enter
 Sleep 3s
 
-Type "uroboro capture 'Fixed critical memory leak in WebSocket connections - cut memory usage by 40%'" Sleep 1.5s Enter  
-Sleep 3s
-
-Type "uroboro capture 'Added real-time collaboration features using WebSockets'" Sleep 1.5s Enter
+Type "# Same command, short format:" Sleep 1s Enter
+Type "uro -c 'Fixed memory leak in connection handler'" Sleep 1.5s Enter  
 Sleep 3s
 
 # --- Demo: Check Status (complete overview) ---
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "# Sacred Command 3: STATUS (complete overview)" Sleep 1s Enter Sleep 1s
+Type "# Command 3: STATUS (complete overview)" Sleep 1s Enter Sleep 1s
+
+Type "uro -s" Sleep 1s Enter
+Sleep 4s
+
+Type "# Same data, full format:" Sleep 1s Enter
 Type "uroboro status" Sleep 1s Enter
 Sleep 4s
 
@@ -53,13 +47,18 @@ Sleep 4s
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "# Sacred Command 2: PUBLISH (2 minutes)" Sleep 1s Enter Sleep 1s
+Type "# Command 2: PUBLISH (2 minutes)" Sleep 1s Enter Sleep 1s
+
 Type "uroboro publish --blog" Sleep 1.5s Enter
 Sleep 8s
+
+Type "# Short format also works:" Sleep 1s Enter
+Type "uro -p --devlog" Sleep 1.5s Enter
+Sleep 6s
 
 Hide
 Type "clear" Enter Sleep 1s
 Show
-Type "# That's the sacred workflow - three commands that's it!" Sleep 1s Enter Sleep 1s
-Type "echo '🎯 capture → publish → status'" Sleep 1s Enter
-Sleep 2s 
+Type "echo '🎯 Core workflow: Both uroboro and uro work seamlessly'" Sleep 1.5s Enter
+Type "echo '✅ Professional tools, not amateur prototypes'" Sleep 1s Enter
+Sleep 3s 
