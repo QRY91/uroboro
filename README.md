@@ -69,6 +69,29 @@ Download the latest binary from [Releases](https://github.com/QRY91/uroboro/rele
 - **Fast**: Sub-second startup
 - **Clean**: No dependencies beyond Go stdlib + Ollama
 - **Complete**: Full format support, capture, publish, status
+- **Tested**: Comprehensive unit test coverage for all core functionality
+
+### Quality Assurance
+```bash
+# Run all tests
+go test ./internal/...
+
+# Run tests with coverage
+go test -race -coverprofile=coverage.out ./internal/...
+
+# Build both binaries
+go build -o uroboro ./cmd/uroboro && ln -sf uroboro uro
+```
+
+### CI Pipeline
+- **Automated testing** on every push/PR
+- **Unit tests** for all 3 core commands
+- **Integration tests** with XDG compliance verification  
+- **Build verification** for both `uroboro` and `uro` binaries
+- **Quality gates** preventing regressions
+- **Coverage reporting** to maintain code quality
+
+The pipeline ensures no "amateur hour" regressions - all 3 commands must work, every release.
 
 ### Python (Reference - Archived)
 Available in `archive/python-reference/` for feature reference and experimentation.
