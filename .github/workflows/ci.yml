@@ -145,4 +145,24 @@ jobs:
       if: success()
       run: |
         echo "🎉 Uroboro CI pipeline completed successfully!"
-        echo "📊 Ready for doggowoof monitoring integration" 
+        echo "📊 Ready for doggowoof monitoring integration"
+
+    # NEW: System-wide installation regression test
+    - name: Test system installation (regression test)
+      run: |
+        # Install to PATH
+        mkdir -p ~/.local/bin
+        cp ./uroboro ~/.local/bin/
+        ln -sf ~/.local/bin/uroboro ~/.local/bin/uro
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        
+        # Test system commands work (prevent Python regression)
+        export PATH="$HOME/.local/bin:$PATH"
+        uroboro --help | grep -q "The Self-Documenting Content Pipeline"
+        uro --help | grep -q "The Self-Documenting Content Pipeline"
+        
+        # Test core workflow doesn't crash
+        uroboro capture "CI regression test - system installation works"
+        uroboro status | grep -q "Recent activity"
+        uro -c "CI regression test - short command works"
+        uro -s | grep -q "Recent activity" 
