@@ -9,8 +9,13 @@ Transform your development insights into professional content that gets you ackn
 ```bash
 # Core workflow - 3 commands, that's it
 uroboro capture "Fixed auth timeout - cut query time from 3s to 200ms"
+# or: uro capture "Fixed auth timeout - cut query time from 3s to 200ms"
+
 uroboro publish --blog --format html
+# or: uro publish --blog --format html
+
 uroboro status
+# or: uro status
 ```
 
 ### Format Support
@@ -22,15 +27,15 @@ uroboro status
 ```bash
 # Capture insights
 uroboro capture "Implemented OAuth2 with JWT tokens"
-uroboro capture "Reduced bundle size by 40% using tree shaking" --project frontend
+uro capture "Reduced bundle size by 40% using tree shaking" --project frontend
 
 # Generate content  
-uroboro publish --blog --preview
+uro publish --blog --preview
 uroboro publish --blog --format html --title "This Week's Wins"
-uroboro publish --devlog
+uro publish --devlog
 
 # Check status
-uroboro status --days 7
+uro status --days 7
 ```
 
 ## 🎯 North Star Workflow
@@ -112,17 +117,18 @@ Three commands. That's it. 🎯
 
 ## 🎯 The Core Workflow
 
-**Three commands beats seventeen.** We discovered this by cutting uroboro from 1,558 lines to 270 lines, removing 14 commands, and keeping only what delivers acknowledgment for your actual work.
+**Three commands beats seventeen.** We discovered this by removing 2,497 lines of outdated code (60.8% of the codebase), cutting 14 commands, and keeping only what delivers acknowledgment for your actual work.
 
 ```bash
 # 1. Capture your work (10 seconds)
 uroboro capture "Fixed auth timeout - cut query time from 3s to 200ms"
+# or: uro capture "Fixed auth timeout - cut query time from 3s to 200ms"
 
 # 2. Publish content (2 minutes)  
-uroboro publish --blog
+uro publish --blog
 
 # 3. Check everything (complete overview)
-uroboro status
+uro status
 ```
 
 ## ✨ What Actually Works
@@ -193,15 +199,16 @@ uroboro publish --blog
 
 ## 📋 Core Commands Reference
 
-### `uroboro capture`
+### `uroboro capture` / `uro capture`
 **Purpose**: Lightning-fast insight logging during development
 
 ```bash
 # Basic capture
 uroboro capture "Fixed memory leak in connection pool"
+# or: uro capture "Fixed memory leak in connection pool"
 
 # With context (optional)
-uroboro capture "Implemented WebSocket reconnection" --project my-app
+uro capture "Implemented WebSocket reconnection" --project my-app
 ```
 
 **Features that actually work**:
@@ -210,21 +217,21 @@ uroboro capture "Implemented WebSocket reconnection" --project my-app
 - Project organization (when needed)
 - Zero flow state interruption
 
-### `uroboro publish`
+### `uroboro publish` / `uro publish`
 **Purpose**: Transform captures into professional content
 
 ```bash
 # Generate blog post
-uroboro publish --blog
+uro publish --blog
 
 # Generate dev log
 uroboro publish --devlog
 
 # Generate social content
-uroboro publish --social
+uro publish --social
 
 # Custom timeframe
-uroboro publish --blog --days 7
+uro publish --blog --days 7
 ```
 
 **Features that actually work**:
@@ -234,12 +241,12 @@ uroboro publish --blog --days 7
 - Auto-voice detection (sounds like you, not AI)
 - 2-minute generation time
 
-### `uroboro status`
+### `uroboro status` / `uro status`
 **Purpose**: Complete overview of your development pipeline
 
 ```bash
 # See everything
-uroboro status
+uro status
 ```
 
 **Shows you**:

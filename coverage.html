@@ -1,0 +1,772 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>capture: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/QRY91/uroboro/internal/capture/capture.go (84.6%)</option>
+				
+				<option value="file1">github.com/QRY91/uroboro/internal/publish/publish.go (29.0%)</option>
+				
+				<option value="file2">github.com/QRY91/uroboro/internal/status/status.go (49.5%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package capture
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+        "time"
+)
+
+type CaptureService struct{}
+
+func NewCaptureService() *CaptureService <span class="cov4" title="2">{
+        return &amp;CaptureService{}
+}</span>
+
+func (c *CaptureService) Capture(content, project, tags string) error <span class="cov4" title="2">{
+        timestamp := time.Now().Format("2006-01-02T15:04:05")
+
+        // Get XDG data directory
+        homeDir, err := os.UserHomeDir()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get home directory: %w", err)
+        }</span>
+
+        <span class="cov4" title="2">dataDir := filepath.Join(homeDir, ".local", "share", "uroboro", "daily")
+        if err := os.MkdirAll(dataDir, 0755); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create data directory: %w", err)
+        }</span>
+
+        // Create daily note filename
+        <span class="cov4" title="2">today := time.Now().Format("2006-01-02")
+        filename := filepath.Join(dataDir, fmt.Sprintf("%s.md", today))
+
+        // Prepare entry
+        entry := fmt.Sprintf("\n## %s\n\n%s\n", timestamp, content)
+
+        if project != "" </span><span class="cov1" title="1">{
+                entry += fmt.Sprintf("Project: %s\n", project)
+        }</span>
+
+        <span class="cov4" title="2">if tags != "" </span><span class="cov1" title="1">{
+                entry += fmt.Sprintf("Tags: %s\n", tags)
+        }</span>
+
+        // Append to daily notes file
+        <span class="cov4" title="2">f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to open daily notes file: %w", err)
+        }</span>
+        <span class="cov4" title="2">defer f.Close()
+
+        if _, err := f.WriteString(entry); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to write to daily notes: %w", err)
+        }</span>
+
+        <span class="cov4" title="2">fmt.Printf("✅ Captured: %s\n", truncateContent(content, 60))
+        return nil</span>
+}
+
+func truncateContent(content string, maxLen int) string <span class="cov10" title="5">{
+        if len(content) &lt;= maxLen </span><span class="cov8" title="4">{
+                return content
+        }</span>
+        <span class="cov1" title="1">return content[:maxLen] + "..."</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package publish
+
+import (
+        "bufio"
+        "context"
+        "fmt"
+        "os"
+        "os/exec"
+        "path/filepath"
+        "strings"
+        "time"
+)
+
+type PublishService struct {
+        model string
+}
+
+func NewPublishService() *PublishService <span class="cov5" title="5">{
+        model := os.Getenv("UROBORO_MODEL")
+        if model == "" </span><span class="cov5" title="5">{
+                model = "mistral:latest"
+        }</span>
+        <span class="cov5" title="5">return &amp;PublishService{model: model}</span>
+}
+
+func (p *PublishService) callOllama(prompt string) (string, error) <span class="cov0" title="0">{
+        fmt.Printf("[DEBUG] Calling ollama with model: %s, prompt length: %d chars\n", p.model, len(prompt))
+
+        ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+        defer cancel()
+
+        cmd := exec.CommandContext(ctx, "ollama", "run", p.model)
+        cmd.Stdin = strings.NewReader(prompt)
+
+        output, err := cmd.Output()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("ollama error: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">result := strings.TrimSpace(string(output))
+        fmt.Printf("[DEBUG] Ollama success, response length: %d chars\n", len(result))
+        return result, nil</span>
+}
+
+func (p *PublishService) GenerateDevlog(days int) error <span class="cov0" title="0">{
+        fmt.Printf("🔍 Collecting activity from last %d day(s)...\n", days)
+
+        // Get recent captures - simplified version
+        activity, err := p.collectRecentActivity(days)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to collect activity: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if len(activity) == 0 </span><span class="cov0" title="0">{
+                fmt.Println("❌ No recent activity found to process")
+                fmt.Println("💡 Try: uroboro capture 'your development insight' first")
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">fmt.Printf("✅ Found %d recent captures\n", len(activity))
+        fmt.Println("📋 Generating development log...")
+
+        prompt := p.buildDevlogPrompt(activity)
+        content, err := p.callOllama(prompt)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to generate devlog: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">fmt.Println("--- DEVLOG SUMMARY ---")
+        fmt.Println(content)
+        fmt.Println("--- END DEVLOG ---")
+
+        return nil</span>
+}
+
+func (p *PublishService) GenerateBlog(days int, title string, preview bool, format string) error <span class="cov0" title="0">{
+        fmt.Printf("🔍 Collecting activity from last %d day(s)...\n", days)
+
+        activity, err := p.collectRecentActivity(days)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to collect activity: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if len(activity) == 0 </span><span class="cov0" title="0">{
+                fmt.Println("❌ No recent activity found to process")
+                fmt.Println("💡 Try: uroboro capture 'your development insight' first")
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">fmt.Printf("✅ Found %d recent captures\n", len(activity))
+        fmt.Printf("📝 Generating blog post (%s format)...\n", format)
+
+        if title == "" </span><span class="cov0" title="0">{
+                title = fmt.Sprintf("Dev Update - %s", time.Now().Format("January 2, 2006"))
+        }</span>
+
+        <span class="cov0" title="0">prompt := p.buildBlogPrompt(activity, title, format)
+        content, err := p.callOllama(prompt)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to generate blog: %w", err)
+        }</span>
+
+        // Format the content based on the requested format
+        <span class="cov0" title="0">fullContent := p.formatContent(content, title, format)
+
+        if preview </span><span class="cov0" title="0">{
+                fmt.Printf("--- %s PREVIEW ---\n", strings.ToUpper(format))
+                fmt.Println(fullContent)
+                fmt.Printf("--- END %s PREVIEW ---\n", strings.ToUpper(format))
+        }</span> else<span class="cov0" title="0"> {
+                filename := p.saveBlogPost(fullContent, title, format)
+                fmt.Printf("✅ Blog post saved to: %s\n", filename)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (p *PublishService) collectRecentActivity(days int) ([]string, error) <span class="cov1" title="1">{
+        // Get XDG data directory
+        homeDir, err := os.UserHomeDir()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to get home directory: %w", err)
+        }</span>
+
+        <span class="cov1" title="1">dataDir := filepath.Join(homeDir, ".local", "share", "uroboro", "daily")
+
+        var activity []string
+
+        entries, err := os.ReadDir(dataDir)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov1" title="1">cutoff := time.Now().AddDate(0, 0, -days)
+
+        for _, entry := range entries </span><span class="cov1" title="1">{
+                if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov1" title="1">info, err := entry.Info()
+                if err != nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov1" title="1">if info.ModTime().After(cutoff) </span><span class="cov1" title="1">{
+                        fullPath := filepath.Join(dataDir, entry.Name())
+                        content, err := os.ReadFile(fullPath)
+                        if err != nil </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+
+                        // Extract captures from markdown content
+                        <span class="cov1" title="1">captures := p.extractCaptures(string(content))
+                        activity = append(activity, captures...)</span>
+                }
+        }
+
+        <span class="cov1" title="1">return activity, nil</span>
+}
+
+func (p *PublishService) extractCaptures(content string) []string <span class="cov3" title="3">{
+        var captures []string
+        scanner := bufio.NewScanner(strings.NewReader(content))
+
+        inCapture := false
+        var currentCapture strings.Builder
+
+        for scanner.Scan() </span><span class="cov10" title="31">{
+                line := scanner.Text()
+
+                // Look for timestamp markers
+                if strings.HasPrefix(line, "## 2025-") </span><span class="cov5" title="5">{
+                        if inCapture &amp;&amp; currentCapture.Len() &gt; 0 </span><span class="cov3" title="3">{
+                                captures = append(captures, strings.TrimSpace(currentCapture.String()))
+                                currentCapture.Reset()
+                        }</span>
+                        <span class="cov5" title="5">inCapture = true
+                        continue</span>
+                }
+
+                <span class="cov9" title="26">if inCapture </span><span class="cov8" title="16">{
+                        if strings.HasPrefix(line, "## ") </span><span class="cov0" title="0">{
+                                // New section, end current capture
+                                if currentCapture.Len() &gt; 0 </span><span class="cov0" title="0">{
+                                        captures = append(captures, strings.TrimSpace(currentCapture.String()))
+                                        currentCapture.Reset()
+                                }</span>
+                                <span class="cov0" title="0">inCapture = false</span>
+                        } else<span class="cov8" title="16"> if strings.TrimSpace(line) != "" &amp;&amp; !strings.HasPrefix(line, "Tags:") </span><span class="cov5" title="6">{
+                                if currentCapture.Len() &gt; 0 </span><span class="cov1" title="1">{
+                                        currentCapture.WriteString(" ")
+                                }</span>
+                                <span class="cov5" title="6">currentCapture.WriteString(strings.TrimSpace(line))</span>
+                        }
+                }
+        }
+
+        // Don't forget the last capture
+        <span class="cov3" title="3">if inCapture &amp;&amp; currentCapture.Len() &gt; 0 </span><span class="cov2" title="2">{
+                captures = append(captures, strings.TrimSpace(currentCapture.String()))
+        }</span>
+
+        <span class="cov3" title="3">return captures</span>
+}
+
+func (p *PublishService) buildDevlogPrompt(activity []string) string <span class="cov1" title="1">{
+        allContent := strings.Join(activity, "\n")
+
+        return fmt.Sprintf(`Analyze this development activity and create a concise development log summary.
+
+IMPORTANT: These are today's most important work captures - prioritize them.
+
+%s
+
+Create a structured summary with:
+## Technical Work
+- Brief bullet points of what was accomplished
+
+## Key Insights  
+- Important discoveries or decisions made
+
+## Next Steps
+- What should be tackled next
+
+Keep it professional but conversational. Focus on the most significant items.`, allContent)
+}</span>
+
+func (p *PublishService) buildBlogPrompt(activity []string, title string, format string) string <span class="cov0" title="0">{
+        todayWork := strings.Join(activity[:min(5, len(activity))], "\n")
+
+        formatInstructions := p.getFormatInstructions(format)
+
+        return fmt.Sprintf(`Write an engaging blog post about today's development work:
+
+TODAY'S CAPTURES:
+%s
+
+Structure:
+1. Brief intro (1-2 sentences)
+2. Main highlights from today's work
+3. Brief technical insight or lesson learned
+4. Quick note on what's next
+
+Keep it 200-300 words, focused on today's specific achievements.
+Write in engaging, professional tone.
+
+%s`, todayWork, formatInstructions)
+}</span>
+
+func (p *PublishService) getFormatInstructions(format string) string <span class="cov4" title="4">{
+        switch format </span>{
+        case "html":<span class="cov1" title="1">
+                return "Output clean, semantic content suitable for HTML conversion."</span>
+        case "text":<span class="cov1" title="1">
+                return "Write in plain text format - no markup, just clean readable content with clear structure."</span>
+        default:<span class="cov2" title="2"> // markdown
+                return "Use standard Markdown formatting with ## headings and `code` blocks."</span>
+        }
+}
+
+func (p *PublishService) formatContent(content, title, format string) string <span class="cov0" title="0">{
+        switch format </span>{
+        case "markdown":<span class="cov0" title="0">
+                return fmt.Sprintf(`# %s
+
+*%s*
+
+%s`, title, time.Now().Format("January 2, 2006"), content)</span>
+
+        case "html":<span class="cov0" title="0">
+                return fmt.Sprintf(`&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;%s&lt;/title&gt;
+    &lt;meta charset="utf-8"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;%s&lt;/h1&gt;
+    &lt;p&gt;&lt;em&gt;%s&lt;/em&gt;&lt;/p&gt;
+    %s
+&lt;/body&gt;
+&lt;/html&gt;`, title, title, time.Now().Format("January 2, 2006"), p.markdownToHTML(content))</span>
+
+        case "text":<span class="cov0" title="0">
+                return fmt.Sprintf(`%s
+
+%s
+
+%s`, title, time.Now().Format("January 2, 2006"), p.stripMarkdown(content))</span>
+
+        default:<span class="cov0" title="0">
+                return content</span>
+        }
+}
+
+func (p *PublishService) markdownToHTML(markdown string) string <span class="cov0" title="0">{
+        // Basic markdown to HTML conversion
+        lines := strings.Split(markdown, "\n")
+        var htmlLines []string
+
+        for _, line := range lines </span><span class="cov0" title="0">{
+                line = strings.TrimSpace(line)
+                if line == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov0" title="0">if strings.HasPrefix(line, "## ") </span><span class="cov0" title="0">{
+                        htmlLines = append(htmlLines, fmt.Sprintf("    &lt;h2&gt;%s&lt;/h2&gt;", line[3:]))
+                }</span> else<span class="cov0" title="0"> if strings.HasPrefix(line, "# ") </span><span class="cov0" title="0">{
+                        htmlLines = append(htmlLines, fmt.Sprintf("    &lt;h1&gt;%s&lt;/h1&gt;", line[2:]))
+                }</span> else<span class="cov0" title="0"> {
+                        // Convert inline code
+                        line = strings.ReplaceAll(line, "`", "&lt;code&gt;")
+                        htmlLines = append(htmlLines, fmt.Sprintf("    &lt;p&gt;%s&lt;/p&gt;", line))
+                }</span>
+        }
+
+        <span class="cov0" title="0">return strings.Join(htmlLines, "\n")</span>
+}
+
+func (p *PublishService) stripMarkdown(markdown string) string <span class="cov0" title="0">{
+        // Remove markdown formatting for plain text
+        text := markdown
+
+        // Remove headers
+        text = strings.ReplaceAll(text, "## ", "")
+        text = strings.ReplaceAll(text, "# ", "")
+
+        // Remove code formatting
+        text = strings.ReplaceAll(text, "`", "")
+
+        // Remove bold/italic
+        text = strings.ReplaceAll(text, "**", "")
+        text = strings.ReplaceAll(text, "*", "")
+
+        // Clean up extra whitespace
+        lines := strings.Split(text, "\n")
+        var cleanLines []string
+        for _, line := range lines </span><span class="cov0" title="0">{
+                line = strings.TrimSpace(line)
+                if line != "" </span><span class="cov0" title="0">{
+                        cleanLines = append(cleanLines, line)
+                }</span>
+        }
+
+        <span class="cov0" title="0">return strings.Join(cleanLines, "\n\n")</span>
+}
+
+func (p *PublishService) saveBlogPost(content, title, format string) string <span class="cov0" title="0">{
+        // Get the project root (parent of go directory)
+        executablePath, err := os.Executable()
+        if err != nil </span><span class="cov0" title="0">{
+                executablePath = "."
+        }</span>
+        <span class="cov0" title="0">execDir := filepath.Dir(executablePath)
+
+        // If we're in the go directory, go up one level to project root
+        projectRoot := execDir
+        if strings.HasSuffix(execDir, "/go") || strings.HasSuffix(execDir, "\\go") </span><span class="cov0" title="0">{
+                projectRoot = filepath.Dir(execDir)
+        }</span>
+
+        // Create output directory at project root
+        <span class="cov0" title="0">outputDir := filepath.Join(projectRoot, "output", "posts")
+        os.MkdirAll(outputDir, 0755)
+
+        // Generate filename from title and format
+        filename := strings.ToLower(title)
+        filename = strings.ReplaceAll(filename, " ", "-")
+        filename = strings.ReplaceAll(filename, ",", "")
+
+        // Choose extension based on format
+        var ext string
+        switch format </span>{
+        case "html":<span class="cov0" title="0">
+                ext = "html"</span>
+        case "text":<span class="cov0" title="0">
+                ext = "txt"</span>
+        default:<span class="cov0" title="0"> // markdown
+                ext = "md"</span>
+        }
+
+        <span class="cov0" title="0">filename = fmt.Sprintf("%s-%s.%s", time.Now().Format("2006-01-02"), filename, ext)
+
+        filepath := filepath.Join(outputDir, filename)
+        os.WriteFile(filepath, []byte(content), 0644)
+
+        return filepath</span>
+}
+
+func min(a, b int) int <span class="cov0" title="0">{
+        if a &lt; b </span><span class="cov0" title="0">{
+                return a
+        }</span>
+        <span class="cov0" title="0">return b</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package status
+
+import (
+        "bufio"
+        "encoding/json"
+        "fmt"
+        "os"
+        "path/filepath"
+        "strings"
+        "time"
+)
+
+type Insight struct {
+        Text      string    `json:"text"`
+        Tags      []string  `json:"tags"`
+        Timestamp time.Time `json:"timestamp"`
+}
+
+type StatusService struct{}
+
+func NewStatusService() *StatusService <span class="cov4" title="4">{
+        return &amp;StatusService{}
+}</span>
+
+func (s *StatusService) ShowStatus(days int) error <span class="cov2" title="2">{
+        fmt.Println("🐍 uroboro status")
+
+        // Get XDG data directory
+        homeDir, err := os.UserHomeDir()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get home directory: %w", err)
+        }</span>
+
+        <span class="cov2" title="2">dataDir := filepath.Join(homeDir, ".local", "share", "uroboro", "daily")
+
+        // Count recent activity
+        cutoff := time.Now().AddDate(0, 0, -days)
+        activityCount := 0
+
+        entries, err := os.ReadDir(dataDir)
+        if err != nil </span><span class="cov1" title="1">{
+                // Data directory doesn't exist yet
+                fmt.Printf("Recent activity (%d days): 0 items\n", days)
+                fmt.Printf("\n📝 Recent Captures (last %d days):\n", days)
+                fmt.Println("  No recent captures found")
+                return nil
+        }</span>
+
+        <span class="cov1" title="1">for _, entry := range entries </span><span class="cov1" title="1">{
+                if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov1" title="1">info, err := entry.Info()
+                if err != nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov1" title="1">if info.ModTime().After(cutoff) </span><span class="cov1" title="1">{
+                        activityCount++
+                }</span>
+        }
+
+        <span class="cov1" title="1">fmt.Printf("Recent activity (%d days): %d items\n", days, activityCount)
+
+        // Show recent captures
+        fmt.Printf("\n📝 Recent Captures (last %d days):\n", days)
+
+        shown := 0
+        for _, entry := range entries </span><span class="cov1" title="1">{
+                if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov1" title="1">info, err := entry.Info()
+                if err != nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov1" title="1">if info.ModTime().After(cutoff) </span><span class="cov1" title="1">{
+                        fullPath := filepath.Join(dataDir, entry.Name())
+                        content, err := os.ReadFile(fullPath)
+                        if err != nil </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+
+                        <span class="cov1" title="1">captures := s.extractRecentCaptures(string(content))
+                        for _, capture := range captures </span><span class="cov2" title="2">{
+                                if shown &gt;= 10 </span><span class="cov0" title="0">{
+                                        break</span>
+                                }
+                                <span class="cov2" title="2">fmt.Printf("  📄 %s\n", capture)
+                                shown++</span>
+                        }
+                }
+
+                <span class="cov1" title="1">if shown &gt;= 10 </span><span class="cov0" title="0">{
+                        break</span>
+                }
+        }
+
+        <span class="cov1" title="1">if shown == 0 </span><span class="cov0" title="0">{
+                fmt.Println("  No recent captures found")
+        }</span>
+
+        <span class="cov1" title="1">return nil</span>
+}
+
+func (s *StatusService) extractRecentCaptures(content string) []string <span class="cov3" title="3">{
+        var captures []string
+        lines := strings.Split(content, "\n")
+
+        for i, line := range lines </span><span class="cov10" title="33">{
+                if strings.HasPrefix(line, "## 2025-") </span><span class="cov5" title="6">{
+                        // Found a timestamp, get the content
+                        if i+2 &lt; len(lines) &amp;&amp; strings.TrimSpace(lines[i+2]) != "" </span><span class="cov5" title="6">{
+                                capture := strings.TrimSpace(lines[i+2])
+                                if len(capture) &gt; 80 </span><span class="cov0" title="0">{
+                                        capture = capture[:80] + "..."
+                                }</span>
+                                <span class="cov5" title="6">captures = append(captures, capture)</span>
+                        }
+                }
+        }
+
+        <span class="cov3" title="3">return captures</span>
+}
+
+func Show(days int, recent bool) error <span class="cov0" title="0">{
+        homeDir, err := os.UserHomeDir()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("could not get home directory: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">insightsFile := filepath.Join(homeDir, ".uroboro", "insights.jsonl")
+
+        file, err := os.Open(insightsFile)
+        if err != nil </span><span class="cov0" title="0">{
+                if os.IsNotExist(err) </span><span class="cov0" title="0">{
+                        fmt.Println("No insights captured yet. Use 'uroboro capture' to get started!")
+                        return nil
+                }</span>
+                <span class="cov0" title="0">return fmt.Errorf("could not open insights file: %w", err)</span>
+        }
+        <span class="cov0" title="0">defer file.Close()
+
+        var insights []Insight
+        scanner := bufio.NewScanner(file)
+        for scanner.Scan() </span><span class="cov0" title="0">{
+                var insight Insight
+                if err := json.Unmarshal(scanner.Bytes(), &amp;insight); err != nil </span><span class="cov0" title="0">{
+                        continue</span> // Skip malformed lines
+                }
+                <span class="cov0" title="0">insights = append(insights, insight)</span>
+        }
+
+        <span class="cov0" title="0">if len(insights) == 0 </span><span class="cov0" title="0">{
+                fmt.Println("No insights found.")
+                return nil
+        }</span>
+
+        // Filter by days if specified
+        <span class="cov0" title="0">if days &gt; 0 </span><span class="cov0" title="0">{
+                cutoff := time.Now().AddDate(0, 0, -days)
+                var filtered []Insight
+                for _, insight := range insights </span><span class="cov0" title="0">{
+                        if insight.Timestamp.After(cutoff) </span><span class="cov0" title="0">{
+                                filtered = append(filtered, insight)
+                        }</span>
+                }
+                <span class="cov0" title="0">insights = filtered</span>
+        }
+
+        <span class="cov0" title="0">fmt.Printf("📊 Uroboro Status\n")
+        fmt.Printf("Total insights: %d\n", len(insights))
+
+        if days &gt; 0 </span><span class="cov0" title="0">{
+                fmt.Printf("Recent activity (%d days): %d items\n", days, len(insights))
+        }</span>
+
+        <span class="cov0" title="0">if recent &amp;&amp; len(insights) &gt; 0 </span><span class="cov0" title="0">{
+                fmt.Println("\nRecent insights:")
+                for i := len(insights) - 1; i &gt;= 0 &amp;&amp; i &gt;= len(insights)-5; i-- </span><span class="cov0" title="0">{
+                        insight := insights[i]
+                        fmt.Printf("  • %s (%s)\n", insight.Text, insight.Timestamp.Format("2006-01-02 15:04"))
+                }</span>
+        }
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

@@ -104,18 +104,24 @@
                     <div class="demo-workflow">
                         <div class="demo-step">
                             <span class="step-number" aria-label="Step 1">1</span>
+                            <div>
                             <div class="demo-input">
-                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                        <span class="terminal-prompt" aria-hidden="true">$</span>
                                 <span class="demo-command">uroboro capture "Fixed auth timeout - cut query time from 3s to 200ms"</span>
+                                </div>
+                                <div class="demo-alt">
+                                    <code>
+                                        <span class="terminal-prompt" aria-hidden="true">$</span>
+                                        <span class="demo-command">uro -c "Implemented real-time notifications using WebSockets"</span>
+                                    </code>
+                                </div>
                             </div>
-                            <div class="demo-alt">
-                                <span class="terminal-prompt" aria-hidden="true">$</span>
-                                <span class="demo-command">uro -c "Fixed auth timeout - cut query time from 3s to 200ms"</span>
-                            </div>
+                        </div>
                         </div>
                         <div class="demo-arrow" aria-hidden="true">↓</div>
                         <div class="demo-step">
                             <span class="step-number" aria-label="Step 2">2</span>
+                            <div>
                             <div class="demo-input">
                                 <span class="terminal-prompt" aria-hidden="true">$</span>
                                 <span class="demo-command">uroboro publish --blog</span>
@@ -124,6 +130,7 @@
                                 <span class="terminal-prompt" aria-hidden="true">$</span>
                                 <span class="demo-command">uro -p --blog</span>
                             </div>
+                        </div>
                         </div>
                         <div class="demo-arrow" aria-hidden="true">↓</div>
                         <div class="demo-output">
@@ -183,10 +190,10 @@
             <div class="problem-cost" role="region" aria-labelledby="cost-heading">
                 <h3 id="cost-heading">The Real Cost:</h3>
                 <ul>
-                    <li><strong>Lost opportunities</strong> - Amazing work goes unnoticed</li>
-                    <li><strong>Imposter syndrome</strong> - No record of your growth</li>
-                    <li><strong>Lonely development</strong> - No community around your work</li>
-                    <li><strong>Career stagnation</strong> - No portfolio of your thinking</li>
+                    <li><strong>Lost opportunities</strong><span class="separator">—</span>Amazing work goes unnoticed</li>
+                    <li><strong>Imposter syndrome</strong><span class="separator">—</span>No record of your growth</li>
+                    <li><strong>Lonely development</strong><span class="separator">—</span>No community around your work</li>
+                    <li><strong>Career stagnation</strong><span class="separator">—</span>No portfolio of your thinking</li>
                 </ul>
             </div>
         </div>
@@ -205,18 +212,18 @@
                     <div class="step-number" aria-label="Step 1">1</div>
                     <div class="step-content">
                         <h3>capture <br><span class="step-time">(10 seconds)</span></h3>
-                        <div class="code-block" role="region" aria-label="Capture command example">
-                            <code>uroboro capture "Implemented real-time notifications using WebSockets"</code>
+                        <div class="demo-input">
+                            <code>
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-text">uroboro capture "Implemented real-time notifications using WebSockets"</span>
+                            </code>
                         </div>
-                        <div class="code-alt" role="region" aria-label="Alternative capture command">
-                            <code>uro -c "Implemented real-time notifications using WebSockets"</code>
+                        <div class="demo-alt">
+                            <code>
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-command">uro -c "Implemented real-time notifications using WebSockets"</span>
+                            </code>
                         </div>
-                        <ul>
-                            <li>Quick terminal command during development</li>
-                            <li>No interruption to your flow state</li>
-                            <li>Captures context while it's fresh in your mind</li>
-                            <li>Auto-git integration when you need it</li>
-                        </ul>
                     </div>
                 </article>
                 
@@ -224,11 +231,17 @@
                     <div class="step-number" aria-label="Step 2">2</div>
                     <div class="step-content">
                         <h3>publish <br><span class="step-time">(2 minutes)</span></h3>
-                        <div class="code-block" role="region" aria-label="Publish command example">
-                            <code>uroboro publish --blog</code>
+                        <div class="demo-input">
+                            <code>
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-command">uroboro publish --blog</span>
+                            </code>
                         </div>
-                        <div class="code-alt" role="region" aria-label="Alternative publish command">
-                            <code>uro -p --blog</code>
+                        <div class="demo-alt">
+                            <code>
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-command">uro -p --blog</span>
+                            </code>
                         </div>
                         <p>Local AI transforms your captures into:</p>
                         <ul>
@@ -244,11 +257,17 @@
                     <div class="step-number" aria-label="Step 3">3</div>
                     <div class="step-content">
                         <h3>status <br><span class="step-time">(Everything you need)</span></h3>
-                        <div class="code-block" role="region" aria-label="Status command example">
-                            <code>uroboro status</code>
+                        <div class="demo-input">
+                            <code>
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-command">uroboro status</span>
+                            </code>
                         </div>
-                        <div class="code-alt" role="region" aria-label="Alternative status command">
-                            <code>uro -s</code>
+                        <div class="demo-alt">
+                            <code>
+                                <span class="terminal-prompt" aria-hidden="true">$</span>
+                                <span class="demo-command">uro -s</span>
+                            </code>
                         </div>
                         <p>Complete overview of your development pipeline:</p>
                         <ul>
@@ -332,7 +351,7 @@
                             <h3>🎬 Complete Overview</h3>
                             <p>Full uroboro experience in action. From capture to published content, see how the tool documents itself while helping you document everything else.</p>
                             <code>uroboro capture → publish → get acknowledged</code>
-                            <div class="demo-update-note">📱 <em>Demos recorded with mobile-friendly resolution and font sizes</em></div>
+                            <div class="demo-update-note"><em>Full uroboro workflow in action</em></div>
                         </div>
                     </div>
                 </div>
@@ -386,7 +405,7 @@
                     <div class="step-number" aria-label="Step 1">1</div>
                     <div class="step-content">
                         <h3>Install</h3>
-                        <div class="code-block" role="region" aria-label="Installation command">
+                        <div class="demo-input" role="region" aria-label="Installation command">
                             <code>go install github.com/QRY91/uroboro@latest</code>
                         </div>
                         <p><em>Or clone and use the binary (installs both <code>uroboro</code> and <code>uro</code>):</em></p>
@@ -401,7 +420,7 @@
                     <div class="step-number" aria-label="Step 2">2</div>
                     <div class="step-content">
                         <h3>Capture Your Work</h3>
-                        <div class="code-block" role="region" aria-label="Capture example command">
+                        <div class="demo-input" role="region" aria-label="Capture example command">
                             <code>uroboro capture "Your development insight here"</code>
                         </div>
                     </div>
@@ -411,7 +430,7 @@
                     <div class="step-number" aria-label="Step 3">3</div>
                     <div class="step-content">
                         <h3>Publish & Get Acknowledged</h3>
-                        <div class="code-block" role="region" aria-label="Publish example command">
+                        <div class="demo-input" role="region" aria-label="Publish example command">
                             <code>uroboro publish --blog</code>
                         </div>
                     </div>
@@ -446,7 +465,8 @@
                 </nav>
                 <div class="footer-meta">
                     <p>uroboro: The tool that documents itself while helping you document everything else 🐍</p>
-                    <p>Made by developers, for developers who deserve acknowledgment.</p>
+                    <p>Made by developers, for developers who deserve acknowledgment.<br>
+                    (That's all of you! Love you! - Q)</p>
                 </div>
             </div>
         </div>
