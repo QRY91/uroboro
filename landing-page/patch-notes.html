@@ -38,6 +38,40 @@
                     <article class="note-item">
                         <div class="note-header">
                             <span class="note-date">June 5, 2025</span>
+                            <span class="note-type">Database UX</span>
+                        </div>
+                        <h2>🗄️ Database UX Improvement & Cross-Platform Integration</h2>
+                        <div class="note-content">
+                            <p><strong>Major UX Enhancement:</strong> Implemented improved <code>--db</code> flag that now supports 
+                            default path usage without explicit specification. No more typing full XDG paths!</p>
+                            
+                            <p><strong>New Usage Patterns:</strong></p>
+                            <ul>
+                                <li><code>uro capture --db "content"</code> → Uses default XDG path automatically</li>
+                                <li><code>uro capture --db=custom.sqlite "content"</code> → Custom database when needed</li>
+                                <li><code>uro publish --devlog --db</code> → Reads from default database</li>
+                            </ul>
+                            
+                            <p><strong>Cross-Platform Foundation:</strong> Complete SQLite database backend integration 
+                            enabling cross-tool communication. Clean interface with solid testing and straightforward 
+                            data management.</p>
+                            
+                            <p><strong>Technical Achievement:</strong> Fixed flag parsing order discovery - flags must 
+                            precede content string for proper command processing. All documentation updated to reflect 
+                            new ergonomic patterns.</p>
+                            
+                            <p><strong>North Star Alignment:</strong> Follows "practical over philosophical" principle - 
+                            43 characters reduced to 5 for default database usage while maintaining full flexibility 
+                            for advanced users.</p>
+                        </div>
+                        <div class="note-tech">
+                            <strong>Generated from:</strong> 5 real uroboro captures • Database UX & Cross-tool integration
+                        </div>
+                    </article>
+
+                    <article class="note-item">
+                        <div class="note-header">
+                            <span class="note-date">June 5, 2025</span>
                             <span class="note-type">Marketing Honesty</span>
                         </div>
                         <h2>🎨 Marketing Honesty Principle & Landing Page Updates</h2>
@@ -137,7 +171,7 @@
                     <div class="note-footer">
                         <h3>🔄 About These Notes</h3>
                         <p>This page demonstrates uroboro's core principle: <strong>documenting actual development work</strong>. 
-                        Every update above was generated from <strong>198 real uroboro development captures</strong> using 
+                        Every update above was generated from <strong>203 real uroboro development captures</strong> using 
                         uroboro's own content organization and generation features.</p>
                         
                         <p>Perfect dogfooding - uroboro documenting its own development journey from proof-of-concept 

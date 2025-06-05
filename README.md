@@ -319,6 +319,20 @@ This isn't just philosophy - it's what we learned. We took a bloated 17-command 
 
 **Result**: A tool that actually gets used because it respects your time and workflow.
 
+## 🤖 AI-Collaborative Design
+
+**Real testimonial from uroboro's developer:**
+
+> *"I don't even type `uro capture` anymore. I just remind my AI assistant to capture work at natural breakpoints - context switches, completed logic blocks, solved problems. The AI reads the captures, understands the context, and helps generate much better summaries than I'd write alone. It's seamless collaboration through simple CLI design."*
+
+**Why this works:**
+- **Universal accessibility**: Any AI that can use command line can help
+- **Natural workflow**: Capture at logical breakpoints, not arbitrary timers  
+- **Collaborative improvement**: Human domain expertise + AI writing skills
+- **Future-proof**: Works with any LLM, not tied to specific AI services
+
+The CLI design makes uroboro naturally compatible with AI assistance, creating a feedback loop where better captures lead to better content generation.
+
 ## 🤝 Contributing
 
 Found a bug in one of the core commands? Want to improve the core workflow? 

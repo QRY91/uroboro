@@ -100,12 +100,21 @@ func handleCapture(args []string) {
 }
 
 func handlePublish(args []string) {
-	// Check for --db flag without value (simple detection)
+	// Parse --db flag manually to support both --db and --db=path
+	dbPath := ""
 	useDefaultDB := false
-	for i, arg := range args {
-		if arg == "--db" && (i+1 >= len(args) || args[i+1][0] == '-') {
+	filteredArgs := []string{}
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--db" {
+			// --db without value, use default
 			useDefaultDB = true
-			break
+		} else if len(arg) > 5 && arg[:5] == "--db=" {
+			// --db=path format
+			dbPath = arg[5:]
+		} else {
+			filteredArgs = append(filteredArgs, arg)
 		}
 	}
 
@@ -116,15 +125,14 @@ func handlePublish(args []string) {
 	title := fs.String("title", "", "Blog post title")
 	preview := fs.Bool("preview", false, "Preview content without saving")
 	format := fs.String("format", "markdown", "Output format: markdown, html, text")
-	dbPath := fs.String("db", "", "SQLite database path (reads from files if not specified)")
 
-	fs.Parse(args)
+	fs.Parse(filteredArgs)
 
 	var service *publish.PublishService
 	var err error
 
 	// Handle database path logic
-	finalDBPath := *dbPath
+	finalDBPath := dbPath
 	if useDefaultDB && finalDBPath == "" {
 		// User specified --db without a value, use default
 		defaultPath, err := getOrSetDefaultDBPath()
