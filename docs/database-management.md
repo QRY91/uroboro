@@ -25,7 +25,7 @@ Linux/macOS: ~/.local/share/uroboro/uroboro.sqlite
 Windows:     %APPDATA%\uroboro\uroboro.sqlite
 
 # Custom location
-uro capture --db /path/to/custom.sqlite "content"
+uro capture --db=custom.sqlite "content"
 ```
 
 ### Test Databases
@@ -49,7 +49,7 @@ uro capture --db /path/to/custom.sqlite "content"
 ### Local Development
 ```bash
 # Fresh start - database created automatically
-uro capture --db ~/.local/share/uroboro/uroboro.sqlite "first capture"
+uro capture --db "first capture"  # Uses default XDG path
 # ✅ Database and schema created on first use
 # ✅ Migrations run automatically
 ```
@@ -86,10 +86,10 @@ if latestVersion < 2 {
 ### User Data Export (Future Feature)
 ```bash
 # Export captures to JSON
-uro export --db ~/.local/share/uroboro/uroboro.sqlite --format json
+uro export --db --format json  # From default database
 
 # Import from another database
-uro import --db ~/.local/share/uroboro/uroboro.sqlite --from backup.json
+uro import --db --from backup.json  # To default database
 ```
 
 ### Manual Backup
@@ -130,8 +130,8 @@ SELECT * FROM tool_messages WHERE to_tool = 'uroboro' AND processed = FALSE;
 ### Database Sharing
 ```bash
 # Both tools use same database
-uro capture --db ~/shared.sqlite "fixed auth issue"
-doggowoof scan --db ~/shared.sqlite ./src/
+uro capture --db=shared.sqlite "fixed auth issue" 
+doggowoof scan --db=shared.sqlite ./src/
 ```
 
 ## 🛡️ Security Considerations

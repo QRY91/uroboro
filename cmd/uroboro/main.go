@@ -36,12 +36,29 @@ func main() {
 }
 
 func handleCapture(args []string) {
+	// Parse --db flag manually to support both --db and --db=path
+	dbPath := ""
+	useDefaultDB := false
+	filteredArgs := []string{}
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--db" {
+			// --db without value, use default
+			useDefaultDB = true
+		} else if len(arg) > 5 && arg[:5] == "--db=" {
+			// --db=path format
+			dbPath = arg[5:]
+		} else {
+			filteredArgs = append(filteredArgs, arg)
+		}
+	}
+
 	fs := flag.NewFlagSet("capture", flag.ExitOnError)
 	project := fs.String("project", "", "Project name")
 	tags := fs.String("tags", "", "Comma-separated tags")
-	dbPath := fs.String("db", "", "SQLite database path (uses file storage if not specified)")
 
-	fs.Parse(args)
+	fs.Parse(filteredArgs)
 
 	if fs.NArg() == 0 {
 		fmt.Fprintf(os.Stderr, "Error: No content provided\n")
@@ -54,8 +71,20 @@ func handleCapture(args []string) {
 	var service *capture.CaptureService
 	var err error
 
-	if *dbPath != "" {
-		service, err = capture.NewCaptureServiceWithDB(*dbPath)
+	// Handle database path logic
+	finalDBPath := dbPath
+	if useDefaultDB && finalDBPath == "" {
+		// User specified --db without value, get default path
+		defaultPath, err := getOrSetDefaultDBPath()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Default database setup failed: %v\n", err)
+			os.Exit(1)
+		}
+		finalDBPath = defaultPath
+	}
+
+	if finalDBPath != "" {
+		service, err = capture.NewCaptureServiceWithDB(finalDBPath)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "❌ Database initialization failed: %v\n", err)
 			os.Exit(1)
@@ -71,6 +100,15 @@ func handleCapture(args []string) {
 }
 
 func handlePublish(args []string) {
+	// Check for --db flag without value (simple detection)
+	useDefaultDB := false
+	for i, arg := range args {
+		if arg == "--db" && (i+1 >= len(args) || args[i+1][0] == '-') {
+			useDefaultDB = true
+			break
+		}
+	}
+
 	fs := flag.NewFlagSet("publish", flag.ExitOnError)
 	days := fs.Int("days", 1, "Number of days to look back")
 	blog := fs.Bool("blog", false, "Generate blog post")
@@ -85,8 +123,20 @@ func handlePublish(args []string) {
 	var service *publish.PublishService
 	var err error
 
-	if *dbPath != "" {
-		service, err = publish.NewPublishServiceWithDB(*dbPath)
+	// Handle database path logic
+	finalDBPath := *dbPath
+	if useDefaultDB && finalDBPath == "" {
+		// User specified --db without a value, use default
+		defaultPath, err := getOrSetDefaultDBPath()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Default database setup failed: %v\n", err)
+			os.Exit(1)
+		}
+		finalDBPath = defaultPath
+	}
+
+	if finalDBPath != "" {
+		service, err = publish.NewPublishServiceWithDB(finalDBPath)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "❌ Database initialization failed: %v\n", err)
 			os.Exit(1)
@@ -156,4 +206,26 @@ func printUsage() {
 	fmt.Printf("  %s -p --blog\n", binaryName)
 	fmt.Printf("  %s status\n", binaryName)
 	fmt.Printf("  %s -s\n", binaryName)
+}
+
+// getOrSetDefaultDBPath tries to get default database path from config,
+// or prompts user to set one if not configured
+func getOrSetDefaultDBPath() (string, error) {
+	// For now, use a simple approach - just return the standard XDG path
+	// Later we can implement the interactive config system
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	defaultPath := filepath.Join(homeDir, ".local", "share", "uroboro", "uroboro.sqlite")
+
+	// Create directory if needed
+	dbDir := filepath.Dir(defaultPath)
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create database directory: %w", err)
+	}
+
+	fmt.Printf("🗄️  Using default database: %s\n", defaultPath)
+	return defaultPath, nil
 }

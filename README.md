@@ -203,25 +203,34 @@ uroboro publish --blog
 **Purpose**: Lightning-fast insight logging during development
 
 ```bash
-# Basic capture
+# Basic capture (file storage)
 uroboro capture "Fixed memory leak in connection pool"
 # or: uro capture "Fixed memory leak in connection pool"
 
 # With context (optional)
 uro capture "Implemented WebSocket reconnection" --project my-app
+
+# Database storage (opt-in)
+uro capture --db "Fixed auth timeout"  # Uses default XDG path
+uro capture --db=myproject.sqlite --project backend "Optimized queries"
 ```
+
+**Storage Options**:
+- **File storage** (default): Daily markdown files in `~/.local/share/uroboro/daily/`
+- **Database storage** (opt-in): SQLite database for cross-tool communication and querying
 
 **Features that actually work**:
 - 10-second workflow
 - Auto-git integration (when wanted)
 - Project organization (when needed)
 - Zero flow state interruption
+- Cross-tool communication via SQLite (when using `--db`)
 
 ### `uroboro publish` / `uro publish`
 **Purpose**: Transform captures into professional content
 
 ```bash
-# Generate blog post
+# Generate blog post (from file storage)
 uro publish --blog
 
 # Generate dev log
@@ -232,7 +241,15 @@ uro publish --social
 
 # Custom timeframe
 uro publish --blog --days 7
+
+# From database storage
+uro publish --blog --db  # Uses default XDG path
+uro publish --devlog --db=myproject.sqlite --days 14
 ```
+
+**Storage Sources**:
+- **File storage** (default): Reads from daily markdown files in `~/.local/share/uroboro/daily/`
+- **Database storage** (opt-in): Reads from SQLite database using `--db` flag
 
 **Features that actually work**:
 - Blog posts from your dev work
@@ -240,6 +257,7 @@ uro publish --blog --days 7
 - Technical dev logs
 - Voice matching (working on making it sound like you)
 - 2-minute generation time
+- Cross-tool data access via SQLite queries
 
 ### `uroboro status` / `uro status`
 **Purpose**: Complete overview of your development pipeline
