@@ -114,6 +114,12 @@ coverage.xml
 local_settings.py
 db.sqlite3
 
+# uroboro database files (local user data - never commit!)
+*.sqlite
+*.db
+uroboro.sqlite
+test_*.sqlite
+
 # Flask stuff:
 instance/
 .webassets-cache
