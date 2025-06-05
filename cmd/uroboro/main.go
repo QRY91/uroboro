@@ -173,18 +173,48 @@ func handlePublish(args []string) {
 }
 
 func handleStatus(args []string) {
+	// Parse --db flag manually to support both --db and --db=path
+	dbPath := ""
+	useDefaultDB := false
+	filteredArgs := []string{}
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--db" {
+			// --db without value, use default
+			useDefaultDB = true
+		} else if len(arg) > 5 && arg[:5] == "--db=" {
+			// --db=path format
+			dbPath = arg[5:]
+		} else {
+			filteredArgs = append(filteredArgs, arg)
+		}
+	}
+
 	fs := flag.NewFlagSet("status", flag.ExitOnError)
 	days := fs.String("days", "7", "Number of days to show")
 
-	fs.Parse(args)
+	fs.Parse(filteredArgs)
 
 	daysInt, err := strconv.Atoi(*days)
 	if err != nil {
 		daysInt = 7
 	}
 
+	// Handle database path logic
+	finalDBPath := dbPath
+	if useDefaultDB && finalDBPath == "" {
+		// User specified --db without value, get default path
+		defaultPath, err := getOrSetDefaultDBPath()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Default database setup failed: %v\n", err)
+			os.Exit(1)
+		}
+		finalDBPath = defaultPath
+	}
+
 	service := status.NewStatusService()
-	if err := service.ShowStatus(daysInt); err != nil {
+	if err := service.ShowStatus(daysInt, finalDBPath); err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Status check failed: %v\n", err)
 		os.Exit(1)
 	}

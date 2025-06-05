@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/QRY91/uroboro/internal/common"
+	"github.com/QRY91/uroboro/internal/database"
 )
 
 type Insight struct {
@@ -24,9 +25,64 @@ func NewStatusService() *StatusService {
 	return &StatusService{}
 }
 
-func (s *StatusService) ShowStatus(days int) error {
+func (s *StatusService) ShowStatus(days int, dbPath string) error {
 	fmt.Println("🐍 uroboro status")
 
+	// If database path is provided, read from database
+	if dbPath != "" {
+		return s.showStatusFromDatabase(days, dbPath)
+	}
+
+	// Otherwise, read from file storage
+	return s.showStatusFromFiles(days)
+}
+
+func (s *StatusService) showStatusFromDatabase(days int, dbPath string) error {
+	// Import database package inline to avoid import issues
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		return fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	// Get recent captures (empty project string means all projects)
+	captures, err := db.GetRecentCaptures(days, "")
+	if err != nil {
+		return fmt.Errorf("failed to query captures: %w", err)
+	}
+
+	fmt.Printf("Recent activity (%d days): %d items\n", days, len(captures))
+	fmt.Printf("\n📝 Recent Captures (last %d days):\n", days)
+
+	if len(captures) == 0 {
+		fmt.Println("  No recent captures found")
+		return nil
+	}
+
+	// Show up to 10 most recent captures
+	shown := 0
+	for i := len(captures) - 1; i >= 0 && shown < 10; i-- {
+		capture := captures[i]
+
+		// Truncate content if too long
+		content := capture.Content
+		if len(content) > 80 {
+			content = content[:80] + "..."
+		}
+
+		// Format with project if available
+		if capture.Project.Valid && capture.Project.String != "" {
+			fmt.Printf("  📄 [%s] %s\n", capture.Project.String, content)
+		} else {
+			fmt.Printf("  📄 %s\n", content)
+		}
+		shown++
+	}
+
+	return nil
+}
+
+func (s *StatusService) showStatusFromFiles(days int) error {
 	// Get cross-platform data directory
 	dataDir := common.GetDataDir()
 
