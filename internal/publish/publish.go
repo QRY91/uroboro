@@ -11,10 +11,12 @@ import (
 	"time"
 
 	"github.com/QRY91/uroboro/internal/common"
+	"github.com/QRY91/uroboro/internal/database"
 )
 
 type PublishService struct {
 	model string
+	db    *database.DB
 }
 
 func NewPublishService() *PublishService {
@@ -23,6 +25,20 @@ func NewPublishService() *PublishService {
 		model = "mistral:latest"
 	}
 	return &PublishService{model: model}
+}
+
+func NewPublishServiceWithDB(dbPath string) (*PublishService, error) {
+	model := os.Getenv("UROBORO_MODEL")
+	if model == "" {
+		model = "mistral:latest"
+	}
+
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	return &PublishService{model: model, db: db}, nil
 }
 
 func (p *PublishService) callOllama(prompt string) (string, error) {
@@ -47,7 +63,7 @@ func (p *PublishService) callOllama(prompt string) (string, error) {
 func (p *PublishService) GenerateDevlog(days int) error {
 	fmt.Printf("🔍 Collecting activity from last %d day(s)...\n", days)
 
-	// Get recent captures - simplified version
+	// Get recent captures - try database first, fall back to files
 	activity, err := p.collectRecentActivity(days)
 	if err != nil {
 		return fmt.Errorf("failed to collect activity: %w", err)
@@ -118,6 +134,35 @@ func (p *PublishService) GenerateBlog(days int, title string, preview bool, form
 }
 
 func (p *PublishService) collectRecentActivity(days int) ([]string, error) {
+	// If database is available, use it
+	if p.db != nil {
+		return p.collectFromDatabase(days)
+	}
+
+	// Otherwise, fall back to file reading
+	return p.collectFromFiles(days)
+}
+
+func (p *PublishService) collectFromDatabase(days int) ([]string, error) {
+	captures, err := p.db.GetRecentCaptures(days, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get captures from database: %w", err)
+	}
+
+	var activity []string
+	for _, capture := range captures {
+		// Format similar to file format but with more structure
+		content := capture.Content
+		if capture.Project.Valid && capture.Project.String != "" {
+			content += fmt.Sprintf(" Project: %s", capture.Project.String)
+		}
+		activity = append(activity, content)
+	}
+
+	return activity, nil
+}
+
+func (p *PublishService) collectFromFiles(days int) ([]string, error) {
 	// Get cross-platform data directory
 	dataDir := common.GetDataDir()
 

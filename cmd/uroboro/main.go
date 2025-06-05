@@ -39,6 +39,7 @@ func handleCapture(args []string) {
 	fs := flag.NewFlagSet("capture", flag.ExitOnError)
 	project := fs.String("project", "", "Project name")
 	tags := fs.String("tags", "", "Comma-separated tags")
+	dbPath := fs.String("db", "", "SQLite database path (uses file storage if not specified)")
 
 	fs.Parse(args)
 
@@ -50,7 +51,19 @@ func handleCapture(args []string) {
 
 	content := fs.Arg(0)
 
-	service := capture.NewCaptureService()
+	var service *capture.CaptureService
+	var err error
+
+	if *dbPath != "" {
+		service, err = capture.NewCaptureServiceWithDB(*dbPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Database initialization failed: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		service = capture.NewCaptureService()
+	}
+
 	if err := service.Capture(content, *project, *tags); err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Capture failed: %v\n", err)
 		os.Exit(1)
@@ -65,10 +78,22 @@ func handlePublish(args []string) {
 	title := fs.String("title", "", "Blog post title")
 	preview := fs.Bool("preview", false, "Preview content without saving")
 	format := fs.String("format", "markdown", "Output format: markdown, html, text")
+	dbPath := fs.String("db", "", "SQLite database path (reads from files if not specified)")
 
 	fs.Parse(args)
 
-	service := publish.NewPublishService()
+	var service *publish.PublishService
+	var err error
+
+	if *dbPath != "" {
+		service, err = publish.NewPublishServiceWithDB(*dbPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Database initialization failed: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		service = publish.NewPublishService()
+	}
 
 	if *blog {
 		if err := service.GenerateBlog(*days, *title, *preview, *format); err != nil {
@@ -82,8 +107,8 @@ func handlePublish(args []string) {
 		}
 	} else {
 		fmt.Fprintf(os.Stderr, "Error: Specify --blog or --devlog\n")
-		fmt.Fprintf(os.Stderr, "Usage: uroboro publish --blog [--title \"Title\"] [--days N] [--format FORMAT]\n")
-		fmt.Fprintf(os.Stderr, "       uroboro publish --devlog [--days N]\n")
+		fmt.Fprintf(os.Stderr, "Usage: uroboro publish --blog [--title \"Title\"] [--days N] [--format FORMAT] [--db PATH]\n")
+		fmt.Fprintf(os.Stderr, "       uroboro publish --devlog [--days N] [--db PATH]\n")
 		fmt.Fprintf(os.Stderr, "Formats: markdown (default), html, text\n")
 		os.Exit(1)
 	}

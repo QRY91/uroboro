@@ -7,15 +7,50 @@ import (
 	"time"
 
 	"github.com/QRY91/uroboro/internal/common"
+	"github.com/QRY91/uroboro/internal/database"
 )
 
-type CaptureService struct{}
+type CaptureService struct {
+	db *database.DB
+}
 
 func NewCaptureService() *CaptureService {
 	return &CaptureService{}
 }
 
+func NewCaptureServiceWithDB(dbPath string) (*CaptureService, error) {
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	return &CaptureService{db: db}, nil
+}
+
 func (c *CaptureService) Capture(content, project, tags string) error {
+	// If database is available, use it
+	if c.db != nil {
+		return c.captureToDatabase(content, project, tags)
+	}
+
+	// Otherwise, fall back to file storage
+	return c.captureToFile(content, project, tags)
+}
+
+func (c *CaptureService) captureToDatabase(content, project, tags string) error {
+	capture, err := c.db.InsertCapture(content, project, tags)
+	if err != nil {
+		return fmt.Errorf("failed to capture to database: %w", err)
+	}
+
+	fmt.Printf("✅ Captured [ID:%d]: %s\n", capture.ID, truncateContent(content, 60))
+	if capture.Project.Valid && capture.Project.String != "" {
+		fmt.Printf("   Project: %s\n", capture.Project.String)
+	}
+	return nil
+}
+
+func (c *CaptureService) captureToFile(content, project, tags string) error {
 	timestamp := time.Now().Format("2006-01-02T15:04:05")
 
 	// Get cross-platform data directory
