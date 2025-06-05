@@ -1,8 +1,8 @@
 # uroboro 🐍
 
-**The Self-Documenting Content Pipeline**
+**The Self-Documenting Dev Tool**
 
-Transform your development insights into professional content that gets you acknowledged for your actual work.
+Turn your development work into shareable content that gets you acknowledged for what you actually build.
 
 ## 🚀 Quick Start (Go CLI - Primary)
 
@@ -41,7 +41,7 @@ uro status --days 7
 ## 🎯 North Star Workflow
 
 1. **Capture** (10 seconds): Document insights as you work
-2. **Publish** (2 minutes): Generate professional content 
+2. **Publish** (2 minutes): Generate shareable content 
 3. **Get acknowledged**: Share your expertise and get noticed
 
 No feature creep. No complexity. Just results.
@@ -135,7 +135,7 @@ uro status
 
 - **🎯 3 Core Commands** - capture, publish, status. That's it.
 - **⚡ 10-Second Capture** - Zero flow state interruption
-- **📝 2-Minute Publish** - Professional content generation
+- **📝 2-Minute Publish** - Content generation from your dev work
 - **🏠 100% Local AI** - Ollama, no external APIs
 - **💰 $0/month costs** - No subscription, no usage fees
 - **🔒 Private by design** - Your code stays on your machine
@@ -235,10 +235,10 @@ uro publish --blog --days 7
 ```
 
 **Features that actually work**:
-- Professional blog posts
+- Blog posts from your dev work
 - Social media content
 - Technical dev logs
-- Auto-voice detection (sounds like you, not AI)
+- Voice matching (working on making it sound like you)
 - 2-minute generation time
 
 ### `uroboro status` / `uro status`

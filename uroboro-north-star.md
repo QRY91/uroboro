@@ -95,6 +95,19 @@ uro publish --blog
 - "Tool that documents your actual work"
 - Invisible philosophy, visible results
 
+## 🎨 Marketing Honesty Principle
+
+**Underpromise, overdeliver.** Show what we're building, not what we wish we were.
+
+**Tone Standards**:
+- Confident but honest about being a solo dev project
+- "Working on" instead of "Revolutionary AI-powered"
+- "Articles from your dev work" not "Professional enterprise content"
+- "Clean Go codebase" not "Quality assured professional system"
+- Pride in the craft without corporate-speak
+
+**Philosophy**: Let others praise the work - we just document the journey honestly. No marketing BS, no fake enterprise polish. Just a developer who loves building useful tools and wants to help other developers get acknowledged for their work.
+
 ## 🗺️ Roadmap Priorities
 
 ### Phase 1: Core Excellence (Next 3 months)
