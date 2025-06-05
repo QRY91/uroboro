@@ -37,75 +37,87 @@
                     
                     <article class="note-item">
                         <div class="note-header">
-                            <span class="note-date">June 2025</span>
+                            <span class="note-date">June 5, 2025</span>
                             <span class="note-type">Cross-Platform Support</span>
                         </div>
-                        <h2>✅ Windows Users No Longer Left Behind</h2>
+                        <h2>🔧 Cross-Platform Directory Handling</h2>
                         <div class="note-content">
-                            <p><strong>Problem:</strong> XDG compliance was hardcoded for Linux paths, breaking Windows users with 
-                            <code>.local\share\uroboro\daily</code> paths that don't exist.</p>
+                            <p><strong>Fixed:</strong> Windows users were getting broken XDG paths like 
+                            <code>.local\share\uroboro\daily</code> that don't exist on Windows.</p>
                             
-                            <p><strong>Solution:</strong> Added proper cross-platform directory handling:</p>
+                            <p><strong>Solution:</strong> Created <code>internal/common/dirs.go</code> with <code>GetDataDir()</code> 
+                            function that detects <code>runtime.GOOS</code> and uses proper paths:</p>
                             <ul>
-                                <li>Linux/macOS: <code>~/.local/share/uroboro/daily/</code> (XDG standard)</li>
-                                <li>Windows: <code>%APPDATA%\uroboro\daily\</code> (Windows standard)</li>
+                                <li>Linux/macOS: <code>~/.local/share/uroboro/</code> (XDG standard)</li>
+                                <li>Windows: <code>%APPDATA%\uroboro\</code> (Windows standard)</li>
                             </ul>
                             
-                            <p><strong>Impact:</strong> uroboro now works properly on all platforms. No more directory 
-                            creation failures or weird paths on Windows. Cross-platform testing implemented.</p>
+                            <p><strong>Refactored:</strong> Updated <code>capture.go</code>, <code>publish.go</code>, 
+                            and <code>status.go</code> to use the new cross-platform function.</p>
                         </div>
                         <div class="note-tech">
-                            <strong>Technical:</strong> 
-                            <code>internal/common/dirs.go</code> • 
-                            <code>runtime.GOOS</code> detection • 
-                            Cross-platform testing
+                            <strong>Generated from:</strong> 4 real uroboro captures • Cross-platform development
                         </div>
                     </article>
 
                     <article class="note-item">
                         <div class="note-header">
-                            <span class="note-date">June 2025</span>
-                            <span class="note-type">Major Cleanup</span>
+                            <span class="note-date">May-June 2025</span>
+                            <span class="note-type">CLI Modernization</span>
                         </div>
-                        <h2>🧹 Clean House - Python Remnants Removed</h2>
+                        <h2>⚡ CLI Interface Modernization</h2>
                         <div class="note-content">
-                            <p><strong>Major refactor:</strong> Removed Python remnants, focused on Go-only implementation. 
-                            Enhanced CI pipeline, added comprehensive testing infrastructure.</p>
+                            <p><strong>Major Update:</strong> Replaced 'uroboro' with 'uro' in examples throughout README 
+                            and landing page for command consistency.</p>
                             
-                            <p><strong>Key improvements:</strong></p>
-                            <ul>
-                                <li><code>uro</code> short alias for quick usage</li>
-                                <li>VHS demo recording setup</li>
-                                <li>Landing page accessibility improvements</li>
-                                <li>WebSocket connection pooling</li>
-                                <li>System installation regression tests</li>
-                                <li>Unified CLI interface with privacy-first usage tracking</li>
-                            </ul>
+                            <p><strong>Enhanced:</strong> Styling for command displays, removed obsolete CI workflows, 
+                            improved documentation presentation.</p>
                             
-                            <p><strong>Philosophy alignment:</strong> Following the north star - "three commands beats seventeen". 
-                            Removed feature bloat, focused on core workflow excellence.</p>
+                            <p><strong>Philosophy:</strong> Making uroboro feel like a professional developer tool 
+                            with modern CLI standards and git-native workflows.</p>
                         </div>
                         <div class="note-tech">
-                            <strong>Technical:</strong>
-                            <code>CI/CD pipeline</code> • 
-                            <code>Testing infrastructure</code> • 
-                            <code>Go-only codebase</code> •
-                            <code>Command consistency</code>
+                            <strong>Generated from:</strong> 26 real uroboro captures • CLI development
+                        </div>
+                    </article>
+
+                    <article class="note-item">
+                        <div class="note-header">
+                            <span class="note-date">May-June 2025</span>
+                            <span class="note-type">Git Integration</span>
+                        </div>
+                        <h2>🔗 Git Integration & Voice Features</h2>
+                        <div class="note-content">
+                            <p><strong>Git Integration:</strong> Refactored home directory retrieval with common data 
+                            directory function across capture, publish, and status services.</p>
+                            
+                            <p><strong>Voice Features:</strong> Discovered uroboro's real power - recursive self-improvement 
+                            through conscious voice pattern refinement. Not just voice mimicry, but a style evolution 
+                            engine for better communication habits.</p>
+                            
+                            <p><strong>Meta Achievement:</strong> Tool documenting its own development journey from 
+                            proof-of-concept to systematic professional tool.</p>
+                        </div>
+                        <div class="note-tech">
+                            <strong>Generated from:</strong> 67 total uroboro captures • Perfect dogfooding
                         </div>
                     </article>
 
                     <div class="note-footer">
                         <h3>🔄 About These Notes</h3>
                         <p>This page demonstrates uroboro's core principle: <strong>documenting actual development work</strong>. 
-                        Each update here comes from real <code>uroboro capture</code> sessions and <code>uroboro publish --devlog</code> 
-                        output as we build the tool.</p>
+                        Every update above was generated from <strong>67 real uroboro development captures</strong> using 
+                        uroboro's own content organization and generation features.</p>
                         
-                        <p>Perfect dogfooding - the tool documents its own progress while we improve it. 
-                        This is exactly how uroboro helps developers get acknowledged for their actual work.</p>
+                        <p>Perfect dogfooding - uroboro documenting its own development journey from proof-of-concept 
+                        to systematic professional tool. This includes everything from cross-platform fixes to 
+                        CLI modernization to voice pattern analysis features.</p>
                         
                         <div class="workflow-demo">
-                            <code>uroboro capture "your development work" → uroboro publish --devlog → share progress</code>
+                            <code>67 uroboro captures → organized by project → generated patch notes → authentic development timeline</code>
                         </div>
+                        
+                        <p><em>No marketing fluff, no fake demos - just real development work captured and organized by uroboro itself.</em></p>
                     </div>
 
                 </div>
