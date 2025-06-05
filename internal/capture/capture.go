@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/QRY91/uroboro/internal/common"
 )
 
 type CaptureService struct{}
@@ -16,13 +18,8 @@ func NewCaptureService() *CaptureService {
 func (c *CaptureService) Capture(content, project, tags string) error {
 	timestamp := time.Now().Format("2006-01-02T15:04:05")
 
-	// Get XDG data directory
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	dataDir := filepath.Join(homeDir, ".local", "share", "uroboro", "daily")
+	// Get cross-platform data directory
+	dataDir := common.GetDataDir()
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return fmt.Errorf("failed to create data directory: %w", err)
 	}

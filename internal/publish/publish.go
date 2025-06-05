@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/QRY91/uroboro/internal/common"
 )
 
 type PublishService struct {
@@ -116,13 +118,8 @@ func (p *PublishService) GenerateBlog(days int, title string, preview bool, form
 }
 
 func (p *PublishService) collectRecentActivity(days int) ([]string, error) {
-	// Get XDG data directory
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	dataDir := filepath.Join(homeDir, ".local", "share", "uroboro", "daily")
+	// Get cross-platform data directory
+	dataDir := common.GetDataDir()
 
 	var activity []string
 

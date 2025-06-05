@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/QRY91/uroboro/internal/common"
 )
 
 type Insight struct {
@@ -25,13 +27,8 @@ func NewStatusService() *StatusService {
 func (s *StatusService) ShowStatus(days int) error {
 	fmt.Println("🐍 uroboro status")
 
-	// Get XDG data directory
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	dataDir := filepath.Join(homeDir, ".local", "share", "uroboro", "daily")
+	// Get cross-platform data directory
+	dataDir := common.GetDataDir()
 
 	// Count recent activity
 	cutoff := time.Now().AddDate(0, 0, -days)
