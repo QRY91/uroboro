@@ -4,6 +4,18 @@
 
 Turn your development work into shareable content that gets you acknowledged for what you actually build.
 
+## 🤖 AI Collaboration Transparency
+
+This project documentation and development has been enhanced through systematic AI collaboration following QRY Labs methodology:
+
+- **Human-Centered Development**: All core functionality, architecture decisions, and strategic direction remain human-controlled
+- **AI-Enhanced Documentation**: AI assistants help improve documentation quality and systematic presentation
+- **Transparent Attribution**: AI collaboration is acknowledged openly as part of QRY's commitment to ethical technology use
+- **Local-First Philosophy**: Uroboro itself uses local AI (Ollama) to maintain privacy and user control
+- **Systematic Methodology**: AI collaboration follows structured procedures documented in `/ai/` directory
+
+**Core Principle**: AI enhances human capability rather than replacing human judgment. The systematic approach to AI collaboration exemplifies uroboro's own philosophy of making quality work visible and professionally presentable.
+
 ## 🚀 Quick Start (Go CLI - Primary)
 
 ```bash
