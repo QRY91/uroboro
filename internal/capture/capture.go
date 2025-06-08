@@ -95,3 +95,12 @@ func truncateContent(content string, maxLen int) string {
 	}
 	return content[:maxLen] + "..."
 }
+
+// ProcessToolMessages processes unprocessed tool messages for cross-tool integration
+func (c *CaptureService) ProcessToolMessages() error {
+	if c.db == nil {
+		return fmt.Errorf("database not available for tool message processing")
+	}
+	
+	return c.db.ProcessUroboroCaptures()
+}

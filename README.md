@@ -16,6 +16,33 @@ This project documentation and development has been enhanced through systematic 
 
 **Core Principle**: AI enhances human capability rather than replacing human judgment. The systematic approach to AI collaboration exemplifies uroboro's own philosophy of making quality work visible and professionally presentable.
 
+## 🔗 QRY Ecosystem Integration (Experimental)
+
+**uroboro** now supports experimental integration with the QRY ecosystem database, enabling intelligent content capture while maintaining complete independence.
+
+**Ecosystem Features:**
+- **Automatic Discovery**: Detects shared QRY ecosystem database (`~/.local/share/qry/ecosystem.sqlite`)
+- **Context-Aware Captures**: Links captures to recent wherewasi context when available
+- **Cross-Tool Notifications**: Sends capture notifications to examinator for flashcard generation
+- **Enhanced Publishing**: Uses ecosystem context to improve publication quality
+- **Graceful Fallback**: Works normally with local database when ecosystem unavailable
+
+**Status Indicators:**
+```bash
+uroboro status
+# Ecosystem mode: "🔗 Ecosystem mode: ENABLED"
+# Local mode:     "📁 Ecosystem mode: DISABLED"
+```
+
+**Ecosystem Commands:**
+```bash
+uroboro sync                    # Process messages from other QRY tools
+uroboro capture "content" --link # Link to recent wherewasi context
+uroboro --local                 # Force local database mode
+```
+
+**Integration Status**: Experimental implementation - captures intelligently link to development context when ecosystem tools work together, functions independently when not.
+
 ## 🚀 Quick Start (Go CLI - Primary)
 
 ```bash
