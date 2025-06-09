@@ -60,11 +60,17 @@ func (p *PublishService) callOllama(prompt string) (string, error) {
 	return result, nil
 }
 
+// GenerateDevlog creates a devlog without project filtering (backward compatibility)
 func (p *PublishService) GenerateDevlog(days int) error {
+	return p.GenerateDevlogWithProject(days, "")
+}
+
+// GenerateDevlogWithProject creates a devlog with optional project filtering
+func (p *PublishService) GenerateDevlogWithProject(days int, project string) error {
 	fmt.Printf("🔍 Collecting activity from last %d day(s)...\n", days)
 
 	// Get recent captures - try database first, fall back to files
-	activity, err := p.collectRecentActivity(days)
+	activity, err := p.collectRecentActivity(days, project)
 	if err != nil {
 		return fmt.Errorf("failed to collect activity: %w", err)
 	}
@@ -84,22 +90,22 @@ func (p *PublishService) GenerateDevlog(days int) error {
 		return fmt.Errorf("failed to generate devlog: %w", err)
 	}
 
-	fmt.Println("--- GENERATED DEVLOG ---")
+	fmt.Println("--- DEVLOG SUMMARY ---")
 	fmt.Println(content)
 	fmt.Println("--- END DEVLOG ---")
 
 	// Save to predictable filename
 	filename := fmt.Sprintf("devlog-%s.md", time.Now().Format("2006-01-02"))
 	outputPath := filepath.Join("output", "posts", filename)
-	
+
 	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
-	
+
 	if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to save devlog: %w", err)
 	}
-	
+
 	fmt.Printf("📄 Saved devlog to: %s\n", outputPath)
 	return nil
 }
@@ -119,10 +125,11 @@ func (p *PublishService) GenerateDevlogFromActivity(activity []string, format st
 	return content, nil
 }
 
-func (p *PublishService) GenerateBlog(days int, title string, preview bool, format string) error {
+// GenerateBlog creates a blog post with optional project filtering
+func (p *PublishService) GenerateBlog(days int, title string, preview bool, format string, project string) error {
 	fmt.Printf("🔍 Collecting activity from last %d day(s)...\n", days)
 
-	activity, err := p.collectRecentActivity(days)
+	activity, err := p.collectRecentActivity(days, project)
 	if err != nil {
 		return fmt.Errorf("failed to collect activity: %w", err)
 	}
@@ -161,18 +168,18 @@ func (p *PublishService) GenerateBlog(days int, title string, preview bool, form
 	return nil
 }
 
-func (p *PublishService) collectRecentActivity(days int) ([]string, error) {
+func (p *PublishService) collectRecentActivity(days int, project string) ([]string, error) {
 	// If database is available, use it
 	if p.db != nil {
-		return p.collectFromDatabase(days)
+		return p.collectFromDatabase(days, project)
 	}
 
 	// Otherwise, fall back to file reading
 	return p.collectFromFiles(days)
 }
 
-func (p *PublishService) collectFromDatabase(days int) ([]string, error) {
-	captures, err := p.db.GetRecentCaptures(days, "")
+func (p *PublishService) collectFromDatabase(days int, project string) ([]string, error) {
+	captures, err := p.db.GetRecentCaptures(days, project)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get captures from database: %w", err)
 	}
@@ -277,7 +284,7 @@ func (p *PublishService) extractCaptures(content string) []string {
 func (p *PublishService) buildDevlogPrompt(activity []string, format string) string {
 	allContent := strings.Join(activity, "\n")
 	currentDate := time.Now().Format("January 2, 2006")
-	
+
 	if format == "html" {
 		return fmt.Sprintf(`You are writing patch notes for uroboro - a developer tool that documents its own development. Create a professional patch note entry in HTML format from today's development captures.
 

@@ -1,7 +1,7 @@
 {
   "name": "uroboro-landing",
   "version": "1.0.0",
-  "description": "Landing page for uroboro.dev - The self-documenting content pipeline",
+  "description": "Landing page for uroboro.dev - The Unified Development Assistant",
   "main": "index.html",
   "scripts": {
     "dev": "python3 -m http.server 8000",
@@ -19,9 +19,11 @@
     "developer-tools",
     "local-llm",
     "documentation",
-    "blog-automation"
+    "blog-automation",
+    "smart-automation",
+    "unified-workflow"
   ],
-  "author": "Q",
+  "author": "QRY91",
   "license": "MIT",
   "devDependencies": {},
   "bugs": {

@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/QRY91/uroboro/internal/common"
+	"github.com/QRY91/uroboro/internal/context"
 	"github.com/QRY91/uroboro/internal/database"
+	"github.com/QRY91/uroboro/internal/tagging"
 )
 
 type CaptureService struct {
@@ -28,6 +30,28 @@ func NewCaptureServiceWithDB(dbPath string) (*CaptureService, error) {
 }
 
 func (c *CaptureService) Capture(content, project, tags string) error {
+	// Smart project detection if no project provided
+	if project == "" {
+		detector := context.NewProjectDetector()
+		if detectedProject := detector.DetectProject(); detectedProject != "" {
+			project = detectedProject
+			fmt.Printf("🔍 Auto-detected project: %s\n", project)
+		}
+	}
+
+	// Smart tagging enhancement
+	analyzer := tagging.NewTagAnalyzer()
+	originalTags := tags
+	tags = analyzer.EnhanceTags(content, tags)
+
+	// Show auto-detected tags if any were added
+	if tags != originalTags {
+		suggestedTags := analyzer.GetSuggestedTags(content)
+		if suggestedTags != "" {
+			fmt.Printf("🏷️  Auto-detected tags: %s\n", suggestedTags)
+		}
+	}
+
 	// If database is available, use it
 	if c.db != nil {
 		return c.captureToDatabase(content, project, tags)
@@ -96,11 +120,16 @@ func truncateContent(content string, maxLen int) string {
 	return content[:maxLen] + "..."
 }
 
+// CaptureWithMetadata is an alias for Capture method to maintain compatibility
+func (c *CaptureService) CaptureWithMetadata(content, project, tags string) error {
+	return c.Capture(content, project, tags)
+}
+
 // ProcessToolMessages processes unprocessed tool messages for cross-tool integration
 func (c *CaptureService) ProcessToolMessages() error {
 	if c.db == nil {
 		return fmt.Errorf("database not available for tool message processing")
 	}
-	
+
 	return c.db.ProcessUroboroCaptures()
 }

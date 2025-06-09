@@ -41,7 +41,7 @@ Another test capture
 	}
 
 	// Test should not error
-	err = service.ShowStatus(7, "")
+	err = service.ShowStatus(7, "", "")
 	if err != nil {
 		t.Errorf("ShowStatus failed: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestStatusService_ShowStatusNoDirectory(t *testing.T) {
 	service := NewStatusService()
 
 	// Test with non-existent directory should not error
-	err := service.ShowStatus(7, "")
+	err := service.ShowStatus(7, "", "")
 	if err != nil {
 		t.Errorf("ShowStatus should handle missing directory gracefully: %v", err)
 	}

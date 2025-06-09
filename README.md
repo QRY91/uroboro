@@ -1,8 +1,10 @@
 # uroboro 🐍
 
-**The Self-Documenting Dev Tool**
+**The Unified Development Assistant**
 
-Turn your development work into shareable content that gets you acknowledged for what you actually build.
+*Formerly the "QRY Trinity" - wherewasi, examinator, and uroboro - now unified into one powerful tool*
+
+Turn your development work into shareable content that gets you acknowledged for what you actually build. With smart project detection, content-based auto-tagging, and instant context extraction.
 
 ## 🤖 AI Collaboration Transparency
 
@@ -16,32 +18,31 @@ This project documentation and development has been enhanced through systematic 
 
 **Core Principle**: AI enhances human capability rather than replacing human judgment. The systematic approach to AI collaboration exemplifies uroboro's own philosophy of making quality work visible and professionally presentable.
 
-## 🔗 QRY Ecosystem Integration (Experimental)
+## 🐍 Trinity Integration Complete
 
-**uroboro** now supports experimental integration with the QRY ecosystem database, enabling intelligent content capture while maintaining complete independence.
+**uroboro** has successfully absorbed the QRY Trinity tools, unifying wherewasi's context detection, examinator's tagging intelligence, and uroboro's publishing power into one seamless experience.
 
-**Ecosystem Features:**
-- **Automatic Discovery**: Detects shared QRY ecosystem database (`~/.local/share/qry/ecosystem.sqlite`)
-- **Context-Aware Captures**: Links captures to recent wherewasi context when available
-- **Cross-Tool Notifications**: Sends capture notifications to examinator for flashcard generation
-- **Enhanced Publishing**: Uses ecosystem context to improve publication quality
-- **Graceful Fallback**: Works normally with local database when ecosystem unavailable
+**Trinity Features Now Built-In:**
+- **Smart Project Detection** (from wherewasi): Auto-detects projects from git repos, package files, and directory names - zero configuration required
+- **Content-Based Auto-Tagging** (from examinator): Analyzes capture content for patterns, detects action types (bugfix, feature, etc.), and identifies technology domains automatically  
+- **Ripcord Functionality**: Instant context extraction to clipboard across all three commands - works cross-platform
+- **Intelligent Context Linking**: Automatically connects related captures and provides rich development context
 
-**Status Indicators:**
+**The Philosophy Maintained:**
 ```bash
-uroboro status
-# Ecosystem mode: "🔗 Ecosystem mode: ENABLED"
-# Local mode:     "📁 Ecosystem mode: DISABLED"
+# Still just 3 commands - but now they're smarter
+uroboro capture   # Query (with smart detection)
+uroboro publish   # Refine (with intelligent tagging) 
+uroboro status    # Yield (with rich context)
 ```
 
-**Ecosystem Commands:**
-```bash
-uroboro sync                    # Process messages from other QRY tools
-uroboro capture "content" --link # Link to recent wherewasi context
-uroboro --local                 # Force local database mode
-```
+**Trinity Benefits:**
+- **Reduced Complexity**: One codebase instead of three separate tools
+- **Enhanced Intelligence**: Each command now leverages insights from all three original tools
+- **Zero Configuration**: Smart detection eliminates setup requirements
+- **Maintained Simplicity**: "3 commands beats 17" philosophy preserved while adding power
 
-**Integration Status**: Experimental implementation - captures intelligently link to development context when ecosystem tools work together, functions independently when not.
+**Legacy Note**: Original trinity tools (wherewasi, examinator) are now legacy - uroboro contains all their functionality plus unified intelligence.
 
 ## 🚀 Quick Start (Go CLI - Primary)
 
@@ -172,9 +173,12 @@ uro status
 
 ## ✨ What Actually Works
 
-- **🎯 3 Core Commands** - capture, publish, status. That's it.
-- **⚡ 10-Second Capture** - Zero flow state interruption
-- **📝 2-Minute Publish** - Content generation from your dev work
+- **🎯 3 Core Commands** - capture, publish, status. Trinity absorbed, complexity eliminated.
+- **🧠 Smart Project Detection** - Auto-discovers from git repos, package files, directory names
+- **🏷️ Content-Based Auto-Tagging** - Analyzes patterns, detects action types, identifies tech domains
+- **📋 Ripcord Functionality** - Instant context extraction to clipboard, cross-platform
+- **⚡ 10-Second Capture** - Zero flow state interruption, now with intelligent context
+- **📝 2-Minute Publish** - Content generation enhanced with trinity intelligence
 - **🏠 100% Local AI** - Ollama, no external APIs
 - **💰 $0/month costs** - No subscription, no usage fees
 - **🔒 Private by design** - Your code stays on your machine
@@ -192,13 +196,19 @@ uro status
 
 We started with **17 commands** and **1,558 lines** of bloated complexity. We removed 14 commands, kept 3 essential ones, and found that **focus beats features**: improve core functionality instead of adding new complexity.
 
-### What We Kept (Core Commands)
-- **`uroboro capture`** - 10-second insight logging
-- **`uroboro publish`** - Generate blog posts, social content, dev logs  
-- **`uroboro status`** - Complete pipeline overview
+### What We Kept (Core Commands + Trinity Intelligence)
+- **`uroboro capture`** - 10-second insight logging with smart project detection and auto-tagging
+- **`uroboro publish`** - Generate blog posts, social content, dev logs with enhanced context
+- **`uroboro status`** - Complete pipeline overview with ripcord functionality
+
+### What We Absorbed (Trinity Integration)
+- ✅ **wherewasi context detection** - Now built into all commands
+- ✅ **examinator tagging intelligence** - Automatic content analysis
+- ✅ **Cross-tool communication** - Unified experience without ecosystem complexity
+- ✅ **Smart fallbacks** - Zero-configuration project detection
 
 ### What We Cleaned Out (Feature Bloat)
-- ❌ 14 unnecessary commands
+- ❌ 14 unnecessary commands (kept the essential trinity)
 - ❌ tamagoro egg system fantasy
 - ❌ sensei learning complexity
 - ❌ interview system bloat
@@ -206,6 +216,7 @@ We started with **17 commands** and **1,558 lines** of bloated complexity. We re
 - ❌ academic mode distraction
 - ❌ 6 different project templates
 - ❌ Voice training complexity
+- ❌ **Multiple tool maintenance** - One codebase now handles everything
 
 ## 🚀 Get Started in 3 Minutes
 
@@ -352,11 +363,16 @@ uroboro automatically detects and uses your Ollama models. No configuration need
 
 ## 🚢 North Star Principle
 
-**Three commands beats seventeen.** 
+**Three commands beats seventeen. One tool beats three.**
 
-This isn't just philosophy - it's what we learned. We took a bloated 17-command CLI with 1,558 lines and surgical-strike removed everything that didn't directly contribute to developer acknowledgment.
+This isn't just philosophy - it's what we learned twice. First, we took a bloated 17-command CLI with 1,558 lines and surgical-strike removed everything that didn't directly contribute to developer acknowledgment. Then, we took three separate trinity tools and unified them into one powerful assistant without adding complexity.
 
-**Result**: A tool that actually gets used because it respects your time and workflow.
+**The Trinity Transformation:**
+- **Before**: wherewasi + examinator + uroboro = 3 tools, 3 codebases, ecosystem complexity
+- **After**: uroboro = 1 tool, 3 commands, trinity intelligence built-in
+- **Philosophy Maintained**: Query-Refine-Yield trifecta maps perfectly to capture-publish-status
+
+**Result**: A tool that actually gets used because it respects your time and workflow, now with the intelligence of three tools unified into one seamless experience.
 
 ## 🤖 AI-Collaborative Design
 

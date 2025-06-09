@@ -77,6 +77,12 @@ func LoadDefaultDBPath() (string, error) {
 	return "", nil
 }
 
+// SaveDefaultDBPath saves the default database path to config
+func SaveDefaultDBPath(dbPath string) error {
+	config := &Config{DefaultDBPath: dbPath}
+	return SaveConfig(config)
+}
+
 // PromptForDefaultDB interactively prompts user to set default database path
 func PromptForDefaultDB() (string, error) {
 	defaultPath := common.GetDefaultDBPath()

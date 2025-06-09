@@ -21,23 +21,30 @@ type Insight struct {
 
 type StatusService struct{}
 
+// NewStatusService creates a new instance of StatusService for displaying
+// development activity status and recent captures.
 func NewStatusService() *StatusService {
 	return &StatusService{}
 }
 
-func (s *StatusService) ShowStatus(days int, dbPath string) error {
+// ShowStatus displays recent development activity for the specified number of days.
+// If dbPath is provided, reads from database; otherwise uses file storage.
+// If project is specified, filters results to only show that project's activity.
+func (s *StatusService) ShowStatus(days int, dbPath string, project string) error {
 	fmt.Println("🐍 uroboro status")
 
 	// If database path is provided, read from database
 	if dbPath != "" {
-		return s.showStatusFromDatabase(days, dbPath)
+		return s.showStatusFromDatabase(days, dbPath, project)
 	}
 
 	// Otherwise, read from file storage
 	return s.showStatusFromFiles(days)
 }
 
-func (s *StatusService) showStatusFromDatabase(days int, dbPath string) error {
+// showStatusFromDatabase retrieves and displays captures from the SQLite database.
+// Filters by project if specified, orders by timestamp descending (newest first).
+func (s *StatusService) showStatusFromDatabase(days int, dbPath string, project string) error {
 	// Import database package inline to avoid import issues
 	db, err := database.NewDB(dbPath)
 	if err != nil {
@@ -46,7 +53,7 @@ func (s *StatusService) showStatusFromDatabase(days int, dbPath string) error {
 	defer db.Close()
 
 	// Get recent captures (empty project string means all projects)
-	captures, err := db.GetRecentCaptures(days, "")
+	captures, err := db.GetRecentCaptures(days, project)
 	if err != nil {
 		return fmt.Errorf("failed to query captures: %w", err)
 	}
@@ -61,7 +68,7 @@ func (s *StatusService) showStatusFromDatabase(days int, dbPath string) error {
 
 	// Show up to 10 most recent captures
 	shown := 0
-	for i := len(captures) - 1; i >= 0 && shown < 10; i-- {
+	for i := 0; i < len(captures) && shown < 10; i++ {
 		capture := captures[i]
 
 		// Truncate content if too long
@@ -82,6 +89,8 @@ func (s *StatusService) showStatusFromDatabase(days int, dbPath string) error {
 	return nil
 }
 
+// showStatusFromFiles retrieves and displays captures from markdown files.
+// Fallback method when database is not available or configured.
 func (s *StatusService) showStatusFromFiles(days int) error {
 	// Get cross-platform data directory
 	dataDir := common.GetDataDir()
@@ -159,6 +168,8 @@ func (s *StatusService) showStatusFromFiles(days int) error {
 	return nil
 }
 
+// extractRecentCaptures parses markdown content to extract capture entries.
+// Looks for timestamp headers and extracts the content below them.
 func (s *StatusService) extractRecentCaptures(content string) []string {
 	var captures []string
 	lines := strings.Split(content, "\n")

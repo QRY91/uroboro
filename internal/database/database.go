@@ -270,6 +270,120 @@ func (db *DB) GetRecentCaptures(days int, project string) ([]Capture, error) {
 	return captures, nil
 }
 
+// Get recent captures with limit (for ripcord functionality)
+func (db *DB) GetRecentCapturesWithLimit(limit int) ([]Capture, error) {
+	query := `
+		SELECT id, timestamp, content, project, tags, source_tool, metadata, created_at, updated_at
+		FROM captures 
+		ORDER BY timestamp DESC
+		LIMIT ?
+	`
+
+	rows, err := db.Query(query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query recent captures: %w", err)
+	}
+	defer rows.Close()
+
+	var captures []Capture
+	for rows.Next() {
+		var capture Capture
+		err := rows.Scan(
+			&capture.ID,
+			&capture.Timestamp,
+			&capture.Content,
+			&capture.Project,
+			&capture.Tags,
+			&capture.SourceTool,
+			&capture.Metadata,
+			&capture.CreatedAt,
+			&capture.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan capture: %w", err)
+		}
+		captures = append(captures, capture)
+	}
+
+	return captures, nil
+}
+
+// Get captures since a specific time
+func (db *DB) GetCapturesSince(since time.Time) ([]Capture, error) {
+	query := `
+		SELECT id, timestamp, content, project, tags, source_tool, metadata, created_at, updated_at
+		FROM captures 
+		WHERE timestamp >= ?
+		ORDER BY timestamp DESC
+	`
+
+	rows, err := db.Query(query, since.Format("2006-01-02 15:04:05"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to query captures since %v: %w", since, err)
+	}
+	defer rows.Close()
+
+	var captures []Capture
+	for rows.Next() {
+		var capture Capture
+		err := rows.Scan(
+			&capture.ID,
+			&capture.Timestamp,
+			&capture.Content,
+			&capture.Project,
+			&capture.Tags,
+			&capture.SourceTool,
+			&capture.Metadata,
+			&capture.CreatedAt,
+			&capture.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan capture: %w", err)
+		}
+		captures = append(captures, capture)
+	}
+
+	return captures, nil
+}
+
+// Get captures by project
+func (db *DB) GetCapturesByProject(project string) ([]Capture, error) {
+	query := `
+		SELECT id, timestamp, content, project, tags, source_tool, metadata, created_at, updated_at
+		FROM captures 
+		WHERE project = ?
+		ORDER BY timestamp DESC
+	`
+
+	rows, err := db.Query(query, project)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query captures for project %s: %w", project, err)
+	}
+	defer rows.Close()
+
+	var captures []Capture
+	for rows.Next() {
+		var capture Capture
+		err := rows.Scan(
+			&capture.ID,
+			&capture.Timestamp,
+			&capture.Content,
+			&capture.Project,
+			&capture.Tags,
+			&capture.SourceTool,
+			&capture.Metadata,
+			&capture.CreatedAt,
+			&capture.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan capture: %w", err)
+		}
+		captures = append(captures, capture)
+	}
+
+	return captures, nil
+}
+
 // Get all captures from the database
 func (db *DB) GetAllCaptures() ([]Capture, error) {
 	query := `
@@ -346,13 +460,13 @@ func (db *DB) InsertPublication(title, content, format, pubType, project, target
 
 // ToolMessage represents a cross-tool communication message
 type ToolMessage struct {
-	ID          int64     `json:"id"`
-	FromTool    string    `json:"from_tool"`
-	ToTool      string    `json:"to_tool"`
-	MessageType string    `json:"message_type"`
-	Data        string    `json:"data"`
-	Processed   bool      `json:"processed"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID          int64      `json:"id"`
+	FromTool    string     `json:"from_tool"`
+	ToTool      string     `json:"to_tool"`
+	MessageType string     `json:"message_type"`
+	Data        string     `json:"data"`
+	Processed   bool       `json:"processed"`
+	CreatedAt   time.Time  `json:"created_at"`
 	ProcessedAt *time.Time `json:"processed_at"`
 }
 
@@ -364,13 +478,13 @@ func (db *DB) GetUnprocessedToolMessages() ([]*ToolMessage, error) {
 		WHERE to_tool = 'uroboro' AND processed = FALSE
 		ORDER BY created_at ASC
 	`
-	
+
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query tool messages: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var messages []*ToolMessage
 	for rows.Next() {
 		msg := &ToolMessage{}
@@ -389,7 +503,7 @@ func (db *DB) GetUnprocessedToolMessages() ([]*ToolMessage, error) {
 		}
 		messages = append(messages, msg)
 	}
-	
+
 	return messages, nil
 }
 
@@ -400,12 +514,12 @@ func (db *DB) MarkToolMessageProcessed(id int64) error {
 		SET processed = TRUE, processed_at = CURRENT_TIMESTAMP
 		WHERE id = ?
 	`
-	
+
 	_, err := db.Exec(query, id)
 	if err != nil {
 		return fmt.Errorf("failed to mark tool message as processed: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -416,19 +530,19 @@ func (db *DB) ProcessUroboroCaptures() error {
 	if err != nil {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
-	
+
 	wherewasiDBPath := filepath.Join(homeDir, ".local", "share", "wherewasi", "context.sqlite")
 	if _, err := os.Stat(wherewasiDBPath); os.IsNotExist(err) {
 		fmt.Println("📝 No wherewasi database found - no tool messages to process")
 		return nil
 	}
-	
+
 	wherewasiDB, err := sql.Open("sqlite3", wherewasiDBPath)
 	if err != nil {
 		return fmt.Errorf("failed to open wherewasi database: %w", err)
 	}
 	defer wherewasiDB.Close()
-	
+
 	// Get unprocessed uroboro messages from wherewasi
 	query := `
 		SELECT id, from_tool, to_tool, message_type, data, processed, created_at, processed_at
@@ -436,13 +550,13 @@ func (db *DB) ProcessUroboroCaptures() error {
 		WHERE to_tool = 'uroboro' AND processed = FALSE
 		ORDER BY created_at ASC
 	`
-	
+
 	rows, err := wherewasiDB.Query(query)
 	if err != nil {
 		return fmt.Errorf("failed to query tool messages from wherewasi: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var processedCount int
 	for rows.Next() {
 		var msg ToolMessage
@@ -460,7 +574,7 @@ func (db *DB) ProcessUroboroCaptures() error {
 			fmt.Printf("⚠️  Failed to scan tool message: %v\n", err)
 			continue
 		}
-		
+
 		if msg.MessageType == "uroboro_capture" {
 			// Parse the JSON data to extract capture content
 			var captureData map[string]interface{}
@@ -468,12 +582,12 @@ func (db *DB) ProcessUroboroCaptures() error {
 				fmt.Printf("⚠️  Failed to parse uroboro capture data from %s: %v\n", msg.FromTool, err)
 				continue
 			}
-			
+
 			// Extract fields
 			content, _ := captureData["content"].(string)
 			project, _ := captureData["project"].(string)
 			tags, _ := captureData["tags"].(string)
-			
+
 			if content != "" {
 				// Create the capture from tool integration
 				_, err := db.InsertCapture(content, project, tags)
@@ -481,30 +595,30 @@ func (db *DB) ProcessUroboroCaptures() error {
 					fmt.Printf("⚠️  Failed to create capture from %s: %v\n", msg.FromTool, err)
 					continue
 				}
-				
+
 				fmt.Printf("📝 Auto-captured from %s: %s\n", msg.FromTool, content)
 				processedCount++
 			}
-			
+
 			// Mark as processed in wherewasi database
 			updateQuery := `
 				UPDATE tool_messages 
 				SET processed = TRUE, processed_at = CURRENT_TIMESTAMP
 				WHERE id = ?
 			`
-			
+
 			_, err = wherewasiDB.Exec(updateQuery, msg.ID)
 			if err != nil {
 				fmt.Printf("⚠️  Failed to mark message as processed: %v\n", err)
 			}
 		}
 	}
-	
+
 	if processedCount > 0 {
 		fmt.Printf("✅ Processed %d tool messages from wherewasi\n", processedCount)
 	} else {
 		fmt.Println("📝 No new tool messages to process")
 	}
-	
+
 	return nil
 }

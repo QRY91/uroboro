@@ -42,7 +42,7 @@ Tags: test,publish
 	}
 
 	// Test collecting activity
-	activity, err := service.collectRecentActivity(7)
+	activity, err := service.collectRecentActivity(7, "test-project")
 	if err != nil {
 		t.Fatalf("collectRecentActivity failed: %v", err)
 	}
@@ -134,7 +134,7 @@ func TestPublishService_BuildDevlogPrompt(t *testing.T) {
 		"Updated documentation",
 	}
 
-	prompt := service.buildDevlogPrompt(activity)
+	prompt := service.buildDevlogPrompt(activity, "markdown")
 
 	// Check that prompt contains activity
 	for _, item := range activity {
@@ -144,12 +144,12 @@ func TestPublishService_BuildDevlogPrompt(t *testing.T) {
 	}
 
 	// Check that prompt has expected structure instructions
-	if !strings.Contains(prompt, "Technical Work") {
-		t.Error("Prompt missing Technical Work section instruction")
+	if !strings.Contains(prompt, "Technical Implementation") {
+		t.Error("Prompt missing Technical Implementation section instruction")
 	}
 
-	if !strings.Contains(prompt, "Key Insights") {
-		t.Error("Prompt missing Key Insights section instruction")
+	if !strings.Contains(prompt, "Impact") {
+		t.Error("Prompt missing Impact section instruction")
 	}
 }
 

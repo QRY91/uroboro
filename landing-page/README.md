@@ -1,6 +1,6 @@
 # uroboro.dev Landing Page
 
-The official landing page for uroboro - The Self-Documenting Content Pipeline.
+The official landing page for uroboro - The Unified Development Assistant (formerly the QRY Trinity).
 
 ## 🚀 Quick Start
 
@@ -30,6 +30,8 @@ landing-page/
 
 ## 🎨 Features
 
+- **Trinity Integration Showcase** - Highlights the successful unification of wherewasi, examinator, and uroboro
+- **Smart Feature Demonstration** - Interactive examples of project detection, auto-tagging, and ripcord functionality
 - **Responsive Design** - Works on desktop, tablet, and mobile
 - **Interactive Voice Demo** - Click between writing styles to see examples
 - **Smooth Animations** - Subtle scroll animations and transitions
@@ -38,12 +40,21 @@ landing-page/
 
 ## 🎯 Sections
 
-1. **Hero** - Clear value proposition with quick demo
-2. **Problem** - Resonates with developer content creation struggles  
-3. **Solution** - 3-step process explanation with architecture
-4. **Voice Showcase** - Interactive demo of 5 writing styles
-5. **Technical Deep-dive** - Local AI benefits and requirements
-6. **CTA** - Clear next steps for visitors
+1. **Hero** - Unified Development Assistant value proposition with Trinity messaging
+2. **Trinity Integration** - Showcases the successful unification of three tools into one
+3. **Problem** - Resonates with developer content creation struggles  
+4. **Solution** - 3-step process enhanced with Trinity intelligence
+5. **Demo Carousel** - Interactive demonstrations of core workflow with Trinity features
+6. **Truth Section** - Benefits of Trinity integration and three-command philosophy
+7. **Technical Deep-dive** - Local AI benefits and Trinity intelligence
+8. **CTA** - Clear next steps for visitors
+
+## 🐍 Trinity Features Highlighted
+
+- **Smart Project Detection** - Zero-configuration auto-discovery from git repos, package files, directory names
+- **Content-Based Auto-Tagging** - Intelligent pattern analysis for action types and technology domains
+- **Ripcord Functionality** - Cross-platform instant context extraction to clipboard
+- **Unified Intelligence** - Three tools' capabilities merged while maintaining simplicity
 
 ## 🎪 Voice Styles Demonstrated
 
@@ -96,7 +107,8 @@ Edit CSS variables in `style.css`:
 ```
 
 ### Content
-- Hero copy: Edit `index.html` hero section
+- Hero copy: Edit `index.html` hero section (now includes Trinity messaging)
+- Trinity features: Edit Trinity integration section in `index.html`
 - Voice examples: Edit `voiceExamples` object in `script.js`
 - Contact info: Update footer links in `index.html`
 
@@ -141,12 +153,13 @@ To enhance SEO:
 
 ## 🤝 Contributing
 
-This landing page is part of the main uroboro project. To contribute:
+This landing page showcases the unified uroboro tool and Trinity integration success. To contribute:
 
 1. Fork the main repository
-2. Make changes in the `landing-page/` directory
-3. Test locally with `npm run dev`
-4. Submit a pull request
+2. Make changes in the `landing-page/` directory  
+3. Test locally with `npm run dev` or `python3 -m http.server 8000`
+4. Ensure Trinity messaging is consistent with main README
+5. Submit a pull request
 
 ## 📄 License
 
