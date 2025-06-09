@@ -131,7 +131,7 @@ func (ta *TagAnalyzer) EnhanceTags(content, existingTags string) string {
 	for _, suggested := range suggestedTags {
 		found := false
 		for _, existing := range allTags {
-			if strings.ToLower(existing) == strings.ToLower(suggested) {
+			if strings.EqualFold(existing, suggested) {
 				found = true
 				break
 			}

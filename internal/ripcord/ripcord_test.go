@@ -396,6 +396,7 @@ func TestRipcordService_WorkRipcord(t *testing.T) {
 
 			if summary == nil {
 				t.Error("Expected summary but got nil")
+				return
 			}
 
 			if summary.Content == "" {
@@ -437,6 +438,7 @@ func TestRipcordService_ProjectRipcord(t *testing.T) {
 
 			if summary == nil {
 				t.Error("Expected summary but got nil")
+				return
 			}
 
 			if summary.Content == "" {
