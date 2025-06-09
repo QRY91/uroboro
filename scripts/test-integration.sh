@@ -29,6 +29,7 @@ yellow() { echo -e "\033[33m$1\033[0m"; }
 # Test result tracking
 TESTS_PASSED=0
 TESTS_FAILED=0
+TESTS_SKIPPED=0
 
 test_result() {
     local exit_code=$1
@@ -106,6 +107,7 @@ if command -v ollama >/dev/null 2>&1; then
     test_result $PUBLISH_EXIT_CODE "Publish command with AI generation"
 else
     yellow "⚠️  Skipping publish test (ollama not available)"
+    ((TESTS_SKIPPED++))
 fi
 
 echo
@@ -167,6 +169,7 @@ if command -v ollama >/dev/null 2>&1; then
     test_result $PUBLISH_FILTER_EXIT_CODE "Publish project filtering"
 else
     yellow "⚠️  Skipping publish project filter test (ollama not available)"
+    ((TESTS_SKIPPED++))
 fi
 
 echo
@@ -269,13 +272,22 @@ echo "📊 Test Summary"
 echo "==============="
 echo "Tests Passed: $TESTS_PASSED"
 echo "Tests Failed: $TESTS_FAILED"
-echo "Total Tests:  $((TESTS_PASSED + TESTS_FAILED))"
+echo "Tests Skipped: $TESTS_SKIPPED"
+echo "Total Tests:  $((TESTS_PASSED + TESTS_FAILED + TESTS_SKIPPED))"
 
 if [ $TESTS_FAILED -eq 0 ]; then
-    green "🎉 All tests passed! Trinity integration verified."
+    if [ $TESTS_SKIPPED -gt 0 ]; then
+        green "✅ All available tests passed! ($TESTS_SKIPPED tests skipped due to missing dependencies)"
+        yellow "   Note: Full AI integration requires ollama for complete validation"
+    else
+        green "🎉 All tests passed! Trinity integration fully verified."
+    fi
     exit 0
 else
     red "💥 $TESTS_FAILED test(s) failed!"
+    if [ $TESTS_SKIPPED -gt 0 ]; then
+        yellow "   ($TESTS_SKIPPED tests were skipped due to missing dependencies)"
+    fi
     echo
     echo "This indicates issues with Trinity functionality that need to be addressed"
     echo "before the code should be considered ready for production."
