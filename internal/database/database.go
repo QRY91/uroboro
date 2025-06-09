@@ -13,7 +13,27 @@ import (
 )
 
 type DB struct {
-	*sql.DB
+	db *sql.DB
+}
+
+// Close closes the database connection
+func (db *DB) Close() error {
+	return db.db.Close()
+}
+
+// QueryRow executes a query that is expected to return at most one row
+func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
+	return db.db.QueryRow(query, args...)
+}
+
+// Query executes a query that returns rows, typically a SELECT
+func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return db.db.Query(query, args...)
+}
+
+// Exec executes a query without returning any rows
+func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return db.db.Exec(query, args...)
 }
 
 type Capture struct {
@@ -80,7 +100,7 @@ func NewDB(dbPath string) (*DB, error) {
 func (db *DB) migrate() error {
 	// Check if migrations table exists
 	var tableExists bool
-	err := db.QueryRow(`
+	err := db.db.QueryRow(`
 		SELECT COUNT(*) > 0 FROM sqlite_master 
 		WHERE type='table' AND name='schema_migrations'
 	`).Scan(&tableExists)
