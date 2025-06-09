@@ -78,17 +78,45 @@ func (p *PublishService) GenerateDevlog(days int) error {
 	fmt.Printf("✅ Found %d recent captures\n", len(activity))
 	fmt.Println("📋 Generating development log...")
 
-	prompt := p.buildDevlogPrompt(activity)
+	prompt := p.buildDevlogPrompt(activity, "markdown")
 	content, err := p.callOllama(prompt)
 	if err != nil {
 		return fmt.Errorf("failed to generate devlog: %w", err)
 	}
 
-	fmt.Println("--- DEVLOG SUMMARY ---")
+	fmt.Println("--- GENERATED DEVLOG ---")
 	fmt.Println(content)
 	fmt.Println("--- END DEVLOG ---")
 
+	// Save to predictable filename
+	filename := fmt.Sprintf("devlog-%s.md", time.Now().Format("2006-01-02"))
+	outputPath := filepath.Join("output", "posts", filename)
+	
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+	
+	if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to save devlog: %w", err)
+	}
+	
+	fmt.Printf("📄 Saved devlog to: %s\n", outputPath)
 	return nil
+}
+
+// GenerateDevlogFromActivity creates AI-generated devlog content from activity strings
+func (p *PublishService) GenerateDevlogFromActivity(activity []string, format string) (string, error) {
+	if len(activity) == 0 {
+		return "", fmt.Errorf("no activity provided")
+	}
+
+	prompt := p.buildDevlogPrompt(activity, format)
+	content, err := p.callOllama(prompt)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate devlog: %w", err)
+	}
+
+	return content, nil
 }
 
 func (p *PublishService) GenerateBlog(days int, title string, preview bool, format string) error {
@@ -246,26 +274,112 @@ func (p *PublishService) extractCaptures(content string) []string {
 	return captures
 }
 
-func (p *PublishService) buildDevlogPrompt(activity []string) string {
+func (p *PublishService) buildDevlogPrompt(activity []string, format string) string {
 	allContent := strings.Join(activity, "\n")
+	currentDate := time.Now().Format("January 2, 2006")
+	
+	if format == "html" {
+		return fmt.Sprintf(`You are writing patch notes for uroboro - a developer tool that documents its own development. Create a professional patch note entry in HTML format from today's development captures.
 
-	return fmt.Sprintf(`Analyze this development activity and create a concise development log summary.
+CURRENT DATE: %s
+USE THIS EXACT DATE IN YOUR OUTPUT.
 
-IMPORTANT: These are today's most important work captures - prioritize them.
-
+DEVELOPMENT CAPTURES:
 %s
 
-Create a structured summary with:
-## Technical Work
-- Brief bullet points of what was accomplished
+Create an HTML patch note entry with this format:
 
-## Key Insights  
-- Important discoveries or decisions made
+<article class="note-item">
+    <div class="note-header">
+        <span class="note-date">%s</span>
+        <span class="note-type">[CATEGORY]</span>
+    </div>
+    <h2>🎯 [DESCRIPTIVE TITLE]</h2>
+    <div class="note-content">
+        <p><strong>Major Achievement:</strong> [One sentence summary]</p>
+        
+        <p><strong>The Problem:</strong> [What UX/technical issue was being solved]</p>
+        
+        <p><strong>The Solution:</strong> [How it was systematically addressed]</p>
+        
+        <p><strong>Key Improvements:</strong></p>
+        <ul>
+            <li><strong>Technical Implementation</strong>: [Specific details]</li>
+            <li><strong>User Experience</strong>: [How this improves developer experience]</li>
+            <li><strong>Psychology-Informed Design</strong>: [Human-centered design principles]</li>
+        </ul>
+        
+        <p><strong>Before vs After:</strong></p>
+        <ul>
+            <li><strong>Before</strong>: [Problematic behavior]</li>
+            <li><strong>After</strong>: [Improved behavior]</li>
+        </ul>
+        
+        <p><strong>Proof of Functionality:</strong></p>
+        <pre><code>[Command examples demonstrating the feature]</code></pre>
+        
+        <p><strong>Impact:</strong> [Why this matters for users and the tool's mission]</p>
+    </div>
+    <div class="note-tech">
+        <strong>Generated from:</strong> [X] real uroboro captures • [Category/Feature]
+    </div>
+</article>
 
-## Next Steps
-- What should be tackled next
+STYLE GUIDELINES:
+- Use semantic HTML with proper class names matching the existing patch notes page
+- Be specific about technical implementations 
+- Include concrete examples in code blocks
+- Professional but authentic developer voice
+- Emphasize systematic problem-solving approach
+- Generate content ready for direct integration into patch-notes.html
 
-Keep it professional but conversational. Focus on the most significant items.`, allContent)
+Generate HTML content that matches the existing patch notes structure.`, currentDate, allContent, currentDate)
+	}
+
+	// Default markdown format
+	return fmt.Sprintf(`You are writing patch notes for uroboro - a developer tool that documents its own development. Create a professional patch note entry from today's development captures.
+
+CURRENT DATE: %s
+USE THIS EXACT DATE IN YOUR OUTPUT.
+
+DEVELOPMENT CAPTURES:
+%s
+
+Create a structured patch note with this format:
+
+## 🎯 [DESCRIPTIVE TITLE] - %s
+
+**Major Achievement:** [One sentence summary of the main accomplishment]
+
+**The Problem:** [What UX/technical issue was being solved]
+
+**The Solution:** [How it was systematically addressed]
+
+### Key Improvements:
+- **Technical Implementation**: [Specific functions/methods added, with technical details]
+- **User Experience**: [How this improves the developer experience]
+- **Psychology-Informed Design**: [How this follows human-centered design principles]
+
+### Before vs After:
+- **Before**: [What the problematic behavior was]
+- **After**: [What the improved behavior is now]
+
+### Proof of Functionality:
+[Include any actual command examples or output that demonstrates the feature working]
+
+**Impact:** [Why this matters for users and the tool's mission]
+
+---
+
+STYLE GUIDELINES:
+- Be specific about technical implementations (function names, methods, etc.)
+- Focus on user experience improvements and psychology-informed design
+- Include concrete examples and proof when available
+- Professional but not corporate - authentic developer voice
+- Emphasize systematic problem-solving approach
+- Highlight dogfooding and real development work
+
+Generate content suitable for HTML patch notes that demonstrates real development progress.`, currentDate, allContent, currentDate)
 }
 
 func (p *PublishService) buildBlogPrompt(activity []string, title string, format string) string {

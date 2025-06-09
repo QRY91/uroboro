@@ -651,6 +651,37 @@ func (edb *EcosystemDB) InsertCapture(content, project, tags string) (*Capture, 
 	return capture, nil
 }
 
+// InsertCaptureWithTimestamp creates a new capture with a specific timestamp (for migration)
+func (edb *EcosystemDB) InsertCaptureWithTimestamp(content, project, tags string, timestamp time.Time) (*Capture, error) {
+	query := `
+		INSERT INTO captures (content, project, tags, timestamp, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`
+
+	result, err := edb.Exec(query, content, project, tags, timestamp, timestamp, timestamp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert capture with timestamp: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get insert ID: %w", err)
+	}
+
+	capture := &Capture{
+		ID:        id,
+		Timestamp: timestamp,
+		Content:   content,
+		Project:   &project,
+		Tags:      &tags,
+		SourceTool: "uroboro",
+		CreatedAt: timestamp,
+		UpdatedAt: timestamp,
+	}
+
+	return capture, nil
+}
+
 // InsertCaptureWithContext creates a new capture linked to a context session
 func (edb *EcosystemDB) InsertCaptureWithContext(content, project, tags string, contextSessionID *int64) (*Capture, error) {
 	timestamp := time.Now()

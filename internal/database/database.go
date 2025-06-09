@@ -270,6 +270,43 @@ func (db *DB) GetRecentCaptures(days int, project string) ([]Capture, error) {
 	return captures, nil
 }
 
+// Get all captures from the database
+func (db *DB) GetAllCaptures() ([]Capture, error) {
+	query := `
+		SELECT id, timestamp, content, project, tags, source_tool, metadata, created_at, updated_at
+		FROM captures 
+		ORDER BY timestamp DESC
+	`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query all captures: %w", err)
+	}
+	defer rows.Close()
+
+	var captures []Capture
+	for rows.Next() {
+		var capture Capture
+		err := rows.Scan(
+			&capture.ID,
+			&capture.Timestamp,
+			&capture.Content,
+			&capture.Project,
+			&capture.Tags,
+			&capture.SourceTool,
+			&capture.Metadata,
+			&capture.CreatedAt,
+			&capture.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan capture: %w", err)
+		}
+		captures = append(captures, capture)
+	}
+
+	return captures, nil
+}
+
 // Insert a publication record
 func (db *DB) InsertPublication(title, content, format, pubType, project, targetPath string, sourceCaptureIDs []int64) (*Publication, error) {
 	// Convert capture IDs to JSON string

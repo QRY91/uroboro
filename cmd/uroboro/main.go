@@ -1,13 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/QRY91/uroboro/internal/capture"
 	"github.com/QRY91/uroboro/internal/config"
+	"github.com/QRY91/uroboro/internal/database"
 	"github.com/QRY91/uroboro/internal/ecosystem"
 	"github.com/QRY91/uroboro/internal/publish"
 	"github.com/QRY91/uroboro/internal/status"
@@ -81,6 +85,11 @@ func initializeEcosystemDatabase() {
 	if edb.IsShared() {
 		fmt.Printf("🔗 Connected to QRY ecosystem database\n")
 		
+		// Check for existing personal database and offer migration
+		if err := checkAndOfferMigration(); err != nil {
+			fmt.Printf("⚠️  Migration check failed: %v\n", err)
+		}
+		
 		// Process any pending ecosystem messages
 		if err := edb.ProcessUroboroCaptures(); err != nil {
 			fmt.Printf("⚠️  Warning: Failed to process ecosystem messages: %v\n", err)
@@ -91,42 +100,32 @@ func initializeEcosystemDatabase() {
 }
 
 func handleCapture(args []string) {
-	// Parse flags with ecosystem awareness
-	dbPath := ""
-	useDefaultDB := false
-	filteredArgs := []string{}
-
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if arg == "--db" {
-			useDefaultDB = true
-		} else if len(arg) > 5 && arg[:5] == "--db=" {
-			dbPath = arg[5:]
-		} else if arg == "--local" {
-			// Skip --local flag (handled in initialization)
-			continue
-		} else {
-			filteredArgs = append(filteredArgs, arg)
-		}
+	// Resolve database path using unified approach
+	dbResult, cleanedArgs, err := resolveDBPath(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Database resolution failed: %v\n", err)
+		os.Exit(1)
 	}
+
+	if len(cleanedArgs) == 0 {
+		fmt.Fprintf(os.Stderr, "❌ No content provided for capture\n")
+		fmt.Fprintf(os.Stderr, "Usage: uroboro capture \"content\" [options]\n")
+		os.Exit(1)
+	}
+
+	// Separate content from flags - content is first argument, rest are flags
+	content := cleanedArgs[0]
+	flagArgs := cleanedArgs[1:]
 
 	fs := flag.NewFlagSet("capture", flag.ExitOnError)
 	project := fs.String("project", "", "Project name")
 	tags := fs.String("tags", "", "Comma-separated tags")
 	link := fs.Bool("link", true, "Link to recent context (ecosystem mode)")
 
-	fs.Parse(filteredArgs)
+	fs.Parse(flagArgs)
 
-	if len(fs.Args()) == 0 {
-		fmt.Fprintf(os.Stderr, "❌ No content provided for capture\n")
-		fmt.Fprintf(os.Stderr, "Usage: uroboro capture \"content\" [options]\n")
-		os.Exit(1)
-	}
-
-	content := fs.Args()[0]
-
-	// Use ecosystem database if available, otherwise fall back to legacy system
-	if edb != nil {
+	// Use ecosystem database if available
+	if dbResult.Source == "ecosystem" {
 		err := captureWithEcosystem(content, *project, *tags, *link)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "❌ Capture failed: %v\n", err)
@@ -135,9 +134,14 @@ func handleCapture(args []string) {
 		return
 	}
 
-	// Legacy capture logic (backward compatibility)
-	fmt.Printf("📝 Using legacy capture mode\n")
-	legacyCapture(content, *project, *tags, dbPath, useDefaultDB)
+	// Use database or fall back to flat files based on resolution
+	if dbResult.UseDB {
+		fmt.Printf("📝 Using database: %s (%s)\n", dbResult.DBPath, dbResult.Source)
+		legacyCapture(content, *project, *tags, dbResult.DBPath, true)
+	} else {
+		fmt.Printf("📝 Using flat file storage\n")
+		legacyCapture(content, *project, *tags, "", false)
+	}
 }
 
 func captureWithEcosystem(content, project, tags string, linkContext bool) error {
@@ -239,22 +243,11 @@ func legacyCapture(content, project, tags, dbPath string, useDefaultDB bool) {
 }
 
 func handlePublish(args []string) {
-	// Parse flags with ecosystem awareness
-	dbPath := ""
-	useDefaultDB := false
-	filteredArgs := []string{}
-
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if arg == "--db" {
-			useDefaultDB = true
-		} else if len(arg) > 5 && arg[:5] == "--db=" {
-			dbPath = arg[5:]
-		} else if arg == "--local" {
-			continue
-		} else {
-			filteredArgs = append(filteredArgs, arg)
-		}
+	// Resolve database path using unified approach
+	dbResult, cleanedArgs, err := resolveDBPath(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Database resolution failed: %v\n", err)
+		os.Exit(1)
 	}
 
 	fs := flag.NewFlagSet("publish", flag.ExitOnError)
@@ -266,9 +259,10 @@ func handlePublish(args []string) {
 	format := fs.String("format", "markdown", "Output format: markdown, html, text")
 	project := fs.String("project", "", "Project name")
 
-	fs.Parse(filteredArgs)
+	fs.Parse(cleanedArgs)
 
-	if edb != nil {
+	// Use ecosystem database if available
+	if dbResult.Source == "ecosystem" {
 		err := publishWithEcosystem(*days, *blog, *devlog, *title, *format, *project, *preview)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "❌ Publish failed: %v\n", err)
@@ -277,9 +271,14 @@ func handlePublish(args []string) {
 		return
 	}
 
-	// Legacy publish logic
-	fmt.Printf("📝 Using legacy publish mode\n")
-	legacyPublish(filteredArgs, dbPath, useDefaultDB)
+	// Use database or fall back to flat files based on resolution
+	if dbResult.UseDB {
+		fmt.Printf("📝 Using database: %s (%s)\n", dbResult.DBPath, dbResult.Source)
+		legacyPublish(cleanedArgs, dbResult.DBPath, true)
+	} else {
+		fmt.Printf("📝 Using flat file storage\n")
+		legacyPublish(cleanedArgs, "", false)
+	}
 }
 
 func publishWithEcosystem(days int, blog, devlog bool, title, format, project string, preview bool) error {
@@ -309,12 +308,49 @@ func publishWithEcosystem(days int, blog, devlog bool, title, format, project st
 		}
 	}
 
-	// Generate publication content
-	content := generatePublicationContent(captures, blog, devlog, format)
+	// Generate AI-enhanced publication content
+	service := publish.NewPublishService()
+	var content string
+	
+	if devlog {
+		// Convert ecosystem captures to activity strings for AI generation
+		var activity []string
+		for _, capture := range captures {
+			activity = append(activity, capture.Content)
+		}
+		
+		content, err = service.GenerateDevlogFromActivity(activity, format)
+		if err != nil {
+			return fmt.Errorf("failed to generate AI devlog: %w", err)
+		}
+		
+		fmt.Println("--- GENERATED DEVLOG ---")
+		fmt.Println(content)
+		fmt.Println("--- END DEVLOG ---")
+	} else {
+		// Fallback to simple content generation for blog and other types
+		content = generatePublicationContent(captures, blog, devlog, format)
+	}
 	
 	if preview {
 		fmt.Println("\n" + content)
 		return nil
+	}
+
+	// Save to file if devlog
+	if devlog {
+		filename := fmt.Sprintf("devlog-%s.md", time.Now().Format("2006-01-02"))
+		outputPath := filepath.Join("output", "posts", filename)
+		
+		if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+			return fmt.Errorf("failed to create output directory: %w", err)
+		}
+		
+		if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
+			return fmt.Errorf("failed to save devlog: %w", err)
+		}
+		
+		fmt.Printf("📄 Saved devlog to: %s\n", outputPath)
 	}
 
 	// Save publication if not preview
@@ -410,19 +446,38 @@ func handleEcosystemSync(args []string) {
 }
 
 func handleStatus(args []string) {
-	if edb != nil {
-		fmt.Printf("🗄️  Database: %s\n", edb.DatabasePath())
+	// Resolve database path using unified approach
+	dbResult, _, err := resolveDBPath(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Database resolution failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Show database information
+	if dbResult.Source == "ecosystem" {
+		fmt.Printf("🗄️  Database: %s\n", dbResult.DBPath)
 		if edb.IsShared() {
 			fmt.Printf("🔗 Ecosystem mode: ENABLED\n")
 		} else {
 			fmt.Printf("📁 Ecosystem mode: DISABLED (local database)\n")
 		}
 		fmt.Println()
+	} else if dbResult.UseDB {
+		fmt.Printf("🗄️  Database: %s (%s)\n", dbResult.DBPath, dbResult.Source)
+		fmt.Println()
+	} else {
+		fmt.Printf("📁 Storage: Flat files (no database configured)\n")
+		fmt.Println()
 	}
 
-	// Use existing status logic
+	// Use status logic with resolved database path
 	service := status.NewStatusService()
-	if err := service.ShowStatus(7, ""); err != nil {
+	dbPath := ""
+	if dbResult.UseDB {
+		dbPath = dbResult.DBPath
+	}
+	
+	if err := service.ShowStatus(7, dbPath); err != nil {
 		fmt.Printf("⚠️  Status check failed: %v\n", err)
 	}
 }
@@ -656,5 +711,257 @@ func truncateString(s string, maxLen int) string {
 	if len(s) <= maxLen {
 		return s
 	}
-	return s[:maxLen-3] + "..."
+	return s[:maxLen] + "..."
+}
+
+// DBResolutionResult contains the resolved database path and metadata
+type DBResolutionResult struct {
+	DBPath     string
+	Source     string // "ecosystem", "explicit", "default", "none"
+	UseDB      bool   // true if should use database, false for flat files
+}
+
+// parseDBFlags extracts --db flag from args and returns cleaned args
+func parseDBFlags(args []string) (dbPath string, explicitDB bool, cleanedArgs []string) {
+	cleanedArgs = []string{}
+	
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--db" {
+			explicitDB = true
+			// --db without value means use default
+		} else if len(arg) > 5 && arg[:5] == "--db=" {
+			dbPath = arg[5:]
+			explicitDB = true
+		} else if arg == "--local" {
+			// Skip --local flag (handled in initialization)
+			continue
+		} else {
+			cleanedArgs = append(cleanedArgs, arg)
+		}
+	}
+	
+	return dbPath, explicitDB, cleanedArgs
+}
+
+// resolveDBPath provides unified database path resolution across all commands
+func resolveDBPath(args []string) (*DBResolutionResult, []string, error) {
+	// Parse --db flags from arguments
+	explicitDBPath, explicitDB, cleanedArgs := parseDBFlags(args)
+	
+	// Priority 1: Use explicit --db flag if provided (allows override of ecosystem)
+	if explicitDB {
+		finalDBPath := explicitDBPath
+		
+		// If --db flag used without value, get default
+		if finalDBPath == "" {
+			defaultPath, err := getOrSetDefaultDBPath()
+			if err != nil {
+				return nil, cleanedArgs, fmt.Errorf("default database setup failed: %w", err)
+			}
+			finalDBPath = defaultPath
+		}
+		
+		return &DBResolutionResult{
+			DBPath: finalDBPath,
+			Source: "explicit",
+			UseDB:  true,
+		}, cleanedArgs, nil
+	}
+	
+	// Priority 2: Use ecosystem database if available
+	if edb != nil {
+		return &DBResolutionResult{
+			DBPath: edb.DatabasePath(),
+			Source: "ecosystem",
+			UseDB:  true,
+		}, cleanedArgs, nil
+	}
+	
+	// Priority 3: Use configured default database if available
+	defaultPath, err := config.LoadDefaultDBPath()
+	if err == nil && defaultPath != "" {
+		return &DBResolutionResult{
+			DBPath: defaultPath,
+			Source: "default",
+			UseDB:  true,
+		}, cleanedArgs, nil
+	}
+	
+	// Priority 4: Fall back to flat files
+	return &DBResolutionResult{
+		DBPath: "",
+		Source: "none",
+		UseDB:  false,
+	}, cleanedArgs, nil
+}
+
+// checkAndOfferMigration checks for existing personal databases and offers migration
+func checkAndOfferMigration() error {
+	// Only run if we have an ecosystem database
+	if edb == nil || !edb.IsShared() {
+		return nil
+	}
+
+	personalDBPath, err := config.LoadDefaultDBPath()
+	if err != nil || personalDBPath == "" {
+		// No configured personal database, nothing to migrate
+		return nil
+	}
+
+	// Check if personal database exists and has data
+	if !fileExists(personalDBPath) {
+		return nil
+	}
+
+	captureCount, err := countCapturesInDB(personalDBPath)
+	if err != nil || captureCount == 0 {
+		// No captures to migrate
+		return nil
+	}
+
+	// Check if we've already migrated (to avoid repeated prompts)
+	ecosystemCount, err := countCapturesInEcosystem()
+	if err == nil && ecosystemCount > 0 {
+		// Ecosystem already has data, assume migration already happened
+		return nil
+	}
+
+	// Offer migration
+	return promptForMigration(personalDBPath, captureCount)
+}
+
+// promptForMigration prompts user to migrate personal database to ecosystem
+func promptForMigration(personalDBPath string, captureCount int) error {
+	fmt.Printf("🔄 Found %d existing captures in personal database\n", captureCount)
+	fmt.Printf("   Copy to ecosystem storage for tool integration? [Y/n]: ")
+
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return err
+	}
+
+	input = strings.TrimSpace(strings.ToLower(input))
+	if input == "" || input == "y" || input == "yes" {
+		return performMigration(personalDBPath, captureCount)
+	}
+
+	fmt.Printf("📝 No migration performed. Use --db to access previous captures.\n")
+	return nil
+}
+
+// performMigration copies captures from personal DB to ecosystem DB
+func performMigration(personalDBPath string, captureCount int) error {
+	fmt.Printf("📋 Copying %d captures to ecosystem storage...\n", captureCount)
+
+	// Open personal database
+	personalDB, err := database.NewDB(personalDBPath)
+	if err != nil {
+		return fmt.Errorf("failed to open personal database: %w", err)
+	}
+	defer personalDB.Close()
+
+	// Get all captures from personal database
+	captures, err := personalDB.GetAllCaptures()
+	if err != nil {
+		return fmt.Errorf("failed to read captures: %w", err)
+	}
+
+	// Copy each capture to ecosystem database
+	copied := 0
+	for _, capture := range captures {
+		project := ""
+		if capture.Project.Valid {
+			project = capture.Project.String
+		}
+		
+		tags := ""
+		if capture.Tags.Valid {
+			tags = capture.Tags.String
+		}
+
+		if _, err := edb.InsertCaptureWithTimestamp(capture.Content, project, tags, capture.CreatedAt); err != nil {
+			fmt.Printf("⚠️  Warning: Failed to copy capture: %v\n", err)
+			continue
+		}
+		copied++
+	}
+
+	if copied == captureCount {
+		fmt.Printf("✅ Successfully copied %d captures to ecosystem storage\n", copied)
+	} else {
+		fmt.Printf("⚠️  Copied %d of %d captures (some failures)\n", copied, captureCount)
+	}
+
+	// Ask about cleanup
+	return promptForCleanup(personalDBPath)
+}
+
+// promptForCleanup asks user if they want to keep or remove the original database
+func promptForCleanup(personalDBPath string) error {
+	fmt.Printf("   Keep original database? [Y/n]: ")
+
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return err
+	}
+
+	input = strings.TrimSpace(strings.ToLower(input))
+	if input == "n" || input == "no" {
+		if err := os.Remove(personalDBPath); err != nil {
+			fmt.Printf("⚠️  Warning: Could not remove original database: %v\n", err)
+			fmt.Printf("   You can manually delete: %s\n", personalDBPath)
+		} else {
+			fmt.Printf("🗑️  Removed original database\n")
+		}
+		
+		// Clear the config entry
+		configObj := &config.Config{DefaultDBPath: ""}
+		if err := config.SaveConfig(configObj); err != nil {
+			fmt.Printf("⚠️  Warning: Could not clear config: %v\n", err)
+		}
+	} else {
+		fmt.Printf("📁 Original database preserved at: %s\n", personalDBPath)
+		fmt.Printf("   Use --db to access it when needed\n")
+	}
+
+	return nil
+}
+
+// countCapturesInDB counts captures in a specific database file
+func countCapturesInDB(dbPath string) (int, error) {
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		return 0, err
+	}
+	defer db.Close()
+
+	captures, err := db.GetAllCaptures()
+	if err != nil {
+		return 0, err
+	}
+
+	return len(captures), nil
+}
+
+// countCapturesInEcosystem counts captures in the ecosystem database
+func countCapturesInEcosystem() (int, error) {
+	if edb == nil {
+		return 0, fmt.Errorf("no ecosystem database")
+	}
+
+	captures, err := edb.GetRecentCaptures(999999, "") // Get all captures
+	if err != nil {
+		return 0, err
+	}
+
+	return len(captures), nil
+}
+
+// fileExists checks if a file exists
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
 }

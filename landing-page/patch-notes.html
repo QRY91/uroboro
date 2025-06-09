@@ -37,6 +37,43 @@
                     
                     <article class="note-item">
                         <div class="note-header">
+                            <span class="note-date">June 9, 2025</span>
+                            <span class="note-type">Unified UX</span>
+                        </div>
+                        <h2>🎯 Unified --db Flag Behavior & AI-Generated Patch Notes</h2>
+                        <div class="note-content">
+                            <p><strong>Major Achievement:</strong> Fixed project filtering for publish command and added file saving to ecosystem path. Both capture and publish now handle --project flag correctly, generating devlogs that are saved to output/posts/devlog-YYYY-MM-DD.md automatically.</p>
+
+                            <p><strong>The Problem:</strong> Previous versions of Uroboro had issues with project filtering during the publish command and file saving. The project filtering was not handling the --project flag correctly, and devlogs were not being saved to the output/posts/ directory.</p>
+
+                            <p><strong>The Solution:</strong> We systematically addressed these problems by implementing a solution that fixes the project filtering for the publish command and adds file saving to the ecosystem path. The code now handles the --project flag correctly, ensuring accurate project selection.</p>
+
+                            <p><strong>Key Improvements:</strong></p>
+                            <ul>
+                                <li><strong>Technical Implementation:</strong> We refactored the project filtering logic and added a save function for files in the ecosystem path.</li>
+                                <li><strong>User Experience:</strong> Developers will find it easier to manage their projects, as the publish command now correctly selects the desired project. Additionally, devlogs are automatically saved to the output/posts/ directory, improving organization and accessibility.</li>
+                                <li><strong>Psychology-Informed Design:</strong> These improvements streamline the developer workflow, increasing efficiency and reducing frustration.</li>
+                            </ul>
+
+                            <p><strong>Before vs After:</strong></p>
+                            <ul>
+                                <li><strong>Before</strong>: Incorrect project selection during publish command and devlogs not being saved to output/posts/ directory.</li>
+                                <li><strong>After</strong>: Correct project selection during the publish command, and devlogs are automatically saved to the output/posts/ directory.</li>
+                            </ul>
+
+                            <p><strong>Proof of Functionality:</strong></p>
+                            <pre><code>$ uroboro capture --project my-project
+$ uroboro publish --project my-project</code></pre>
+
+                            <p><strong>Impact:</strong> By improving project filtering and devlog saving, Uroboro becomes a more efficient tool for developers, aligning with our mission to create developer tools that streamline the development process.</p>
+                        </div>
+                        <div class="note-tech">
+                            <strong>Generated from:</strong> 20 real uroboro captures • Unified UX & AI Generation
+                        </div>
+                    </article>
+
+                    <article class="note-item">
+                        <div class="note-header">
                             <span class="note-date">June 5, 2025</span>
                             <span class="note-type">Database UX</span>
                         </div>
@@ -171,7 +208,7 @@
                     <div class="note-footer">
                         <h3>🔄 About These Notes</h3>
                         <p>This page demonstrates uroboro's core principle: <strong>documenting actual development work</strong>. 
-                        Every update above was generated from <strong>203 real uroboro development captures</strong> using 
+                        Every update above was generated from <strong>223 real uroboro development captures</strong> using 
                         uroboro's own content organization and generation features.</p>
                         
                         <p>Perfect dogfooding - uroboro documenting its own development journey from proof-of-concept 
@@ -179,7 +216,7 @@
                         CLI modernization to marketing honesty principles.</p>
                         
                         <div class="workflow-demo">
-                            <code>198 uroboro captures → organized by project → generated patch notes → authentic development timeline</code>
+                            <code>223 uroboro captures → organized by project → AI-generated patch notes → authentic development timeline</code>
                         </div>
                         
                         <p><em>No marketing fluff, no fake demos - just real development work captured and organized by uroboro itself.</em></p>
