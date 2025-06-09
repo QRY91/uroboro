@@ -161,7 +161,10 @@ func (p *PublishService) GenerateBlog(days int, title string, preview bool, form
 		fmt.Println(fullContent)
 		fmt.Printf("--- END %s PREVIEW ---\n", strings.ToUpper(format))
 	} else {
-		filename := p.saveBlogPost(fullContent, title, format)
+		filename, err := p.saveBlogPost(fullContent, title, format)
+		if err != nil {
+			return fmt.Errorf("failed to save blog post: %w", err)
+		}
 		fmt.Printf("✅ Blog post saved to: %s\n", filename)
 	}
 
@@ -510,7 +513,7 @@ func (p *PublishService) stripMarkdown(markdown string) string {
 	return strings.Join(cleanLines, "\n\n")
 }
 
-func (p *PublishService) saveBlogPost(content, title, format string) string {
+func (p *PublishService) saveBlogPost(content, title, format string) (string, error) {
 	// Get the project root (parent of go directory)
 	executablePath, err := os.Executable()
 	if err != nil {
@@ -526,7 +529,9 @@ func (p *PublishService) saveBlogPost(content, title, format string) string {
 
 	// Create output directory at project root
 	outputDir := filepath.Join(projectRoot, "output", "posts")
-	os.MkdirAll(outputDir, 0755)
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create output directory: %w", err)
+	}
 
 	// Generate filename from title and format
 	filename := strings.ToLower(title)
@@ -547,9 +552,11 @@ func (p *PublishService) saveBlogPost(content, title, format string) string {
 	filename = fmt.Sprintf("%s-%s.%s", time.Now().Format("2006-01-02"), filename, ext)
 
 	filepath := filepath.Join(outputDir, filename)
-	os.WriteFile(filepath, []byte(content), 0644)
+	if err := os.WriteFile(filepath, []byte(content), 0644); err != nil {
+		return "", fmt.Errorf("failed to write file: %w", err)
+	}
 
-	return filepath
+	return filepath, nil
 }
 
 func min(a, b int) int {

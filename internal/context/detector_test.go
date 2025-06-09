@@ -389,7 +389,11 @@ func TestProjectDetector_DetectProject_Integration(t *testing.T) {
 
 	// Change to test directory
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Logf("Failed to restore directory: %v", err)
+		}
+	}()
 
 	err = os.Chdir(tmpDir)
 	if err != nil {
@@ -456,14 +460,22 @@ func BenchmarkProjectDetector_DetectProject(b *testing.B) {
 	defer os.RemoveAll(tmpDir)
 
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			b.Logf("Failed to restore directory: %v", err)
+		}
+	}()
 
-	os.Chdir(tmpDir)
+	if err := os.Chdir(tmpDir); err != nil {
+		b.Fatalf("Failed to change to temp dir: %v", err)
+	}
 
 	goMod := `module github.com/test/benchmark-project
 
 go 1.21`
-	os.WriteFile("go.mod", []byte(goMod), 0644)
+	if err := os.WriteFile("go.mod", []byte(goMod), 0644); err != nil {
+		b.Fatalf("Failed to write go.mod: %v", err)
+	}
 
 	b.ResetTimer()
 

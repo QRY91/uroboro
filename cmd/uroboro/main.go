@@ -57,7 +57,10 @@ func handleCapture(args []string) {
 	ripcordFlag := fs.Bool("ripcord", false, "Copy enriched context to clipboard after capture")
 	dbFlag := fs.String("db", "", "Database path (optional)")
 
-	fs.Parse(args[1:])
+	if err := fs.Parse(args[1:]); err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Error parsing capture flags: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Smart project detection if no project provided
 	if *project == "" {
@@ -136,7 +139,10 @@ func handlePublish(args []string) {
 	ripcordFlag := fs.Bool("ripcord", false, "Copy published content to clipboard")
 	dbFlag := fs.String("db", "", "Database path (optional)")
 
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Error parsing publish flags: %v\n", err)
+		os.Exit(1)
+	}
 
 	if !*blog && !*devlog {
 		fmt.Fprintf(os.Stderr, "❌ Specify --blog or --devlog\n")
@@ -210,7 +216,10 @@ func handleStatus(args []string) {
 	dbFlag := fs.String("db", "", "Database path (optional)")
 	project := fs.String("project", "", "Project name")
 
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Error parsing status flags: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Try database first, fall back to files
 	dbPath := ""

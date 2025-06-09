@@ -354,6 +354,7 @@ func TestRipcordService_QuickRipcord(t *testing.T) {
 
 			if context == nil {
 				t.Error("Expected context but got nil")
+				return
 			}
 
 			if context.Content == "" {
