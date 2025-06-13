@@ -301,10 +301,38 @@ func handleConfig(args []string) {
 			os.Exit(1)
 		}
 
+		analyticsConfig, err := config.LoadAnalyticsConfig()
+		if err != nil {
+			fmt.Printf("❌ Failed to load analytics config: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println("🔧 uroboro configuration:")
+		fmt.Println()
+
 		if dbPath == "" {
-			fmt.Println("📁 No default database configured (using file storage)")
+			fmt.Println("📁 Database: No default configured (using file storage)")
 		} else {
-			fmt.Printf("🗄️  Default database: %s\n", dbPath)
+			fmt.Printf("🗄️  Database: %s\n", dbPath)
+		}
+
+		fmt.Printf("📊 Analytics: %s\n", func() string {
+			if analyticsConfig.AnalyticsEnabled {
+				return "✅ Enabled"
+			}
+			return "❌ Disabled"
+		}())
+
+		if analyticsConfig.AnalyticsEnabled {
+			fmt.Printf("   PostHog Host: %s\n", analyticsConfig.PostHogHost)
+			fmt.Printf("   Privacy Mode: %s\n", analyticsConfig.PrivacyMode)
+			if analyticsConfig.PostHogAPIKey != "" {
+				fmt.Printf("   API Key: %s...%s\n",
+					analyticsConfig.PostHogAPIKey[:4],
+					analyticsConfig.PostHogAPIKey[len(analyticsConfig.PostHogAPIKey)-4:])
+			} else {
+				fmt.Println("   API Key: Not set")
+			}
 		}
 		return
 	}
@@ -336,9 +364,107 @@ func handleConfig(args []string) {
 
 		fmt.Printf("✅ Default database set to: %s\n", dbPath)
 
+	case "analytics-on":
+		// Load current config to preserve settings
+		analyticsConfig, err := config.LoadAnalyticsConfig()
+		if err != nil {
+			analyticsConfig = &config.Config{
+				PostHogHost: "https://eu.posthog.com",
+				PrivacyMode: "enhanced",
+			}
+		}
+
+		err = config.SaveAnalyticsConfig(true, analyticsConfig.PostHogAPIKey,
+			analyticsConfig.PostHogHost, analyticsConfig.PrivacyMode)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Failed to enable analytics: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println("✅ Analytics enabled")
+		if analyticsConfig.PostHogAPIKey == "" {
+			fmt.Println("💡 Set PostHog API key with: uroboro config set-posthog-key <key>")
+		}
+
+	case "analytics-off":
+		// Load current config to preserve other settings
+		analyticsConfig, err := config.LoadAnalyticsConfig()
+		if err != nil {
+			analyticsConfig = &config.Config{
+				PostHogHost: "https://eu.posthog.com",
+				PrivacyMode: "enhanced",
+			}
+		}
+
+		err = config.SaveAnalyticsConfig(false, analyticsConfig.PostHogAPIKey,
+			analyticsConfig.PostHogHost, analyticsConfig.PrivacyMode)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Failed to disable analytics: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println("✅ Analytics disabled")
+
+	case "set-posthog-key":
+		if len(args) < 2 {
+			fmt.Fprintf(os.Stderr, "❌ Usage: uroboro config set-posthog-key <api-key>\n")
+			os.Exit(1)
+		}
+		apiKey := args[1]
+
+		// Load current config to preserve other settings
+		analyticsConfig, err := config.LoadAnalyticsConfig()
+		if err != nil {
+			analyticsConfig = &config.Config{
+				PostHogHost: "https://eu.posthog.com",
+				PrivacyMode: "enhanced",
+			}
+		}
+
+		err = config.SaveAnalyticsConfig(analyticsConfig.AnalyticsEnabled, apiKey,
+			analyticsConfig.PostHogHost, analyticsConfig.PrivacyMode)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Failed to save PostHog API key: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("✅ PostHog API key set to: %s...%s\n", apiKey[:4], apiKey[len(apiKey)-4:])
+		if !analyticsConfig.AnalyticsEnabled {
+			fmt.Println("💡 Enable analytics with: uroboro config analytics-on")
+		}
+
+	case "set-posthog-host":
+		if len(args) < 2 {
+			fmt.Fprintf(os.Stderr, "❌ Usage: uroboro config set-posthog-host <host-url>\n")
+			os.Exit(1)
+		}
+		host := args[1]
+
+		// Load current config to preserve other settings
+		analyticsConfig, err := config.LoadAnalyticsConfig()
+		if err != nil {
+			analyticsConfig = &config.Config{
+				PrivacyMode: "enhanced",
+			}
+		}
+
+		err = config.SaveAnalyticsConfig(analyticsConfig.AnalyticsEnabled, analyticsConfig.PostHogAPIKey,
+			host, analyticsConfig.PrivacyMode)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Failed to save PostHog host: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("✅ PostHog host set to: %s\n", host)
+
 	default:
 		fmt.Fprintf(os.Stderr, "❌ Unknown config command: %s\n", command)
-		fmt.Fprintf(os.Stderr, "Available commands: set-db\n")
+		fmt.Fprintf(os.Stderr, "Available commands:\n")
+		fmt.Fprintf(os.Stderr, "  set-db <path>           Set default database path\n")
+		fmt.Fprintf(os.Stderr, "  analytics-on            Enable analytics\n")
+		fmt.Fprintf(os.Stderr, "  analytics-off           Disable analytics\n")
+		fmt.Fprintf(os.Stderr, "  set-posthog-key <key>   Set PostHog API key\n")
+		fmt.Fprintf(os.Stderr, "  set-posthog-host <url>  Set PostHog host URL\n")
 		os.Exit(1)
 	}
 }

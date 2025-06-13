@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/QRY91/uroboro/internal/config"
 )
 
 // Configuration holds PostHog analytics configuration
@@ -482,15 +484,54 @@ func GetGitContext() *GitContext {
 	}
 }
 
-// loadConfiguration loads PostHog configuration from environment variables
+// loadConfiguration loads PostHog configuration from uroboro config file
 func loadConfiguration() *Configuration {
-	config := &Configuration{
-		Enabled:       getEnvBool("QRY_POSTHOG_ENABLED", false),
-		APIKey:        os.Getenv("POSTHOG_API_KEY"),
-		Host:          getEnvString("POSTHOG_HOST", "https://us.posthog.com"),
+	// Load from uroboro config
+	cfg, err := config.LoadAnalyticsConfig()
+	if err != nil {
+		log.Printf("Failed to load analytics config: %v", err)
+		// Return disabled config
+		return &Configuration{
+			Enabled:       false,
+			Host:          "https://eu.posthog.com",
+			Environment:   "development",
+			PrivacyMode:   "enhanced",
+			LocalFirst:    true,
+			Debug:         false,
+			BatchSize:     100,
+			FlushInterval: 10 * time.Second,
+			RetryAttempts: 3,
+		}
+	}
+
+	// Check for environment variable overrides (for development)
+	enabled := cfg.AnalyticsEnabled
+	if envEnabled := os.Getenv("QRY_POSTHOG_ENABLED"); envEnabled != "" {
+		enabled = envEnabled == "true"
+	}
+
+	apiKey := cfg.PostHogAPIKey
+	if envKey := os.Getenv("POSTHOG_API_KEY"); envKey != "" {
+		apiKey = envKey
+	}
+
+	host := cfg.PostHogHost
+	if envHost := os.Getenv("POSTHOG_HOST"); envHost != "" {
+		host = envHost
+	}
+
+	privacyMode := cfg.PrivacyMode
+	if envPrivacy := os.Getenv("QRY_PRIVACY_MODE"); envPrivacy != "" {
+		privacyMode = envPrivacy
+	}
+
+	configuration := &Configuration{
+		Enabled:       enabled,
+		APIKey:        apiKey,
+		Host:          host,
 		ProjectID:     os.Getenv("POSTHOG_PROJECT_ID"),
 		Environment:   getEnvString("QRY_POSTHOG_ENVIRONMENT", "development"),
-		PrivacyMode:   getEnvString("QRY_PRIVACY_MODE", "enhanced"),
+		PrivacyMode:   privacyMode,
 		LocalFirst:    getEnvBool("QRY_LOCAL_FIRST", true),
 		Debug:         getEnvBool("QRY_DEBUG_ANALYTICS", false),
 		BatchSize:     getEnvInt("POSTHOG_BATCH_SIZE", 100),
@@ -500,13 +541,13 @@ func loadConfiguration() *Configuration {
 
 	// Debug logging for configuration
 	log.Printf("🔍 DEBUG: PostHog configuration loaded:")
-	log.Printf("🔍 DEBUG: Enabled=%v", config.Enabled)
-	log.Printf("🔍 DEBUG: APIKey=%s", maskAPIKey(config.APIKey))
-	log.Printf("🔍 DEBUG: Host=%s", config.Host)
-	log.Printf("🔍 DEBUG: Environment=%s", config.Environment)
-	log.Printf("🔍 DEBUG: PrivacyMode=%s", config.PrivacyMode)
+	log.Printf("🔍 DEBUG: Enabled=%v", configuration.Enabled)
+	log.Printf("🔍 DEBUG: APIKey=%s", maskAPIKey(configuration.APIKey))
+	log.Printf("🔍 DEBUG: Host=%s", configuration.Host)
+	log.Printf("🔍 DEBUG: Environment=%s", configuration.Environment)
+	log.Printf("🔍 DEBUG: PrivacyMode=%s", configuration.PrivacyMode)
 
-	return config
+	return configuration
 }
 
 func generateUserID() string {

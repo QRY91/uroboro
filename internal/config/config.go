@@ -11,7 +11,11 @@ import (
 )
 
 type Config struct {
-	DefaultDBPath string `json:"default_db_path"`
+	DefaultDBPath    string `json:"default_db_path"`
+	AnalyticsEnabled bool   `json:"analytics_enabled"`
+	PostHogAPIKey    string `json:"posthog_api_key"`
+	PostHogHost      string `json:"posthog_host"`
+	PrivacyMode      string `json:"privacy_mode"`
 }
 
 // GetConfigPath returns the path to the config file
@@ -42,8 +46,12 @@ func SaveConfig(config *Config) error {
 
 	configPath := GetConfigPath()
 
-	// Simple implementation - just save the default DB path for now
+	// Simple implementation - save all config values
 	content := fmt.Sprintf("default_db_path=%s\n", config.DefaultDBPath)
+	content += fmt.Sprintf("analytics_enabled=%t\n", config.AnalyticsEnabled)
+	content += fmt.Sprintf("posthog_api_key=%s\n", config.PostHogAPIKey)
+	content += fmt.Sprintf("posthog_host=%s\n", config.PostHogHost)
+	content += fmt.Sprintf("privacy_mode=%s\n", config.PrivacyMode)
 
 	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to save config: %w", err)
@@ -52,29 +60,62 @@ func SaveConfig(config *Config) error {
 	return nil
 }
 
-// LoadDefaultDBPath loads the default database path from config
-func LoadDefaultDBPath() (string, error) {
+// parseConfigFile parses the simple key=value config file format
+func parseConfigFile() (*Config, error) {
 	configPath := GetConfigPath()
 
-	// If config file doesn't exist, return empty string
+	// If config file doesn't exist, return defaults
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return "", nil
+		return &Config{
+			AnalyticsEnabled: false,
+			PostHogHost:      "https://eu.posthog.com",
+			PrivacyMode:      "enhanced",
+		}, nil
 	}
 
 	content, err := os.ReadFile(configPath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// Simple parsing - look for default_db_path=
+	config := &Config{
+		AnalyticsEnabled: false,
+		PostHogHost:      "https://eu.posthog.com",
+		PrivacyMode:      "enhanced",
+	}
+
+	// Simple parsing - look for key=value pairs
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
 		if strings.HasPrefix(line, "default_db_path=") {
-			return strings.TrimPrefix(line, "default_db_path="), nil
+			config.DefaultDBPath = strings.TrimPrefix(line, "default_db_path=")
+		} else if strings.HasPrefix(line, "analytics_enabled=") {
+			value := strings.TrimPrefix(line, "analytics_enabled=")
+			config.AnalyticsEnabled = value == "true"
+		} else if strings.HasPrefix(line, "posthog_api_key=") {
+			config.PostHogAPIKey = strings.TrimPrefix(line, "posthog_api_key=")
+		} else if strings.HasPrefix(line, "posthog_host=") {
+			config.PostHogHost = strings.TrimPrefix(line, "posthog_host=")
+		} else if strings.HasPrefix(line, "privacy_mode=") {
+			config.PrivacyMode = strings.TrimPrefix(line, "privacy_mode=")
 		}
 	}
 
-	return "", nil
+	return config, nil
+}
+
+// LoadDefaultDBPath loads the default database path from config
+func LoadDefaultDBPath() (string, error) {
+	config, err := parseConfigFile()
+	if err != nil {
+		return "", err
+	}
+	return config.DefaultDBPath, nil
 }
 
 // SaveDefaultDBPath saves the default database path to config
@@ -136,4 +177,35 @@ func GetDefaultDBPath() (string, error) {
 
 	// Otherwise, prompt user to set one
 	return PromptForDefaultDB()
+}
+
+// LoadAnalyticsConfig loads analytics configuration from config file
+func LoadAnalyticsConfig() (*Config, error) {
+	return parseConfigFile()
+}
+
+// SaveAnalyticsConfig saves analytics configuration
+func SaveAnalyticsConfig(enabled bool, apiKey, host, privacyMode string) error {
+	// Load existing config to preserve other settings
+	config, err := parseConfigFile()
+	if err != nil {
+		config = &Config{}
+	}
+
+	// Update analytics settings
+	config.AnalyticsEnabled = enabled
+	config.PostHogAPIKey = apiKey
+	config.PostHogHost = host
+	config.PrivacyMode = privacyMode
+
+	return SaveConfig(config)
+}
+
+// IsAnalyticsEnabled checks if analytics is enabled in config
+func IsAnalyticsEnabled() bool {
+	config, err := parseConfigFile()
+	if err != nil {
+		return false
+	}
+	return config.AnalyticsEnabled
 }
