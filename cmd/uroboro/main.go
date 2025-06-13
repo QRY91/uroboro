@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/QRY91/uroboro/internal/analytics"
 	"github.com/QRY91/uroboro/internal/capture"
@@ -21,7 +22,6 @@ import (
 func main() {
 	// Initialize PostHog analytics
 	analytics.Initialize()
-	defer analytics.Get().Close()
 
 	if len(os.Args) < 2 {
 		printUsage()
@@ -38,6 +38,10 @@ func main() {
 		handlePublish(os.Args[2:])
 	case "status", "-s":
 		handleStatus(os.Args[2:])
+	case "analytics", "-a":
+		handleAnalytics(os.Args[2:])
+	case "session":
+		handleSession(os.Args[2:])
 	case "config":
 		handleConfig(os.Args[2:])
 	default:
@@ -346,12 +350,16 @@ func printUsage() {
 	fmt.Println("  uroboro capture \"content\" [flags]    # Capture development insights")
 	fmt.Println("  uroboro publish [flags]               # Generate content from captures")
 	fmt.Println("  uroboro status [flags]                # Show development pipeline status")
+	fmt.Println("  uroboro analytics [flags]             # Show personal development analytics")
+	fmt.Println("  uroboro session [command]             # Manage development sessions")
 	fmt.Println("  uroboro config [command]              # Configure uroboro")
 	fmt.Println()
 	fmt.Println("Short aliases:")
 	fmt.Println("  uro -c \"content\"    # capture")
 	fmt.Println("  uro -p --devlog      # publish devlog")
 	fmt.Println("  uro -s              # status")
+	fmt.Println("  uro -a              # analytics")
+	fmt.Println("  uro session info    # current session")
 	fmt.Println()
 	fmt.Println("Features:")
 	fmt.Println("  🧠 Smart project detection")
@@ -393,6 +401,206 @@ func shouldUseDatabase() bool {
 	// Check if we have a configured default database
 	dbPath, err := config.LoadDefaultDBPath()
 	return err == nil && dbPath != ""
+}
+
+func handleAnalytics(args []string) {
+	fs := flag.NewFlagSet("analytics", flag.ExitOnError)
+	days := fs.Int("days", 7, "Number of days to analyze")
+	sessions := fs.Bool("sessions", false, "Show session analytics")
+	productivity := fs.Bool("productivity", false, "Show productivity trends")
+	projects := fs.Bool("projects", false, "Show project breakdown")
+	all := fs.Bool("all", false, "Show all analytics")
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Error parsing analytics flags: %v\n", err)
+		os.Exit(1)
+	}
+
+	// If no specific flags, show summary
+	if !*sessions && !*productivity && !*projects {
+		*all = true
+	}
+
+	fmt.Printf("📊 Personal Development Analytics (last %d days)\n", *days)
+	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+	// Get current session info
+	currentSession := analytics.Get().GetCurrentSession()
+	if currentSession != nil {
+		fmt.Printf("🎯 Current Session: %s\n", currentSession.ID)
+		fmt.Printf("   Duration: %v\n", currentSession.LastActivity.Sub(currentSession.StartTime).Round(time.Minute))
+		fmt.Printf("   Activities: %d\n", len(currentSession.Activities))
+		fmt.Printf("   Project: %s\n", currentSession.Project)
+		fmt.Println()
+	}
+
+	if *all || *sessions {
+		fmt.Println("📈 Session Insights:")
+		fmt.Println("   • Session-based analytics help you understand your development flow")
+		fmt.Println("   • Track productivity patterns and optimize your work sessions")
+		fmt.Println("   • Identify peak performance times and context switching patterns")
+		fmt.Println()
+	}
+
+	if *all || *productivity {
+		fmt.Println("🚀 Productivity Patterns:")
+		fmt.Println("   • Self-tracking analytics provide personal insights")
+		fmt.Println("   • No surveillance - just personal optimization data")
+		fmt.Println("   • Privacy-first approach respects your development flow")
+		fmt.Println()
+	}
+
+	if *all || *projects {
+		fmt.Println("🎨 Project Analytics:")
+		fmt.Println("   • Track time spent across different projects")
+		fmt.Println("   • Understand your project switching patterns")
+		fmt.Println("   • Optimize context management for better flow states")
+		fmt.Println()
+	}
+
+	fmt.Println("💡 Tip: Analytics are completely optional and privacy-first")
+	fmt.Printf("   Current status: %s\n", func() string {
+		if analytics.Get().IsEnabled() {
+			return "✅ Enabled - tracking your development patterns"
+		}
+		return "⚠️  Disabled - set POSTHOG_API_KEY to enable personal insights"
+	}())
+
+	// Track analytics dashboard usage
+	if analytics.Get().IsEnabled() {
+		fmt.Println()
+		fmt.Println("🔗 PostHog Dashboard: Check your personal development insights!")
+	}
+}
+
+func handleSession(args []string) {
+	if len(args) == 0 {
+		// Show current session info
+		showCurrentSession()
+		return
+	}
+
+	command := args[0]
+	switch command {
+	case "info", "current":
+		showCurrentSession()
+	case "end", "stop":
+		endCurrentSession()
+	case "new", "start":
+		startNewSession(args[1:])
+	case "timeout":
+		checkSessionTimeout()
+	default:
+		fmt.Fprintf(os.Stderr, "❌ Unknown session command: %s\n", command)
+		fmt.Fprintf(os.Stderr, "Available commands: info, end, new, timeout\n")
+		os.Exit(1)
+	}
+}
+
+func showCurrentSession() {
+	currentSession := analytics.Get().GetCurrentSession()
+	if currentSession == nil {
+		fmt.Println("⚠️  No active development session")
+		fmt.Println("   Start a new session with: uroboro session new")
+		return
+	}
+
+	duration := time.Since(currentSession.StartTime)
+	lastActivity := time.Since(currentSession.LastActivity)
+
+	fmt.Printf("🎯 Current Development Session\n")
+	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	fmt.Printf("Session ID: %s\n", currentSession.ID)
+	fmt.Printf("Duration: %v\n", duration.Round(time.Minute))
+	fmt.Printf("Last Activity: %v ago\n", lastActivity.Round(time.Second))
+	fmt.Printf("Project: %s\n", func() string {
+		if currentSession.Project == "" {
+			return "(not set)"
+		}
+		return currentSession.Project
+	}())
+	fmt.Printf("Activities: %d\n", len(currentSession.Activities))
+
+	if currentSession.GitContext != nil {
+		fmt.Printf("Git Branch: %s\n", currentSession.GitContext.Branch)
+		if currentSession.GitContext.IsDirty {
+			fmt.Printf("Git Status: 🔄 dirty\n")
+		} else {
+			fmt.Printf("Git Status: ✅ clean\n")
+		}
+	}
+
+	fmt.Printf("Working Dir: %s\n", currentSession.WorkingDir)
+
+	if len(currentSession.Activities) > 0 {
+		fmt.Println("\n📋 Recent Activities:")
+		for i := len(currentSession.Activities) - 1; i >= 0 && i >= len(currentSession.Activities)-3; i-- {
+			activity := currentSession.Activities[i]
+			timeAgo := time.Since(activity.Timestamp).Round(time.Minute)
+			fmt.Printf("   • %s (%v ago)\n", activity.Type, timeAgo)
+		}
+	}
+
+	fmt.Println("\n💡 Commands:")
+	fmt.Println("   uroboro session end     # End current session")
+	fmt.Println("   uroboro session new     # Start fresh session")
+}
+
+func endCurrentSession() {
+	currentSession := analytics.Get().GetCurrentSession()
+	if currentSession == nil {
+		fmt.Println("⚠️  No active session to end")
+		return
+	}
+
+	fmt.Printf("🔚 Ending session: %s\n", currentSession.ID)
+	analytics.Get().EndCurrentSession()
+	fmt.Println("✅ Session ended successfully")
+
+	if analytics.Get().IsEnabled() {
+		fmt.Println("📊 Session analytics sent to PostHog")
+	}
+}
+
+func startNewSession(args []string) {
+	// End current session first
+	if analytics.Get().GetCurrentSession() != nil {
+		fmt.Println("🔄 Ending current session...")
+		analytics.Get().EndCurrentSession()
+	}
+
+	// Parse project name if provided
+	project := ""
+	if len(args) > 0 {
+		project = args[0]
+	}
+
+	// Start a new session by triggering an activity
+	fmt.Printf("🎯 Starting new development session")
+	if project != "" {
+		fmt.Printf(" (project: %s)", project)
+	}
+	fmt.Println()
+
+	// Track the session start
+	analytics.Get().TrackCaptureSimple("Session started manually", project, []string{"session", "manual"})
+
+	// Show the new session info
+	time.Sleep(100 * time.Millisecond) // Brief delay to ensure session is created
+	showCurrentSession()
+}
+
+func checkSessionTimeout() {
+	fmt.Println("🕐 Checking session timeout...")
+	analytics.Get().CheckSessionTimeout()
+
+	currentSession := analytics.Get().GetCurrentSession()
+	if currentSession == nil {
+		fmt.Println("⏰ Session has timed out (no active session)")
+	} else {
+		lastActivity := time.Since(currentSession.LastActivity)
+		fmt.Printf("✅ Session still active (last activity: %v ago)\n", lastActivity.Round(time.Second))
+	}
 }
 
 func getDefaultDBPath() (string, error) {

@@ -13,7 +13,8 @@ var (
 
 // Analytics provides a simple interface for uroboro analytics
 type Analytics struct {
-	client *AnalyticsClient
+	client         *AnalyticsClient
+	sessionManager *SessionManager
 }
 
 // Initialize sets up the global analytics instance
@@ -22,11 +23,17 @@ func Initialize() {
 		client, err := NewAnalyticsClient()
 		if err != nil {
 			log.Printf("Warning: Analytics initialization failed: %v", err)
-			// Create disabled instance
-			instance = &Analytics{client: nil}
+			// Create disabled instance with session manager
+			instance = &Analytics{
+				client:         nil,
+				sessionManager: NewSessionManager(nil),
+			}
 			return
 		}
-		instance = &Analytics{client: client}
+		instance = &Analytics{
+			client:         client,
+			sessionManager: NewSessionManager(client),
+		}
 	})
 }
 
@@ -40,115 +47,146 @@ func Get() *Analytics {
 
 // TrackCaptureSimple tracks a basic capture event with minimal parameters
 func (a *Analytics) TrackCaptureSimple(content, project string, tags []string) {
-	if a.client == nil {
-		return
-	}
+	startTime := time.Now()
 
-	event := CaptureEvent{
-		Content:       content,
-		Project:       project,
-		Tags:          tags,
-		Method:        "cli",
-		InsightLength: len(content),
-		CaptureTime:   0, // Will be set by caller if available
-		AIAssisted:    false,
-		GitContext:    GetGitContext(),
-		WorkflowStage: "capture",
-		ContextWeight: 0.5,
+	// Track in session
+	metadata := map[string]interface{}{
+		"content_length": len(content),
+		"tags":           tags,
+		"method":         "cli",
 	}
+	a.sessionManager.StartActivity("capture", project, metadata)
 
-	if err := a.client.TrackCapture(event); err != nil {
-		log.Printf("Analytics capture tracking failed: %v", err)
+	// Complete the activity
+	duration := time.Since(startTime)
+	a.sessionManager.CompleteActivity(true, len(content), duration)
+
+	// ALSO send individual event for debugging
+	if a.client != nil {
+		event := CaptureEvent{
+			Content:       content,
+			Project:       project,
+			Tags:          tags,
+			Method:        "cli",
+			InsightLength: len(content),
+			CaptureTime:   duration,
+			AIAssisted:    false,
+			GitContext:    GetGitContext(),
+			WorkflowStage: "capture",
+			ContextWeight: calculateContextWeight(content, project),
+		}
+
+		if err := a.client.TrackCapture(event); err != nil {
+			log.Printf("Individual capture tracking failed: %v", err)
+		} else {
+			log.Printf("✅ DEBUG: Individual capture event sent")
+		}
 	}
 }
 
 // TrackCaptureDetailed tracks a capture event with full context
 func (a *Analytics) TrackCaptureDetailed(content, project string, tags []string, aiAssisted bool, captureTime time.Duration) {
-	if a.client == nil {
-		return
+	// Track in session with detailed metadata
+	metadata := map[string]interface{}{
+		"content_length": len(content),
+		"tags":           tags,
+		"method":         "cli",
+		"ai_assisted":    aiAssisted,
+		"context_weight": calculateContextWeight(content, project),
 	}
-
-	event := CaptureEvent{
-		Content:       content,
-		Project:       project,
-		Tags:          tags,
-		Method:        "cli",
-		InsightLength: len(content),
-		CaptureTime:   captureTime,
-		AIAssisted:    aiAssisted,
-		GitContext:    GetGitContext(),
-		WorkflowStage: "capture",
-		ContextWeight: calculateContextWeight(content, project),
-	}
-
-	if err := a.client.TrackCapture(event); err != nil {
-		log.Printf("Analytics capture tracking failed: %v", err)
-	}
+	a.sessionManager.StartActivity("capture", project, metadata)
+	a.sessionManager.CompleteActivity(true, len(content), captureTime)
 }
 
 // TrackPublishSimple tracks a basic publish event
 func (a *Analytics) TrackPublishSimple(format string, success bool, wordCount int) {
-	if a.client == nil {
-		return
-	}
+	startTime := time.Now()
 
-	event := PublishEvent{
-		Format:            format,
-		WordCount:         wordCount,
-		Platform:          "local",
-		Success:           success,
-		ContentType:       format,
-		AIAssistanceLevel: "none",
-		CapturesUsed:      0, // Will be set by caller if available
-		GenerationTime:    0,
-		QualityScore:      0.5,
+	// Track in session
+	metadata := map[string]interface{}{
+		"format":      format,
+		"word_count":  wordCount,
+		"platform":    "local",
+		"ai_assisted": false,
 	}
+	a.sessionManager.StartActivity("publish", "", metadata)
 
-	if err := a.client.TrackPublish(event); err != nil {
-		log.Printf("Analytics publish tracking failed: %v", err)
+	// Complete the activity
+	duration := time.Since(startTime)
+	a.sessionManager.CompleteActivity(success, wordCount, duration)
+
+	// ALSO send individual event for debugging
+	if a.client != nil {
+		event := PublishEvent{
+			Format:            format,
+			WordCount:         wordCount,
+			Platform:          "local",
+			Success:           success,
+			ContentType:       format,
+			AIAssistanceLevel: "none",
+			CapturesUsed:      0,
+			GenerationTime:    duration,
+			QualityScore:      0.5,
+		}
+
+		if err := a.client.TrackPublish(event); err != nil {
+			log.Printf("Individual publish tracking failed: %v", err)
+		} else {
+			log.Printf("✅ DEBUG: Individual publish event sent")
+		}
 	}
 }
 
 // TrackPublishDetailed tracks a publish event with full context
 func (a *Analytics) TrackPublishDetailed(format string, success bool, wordCount, capturesUsed int, generationTime time.Duration, aiLevel string) {
-	if a.client == nil {
-		return
+	// Track in session with detailed metadata
+	metadata := map[string]interface{}{
+		"format":        format,
+		"word_count":    wordCount,
+		"platform":      "local",
+		"captures_used": capturesUsed,
+		"ai_level":      aiLevel,
+		"quality_score": calculateQualityScore(wordCount, capturesUsed),
 	}
-
-	event := PublishEvent{
-		Format:            format,
-		WordCount:         wordCount,
-		Platform:          "local",
-		Success:           success,
-		ContentType:       format,
-		AIAssistanceLevel: aiLevel,
-		CapturesUsed:      capturesUsed,
-		GenerationTime:    generationTime,
-		QualityScore:      calculateQualityScore(wordCount, capturesUsed),
-	}
-
-	if err := a.client.TrackPublish(event); err != nil {
-		log.Printf("Analytics publish tracking failed: %v", err)
-	}
+	a.sessionManager.StartActivity("publish", "", metadata)
+	a.sessionManager.CompleteActivity(success, wordCount, generationTime)
 }
 
 // TrackStatusCheck tracks a status command execution
 func (a *Analytics) TrackStatusCheck(totalCaptures, capturesToday, activeProjects, unpublishedCaptures int, dbSizeMB float64) {
-	if a.client == nil {
-		return
-	}
+	startTime := time.Now()
 
-	event := StatusEvent{
-		TotalCaptures:       totalCaptures,
-		CapturesToday:       capturesToday,
-		ActiveProjects:      activeProjects,
-		ProductivityTrend:   calculateProductivityTrend(capturesToday),
-		UnpublishedCaptures: unpublishedCaptures,
-		DatabaseSizeMB:      dbSizeMB,
+	// Track in session
+	metadata := map[string]interface{}{
+		"total_captures":       totalCaptures,
+		"captures_today":       capturesToday,
+		"active_projects":      activeProjects,
+		"unpublished_captures": unpublishedCaptures,
+		"database_size_mb":     dbSizeMB,
+		"productivity_trend":   calculateProductivityTrend(capturesToday),
 	}
+	a.sessionManager.StartActivity("status", "", metadata)
 
-	if err := a.client.TrackStatus(event); err != nil {
-		log.Printf("Analytics status tracking failed: %v", err)
+	// Complete the activity
+	duration := time.Since(startTime)
+	a.sessionManager.CompleteActivity(true, totalCaptures, duration)
+
+	// ALSO send individual event for debugging
+	if a.client != nil {
+		event := StatusEvent{
+			TotalCaptures:       totalCaptures,
+			CapturesToday:       capturesToday,
+			ActiveProjects:      activeProjects,
+			ProductivityTrend:   calculateProductivityTrend(capturesToday),
+			UnpublishedCaptures: unpublishedCaptures,
+			DatabaseSizeMB:      dbSizeMB,
+		}
+
+		if err := a.client.TrackStatus(event); err != nil {
+			log.Printf("Individual status tracking failed: %v", err)
+		} else {
+			log.Printf("✅ DEBUG: Individual status event sent")
+		}
 	}
 }
 
@@ -176,6 +214,11 @@ func (a *Analytics) TrackWorkflowChange(from, to, trigger string, duration time.
 
 // Close gracefully shuts down analytics
 func (a *Analytics) Close() {
+	// Check for session timeout but don't force end
+	if a.sessionManager != nil {
+		a.sessionManager.CheckSessionTimeout()
+	}
+
 	if a.client != nil {
 		if err := a.client.Close(); err != nil {
 			log.Printf("Analytics shutdown error: %v", err)
@@ -186,6 +229,28 @@ func (a *Analytics) Close() {
 // IsEnabled returns true if analytics is enabled and working
 func (a *Analytics) IsEnabled() bool {
 	return a.client != nil && a.client.isEnabled()
+}
+
+// GetCurrentSession returns information about the current session
+func (a *Analytics) GetCurrentSession() *Session {
+	if a.sessionManager == nil {
+		return nil
+	}
+	return a.sessionManager.GetCurrentSession()
+}
+
+// EndCurrentSession explicitly ends the current session
+func (a *Analytics) EndCurrentSession() {
+	if a.sessionManager != nil {
+		a.sessionManager.EndSession()
+	}
+}
+
+// CheckSessionTimeout checks if the current session should timeout
+func (a *Analytics) CheckSessionTimeout() {
+	if a.sessionManager != nil {
+		a.sessionManager.CheckSessionTimeout()
+	}
 }
 
 // Helper functions

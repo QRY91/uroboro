@@ -3,6 +3,7 @@ package analytics
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/posthog/posthog-go"
 )
 
 // Configuration holds PostHog analytics configuration
@@ -31,7 +30,7 @@ type Configuration struct {
 
 // AnalyticsClient handles PostHog integration for uroboro
 type AnalyticsClient struct {
-	client *posthog.Client
+	client *DirectHTTPClient
 	config *Configuration
 	userID string
 }
@@ -102,30 +101,10 @@ func NewAnalyticsClient() (*AnalyticsClient, error) {
 		return &AnalyticsClient{config: config}, fmt.Errorf("PostHog API key not configured")
 	}
 
-	// Configure PostHog client
-	client, err := posthog.NewWithConfig(
-		config.APIKey,
-		posthog.Config{
-			Endpoint:      config.Host,
-			BatchSize:     config.BatchSize,
-			FlushInterval: config.FlushInterval,
-			DefaultProperties: posthog.Properties{
-				"$lib":            "uroboro-posthog",
-				"$lib_version":    "1.0.0",
-				"qry_environment": config.Environment,
-				"qry_tool":        "uroboro",
-				"qry_privacy":     config.PrivacyMode,
-			},
-			Logger:  posthog.StdLogger(os.Stdout),
-			Verbose: config.Debug,
-		},
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize PostHog client: %w", err)
-	}
-
 	userID := generateUserID()
+
+	// Create direct HTTP client instead of Go SDK
+	client := NewDirectHTTPClient(config.APIKey, config.Host, userID, config.Debug)
 
 	return &AnalyticsClient{
 		client: client,
@@ -140,7 +119,7 @@ func (ac *AnalyticsClient) TrackCapture(event CaptureEvent) error {
 		return nil
 	}
 
-	properties := posthog.Properties{
+	properties := map[string]interface{}{
 		// Core capture metrics
 		"insight_length":  event.InsightLength,
 		"capture_method":  event.Method,
@@ -181,7 +160,7 @@ func (ac *AnalyticsClient) TrackPublish(event PublishEvent) error {
 		return nil
 	}
 
-	properties := posthog.Properties{
+	properties := map[string]interface{}{
 		// Publication metrics
 		"format":              event.Format,
 		"word_count":          event.WordCount,
@@ -209,7 +188,7 @@ func (ac *AnalyticsClient) TrackStatus(event StatusEvent) error {
 		return nil
 	}
 
-	properties := posthog.Properties{
+	properties := map[string]interface{}{
 		// Status metrics
 		"total_captures":       event.TotalCaptures,
 		"captures_today":       event.CapturesToday,
@@ -234,7 +213,7 @@ func (ac *AnalyticsClient) TrackAICollaboration(duration time.Duration, queries 
 		return nil
 	}
 
-	properties := posthog.Properties{
+	properties := map[string]interface{}{
 		"session_duration_minutes": duration.Minutes(),
 		"queries_sent":             queries,
 		"human_satisfaction":       satisfaction,
@@ -252,7 +231,7 @@ func (ac *AnalyticsClient) TrackWorkflowTransition(fromState, toState, trigger s
 		return nil
 	}
 
-	properties := posthog.Properties{
+	properties := map[string]interface{}{
 		"from_state":             fromState,
 		"to_state":               toState,
 		"transition_trigger":     trigger,
@@ -266,9 +245,7 @@ func (ac *AnalyticsClient) TrackWorkflowTransition(fromState, toState, trigger s
 
 // Close gracefully shuts down the analytics client
 func (ac *AnalyticsClient) Close() error {
-	if ac.client != nil {
-		return ac.client.Close()
-	}
+	// Direct HTTP client doesn't need explicit closing
 	return nil
 }
 
@@ -278,28 +255,40 @@ func (ac *AnalyticsClient) isEnabled() bool {
 	return ac.config.Enabled && ac.client != nil
 }
 
-func (ac *AnalyticsClient) captureEvent(eventName string, properties posthog.Properties) error {
+func (ac *AnalyticsClient) captureEvent(eventName string, properties map[string]interface{}) error {
 	if !ac.isEnabled() {
+		log.Printf("⚠️  DEBUG: Analytics not enabled, skipping event: %s", eventName)
 		return nil
 	}
 
+	log.Printf("🔍 DEBUG: Capturing event: %s", eventName)
+	log.Printf("🔍 DEBUG: User ID: %s", ac.userID)
+	log.Printf("🔍 DEBUG: Raw properties count: %d", len(properties))
+
 	// Apply privacy filtering
 	filteredProperties := ac.applyPrivacyFilter(properties)
+	log.Printf("🔍 DEBUG: Filtered properties count: %d", len(filteredProperties))
 
 	// Add common properties
 	filteredProperties["qry_integration"] = "uroboro_posthog"
 	filteredProperties["qry_version"] = "1.0.0"
 
-	return ac.client.Enqueue(posthog.Capture{
-		DistinctId: ac.userID,
-		Event:      eventName,
-		Properties: filteredProperties,
-		Timestamp:  time.Now(),
-	})
+	log.Printf("🔍 DEBUG: Final properties: %+v", filteredProperties)
+
+	// Use direct HTTP client instead of Go SDK
+	err := ac.client.SendEvent(eventName, filteredProperties)
+
+	if err != nil {
+		log.Printf("❌ DEBUG: Failed to send event %s: %v", eventName, err)
+	} else {
+		log.Printf("✅ DEBUG: Successfully sent event: %s", eventName)
+	}
+
+	return err
 }
 
-func (ac *AnalyticsClient) applyPrivacyFilter(properties posthog.Properties) posthog.Properties {
-	filtered := make(posthog.Properties)
+func (ac *AnalyticsClient) applyPrivacyFilter(properties map[string]interface{}) map[string]interface{} {
+	filtered := make(map[string]interface{})
 
 	privacyLevel := PrivacyLevel(ac.config.PrivacyMode)
 
@@ -445,7 +434,7 @@ func (ac *AnalyticsClient) filterRepoName(repo string) string {
 	return filepath.Base(repo) // Only return the repo name, not full path
 }
 
-func (ac *AnalyticsClient) addSystemMetrics(properties posthog.Properties) {
+func (ac *AnalyticsClient) addSystemMetrics(properties map[string]interface{}) {
 	properties["go_version"] = runtime.Version()
 	properties["num_cpu"] = runtime.NumCPU()
 	properties["arch"] = runtime.GOARCH
@@ -509,6 +498,14 @@ func loadConfiguration() *Configuration {
 		RetryAttempts: getEnvInt("POSTHOG_RETRY_ATTEMPTS", 3),
 	}
 
+	// Debug logging for configuration
+	log.Printf("🔍 DEBUG: PostHog configuration loaded:")
+	log.Printf("🔍 DEBUG: Enabled=%v", config.Enabled)
+	log.Printf("🔍 DEBUG: APIKey=%s", maskAPIKey(config.APIKey))
+	log.Printf("🔍 DEBUG: Host=%s", config.Host)
+	log.Printf("🔍 DEBUG: Environment=%s", config.Environment)
+	log.Printf("🔍 DEBUG: PrivacyMode=%s", config.PrivacyMode)
+
 	return config
 }
 
@@ -516,6 +513,13 @@ func generateUserID() string {
 	// Generate a stable user ID for this installation
 	hostname, _ := os.Hostname()
 	return fmt.Sprintf("uroboro_user_%s", hostname)
+}
+
+func maskAPIKey(key string) string {
+	if len(key) < 8 {
+		return "***"
+	}
+	return key[:4] + "***" + key[len(key)-4:]
 }
 
 // Environment variable helpers
