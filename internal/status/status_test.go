@@ -129,3 +129,58 @@ Tags: testing,unit
 		t.Errorf("Tags metadata should be filtered out. Got: %s", captures[0])
 	}
 }
+
+// TDD Test: Tag filtering functionality (will fail until implemented)
+func TestStatusService_ShowStatusWithTagFilter(t *testing.T) {
+	tempHome := t.TempDir()
+	originalHome := os.Getenv("HOME")
+	os.Setenv("HOME", tempHome)
+	defer os.Setenv("HOME", originalHome)
+
+	service := NewStatusService()
+
+	// Create test data directory
+	dataDir := filepath.Join(tempHome, ".local", "share", "uroboro", "daily")
+	err := os.MkdirAll(dataDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create test directory: %v", err)
+	}
+
+	// Create test file with captures having different tags
+	today := time.Now().Format("2006-01-02")
+	testFile := filepath.Join(dataDir, today+".md")
+	testContent := `
+## 2025-06-04T10:00:00
+
+Bugfix capture content
+Project: test-project
+Tags: bugfix,urgent
+
+## 2025-06-04T11:00:00
+
+Feature capture content  
+Project: test-project
+Tags: feature,enhancement
+
+## 2025-06-04T12:00:00
+
+Another bugfix
+Project: test-project
+Tags: bugfix,database
+`
+	err = os.WriteFile(testFile, []byte(testContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
+	// Test filtering by "bugfix" tag - should return 2 captures
+	// This will fail until we implement the --tags flag
+	err = service.ShowStatusWithTags(7, "", "", "bugfix")
+	if err != nil {
+		t.Errorf("ShowStatusWithTags failed: %v", err)
+	}
+
+	// TODO: Add assertions for filtered output once method exists
+	// For now, this test defines the contract: 
+	// ShowStatusWithTags(days, dbPath, project, tags) should filter by tags
+}

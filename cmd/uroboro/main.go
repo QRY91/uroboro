@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/QRY91/uroboro/internal/analytics"
 	"github.com/QRY91/uroboro/internal/capture"
 	"github.com/QRY91/uroboro/internal/config"
 	"github.com/QRY91/uroboro/internal/context"
@@ -18,6 +19,10 @@ import (
 )
 
 func main() {
+	// Initialize PostHog analytics
+	analytics.Initialize()
+	defer analytics.Get().Close()
+
 	if len(os.Args) < 2 {
 		printUsage()
 		os.Exit(1)
@@ -107,6 +112,13 @@ func handleCapture(args []string) {
 		os.Exit(1)
 	}
 
+	// Track successful capture
+	tagsList := strings.Split(*tags, ",")
+	if *tags == "" {
+		tagsList = []string{}
+	}
+	analytics.Get().TrackCaptureSimple(content, *project, tagsList)
+
 	// Handle ripcord functionality
 	if *ripcordFlag {
 		var ripcordService *ripcord.RipcordService
@@ -186,8 +198,12 @@ func handlePublish(args []string) {
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Publish failed: %v\n", err)
+		analytics.Get().TrackPublishSimple(*format, false, 0)
 		os.Exit(1)
 	}
+
+	// Track successful publish
+	analytics.Get().TrackPublishSimple(*format, true, 1000) // TODO: get actual word count
 
 	// Handle ripcord functionality
 	if *ripcordFlag {
@@ -248,6 +264,9 @@ func handleStatus(args []string) {
 		fmt.Fprintf(os.Stderr, "❌ Status failed: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Track status check
+	analytics.Get().TrackStatusCheck(0, 0, 1, 0, 0.0) // TODO: get actual metrics
 
 	// Handle ripcord functionality
 	if *ripcordFlag {
