@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -13,6 +15,7 @@ import (
 	"github.com/QRY91/uroboro/internal/config"
 	"github.com/QRY91/uroboro/internal/context"
 	"github.com/QRY91/uroboro/internal/database"
+	"github.com/QRY91/uroboro/internal/journey"
 	"github.com/QRY91/uroboro/internal/publish"
 	"github.com/QRY91/uroboro/internal/ripcord"
 	"github.com/QRY91/uroboro/internal/status"
@@ -148,6 +151,7 @@ func handlePublish(args []string) {
 	days := fs.Int("days", 1, "Number of days to look back")
 	blog := fs.Bool("blog", false, "Generate blog post")
 	devlog := fs.Bool("devlog", false, "Generate devlog")
+	journey := fs.Bool("journey", false, "Generate journey replay visualization")
 	title := fs.String("title", "", "Blog post title")
 	preview := fs.Bool("preview", false, "Preview content without saving")
 	format := fs.String("format", "markdown", "Output format: markdown, html, text")
@@ -155,13 +159,19 @@ func handlePublish(args []string) {
 	ripcordFlag := fs.Bool("ripcord", false, "Copy published content to clipboard")
 	dbFlag := fs.String("db", "", "Database path (optional)")
 
+	// Journey-specific flags
+	port := fs.Int("port", 8080, "Port for journey web server")
+	autoOpen := fs.Bool("open", true, "Automatically open browser for journey")
+	theme := fs.String("theme", "default", "Theme for journey visualization")
+	exportJSON := fs.Bool("export", false, "Export journey data to JSON file")
+
 	if err := fs.Parse(args); err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Error parsing publish flags: %v\n", err)
 		os.Exit(1)
 	}
 
-	if !*blog && !*devlog {
-		fmt.Fprintf(os.Stderr, "❌ Specify --blog or --devlog\n")
+	if !*blog && !*devlog && !*journey {
+		fmt.Fprintf(os.Stderr, "❌ Specify --blog, --devlog, or --journey\n")
 		os.Exit(1)
 	}
 
@@ -198,6 +208,8 @@ func handlePublish(args []string) {
 		err = service.GenerateBlog(*days, *title, *preview, *format, *project)
 	} else if *devlog {
 		err = service.GenerateDevlogWithProject(*days, *project)
+	} else if *journey {
+		err = handleJourneyPublish(*days, *project, *port, *autoOpen, *theme, *exportJSON, *title, service)
 	}
 
 	if err != nil {
@@ -483,9 +495,15 @@ func printUsage() {
 	fmt.Println("Short aliases:")
 	fmt.Println("  uro -c \"content\"    # capture")
 	fmt.Println("  uro -p --devlog      # publish devlog")
+	fmt.Println("  uro -p --journey     # journey replay visualization")
 	fmt.Println("  uro -s              # status")
 	fmt.Println("  uro -a              # analytics")
 	fmt.Println("  uro session info    # current session")
+	fmt.Println()
+	fmt.Println("Publish Options:")
+	fmt.Println("  --blog               # Generate blog post")
+	fmt.Println("  --devlog             # Generate development log")
+	fmt.Println("  --journey            # Interactive timeline visualization")
 	fmt.Println()
 	fmt.Println("Features:")
 	fmt.Println("  🧠 Smart project detection")
@@ -493,6 +511,7 @@ func printUsage() {
 	fmt.Println("  📋 Ripcord functionality")
 	fmt.Println("  🗄️  Optional database storage")
 	fmt.Println("  📁 File-based fallback")
+	fmt.Println("  🎬 Journey replay visualization")
 }
 
 // Helper functions
@@ -740,4 +759,117 @@ func getDefaultDBPath() (string, error) {
 	}
 
 	return dbPath, nil
+}
+
+func handleJourneyPublish(days int, project string, port int, autoOpen bool, theme string, exportJSON bool, title string, service *publish.PublishService) error {
+	// Get database from service
+	if service == nil {
+		return fmt.Errorf("service not initialized")
+	}
+
+	// For now, we need direct database access - this could be refactored later to go through the publish service
+	dbPath, err := getDefaultDBPath()
+	if err != nil {
+		return fmt.Errorf("database not available: %w", err)
+	}
+
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		return fmt.Errorf("failed to initialize database: %w", err)
+	}
+	defer db.Close()
+
+	// Parse projects if specified
+	var projectList []string
+	if project != "" {
+		projectList = strings.Split(project, ",")
+		for i, p := range projectList {
+			projectList[i] = strings.TrimSpace(p)
+		}
+	}
+
+	// Create journey options
+	options := journey.JourneyOptions{
+		Days:     days,
+		Projects: projectList,
+		Port:     port,
+		AutoOpen: autoOpen,
+		Theme:    theme,
+		Title:    title,
+		Export:   exportJSON,
+	}
+
+	if exportJSON {
+		// Export mode - generate JSON and save to file
+		journeyService := journey.NewJourneyService(db)
+		journeyData, err := journeyService.GenerateJourney(options)
+		if err != nil {
+			return fmt.Errorf("failed to generate journey data: %w", err)
+		}
+
+		filename := fmt.Sprintf("journey-%d-days.json", days)
+		if err := saveJourneyToFile(journeyData, filename); err != nil {
+			return fmt.Errorf("failed to export journey data: %w", err)
+		}
+
+		fmt.Printf("✅ Journey data exported to %s\n", filename)
+		return nil
+	}
+
+	// Web server mode
+	server := journey.NewServer(db, port)
+
+	fmt.Printf("🎬 Starting Journey Replay visualization...\n")
+	fmt.Printf("📊 Analyzing %d days of data\n", days)
+	if len(projectList) > 0 {
+		fmt.Printf("🎯 Filtering projects: %s\n", strings.Join(projectList, ", "))
+	}
+	fmt.Printf("🎨 Theme: %s\n", theme)
+
+	if autoOpen {
+		go func() {
+			time.Sleep(2 * time.Second)
+			openBrowser(fmt.Sprintf("http://localhost:%d", port))
+		}()
+	}
+
+	return server.Start()
+}
+
+func saveJourneyToFile(journeyData *journey.JourneyData, filename string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(journeyData)
+}
+
+func openBrowser(url string) {
+	var cmd string
+	var args []string
+
+	switch {
+	case fileExists("/usr/bin/xdg-open"):
+		cmd = "xdg-open"
+	case fileExists("/usr/bin/open"):
+		cmd = "open"
+	case fileExists("/usr/bin/start"):
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	default:
+		fmt.Printf("🌐 Open your browser and navigate to: %s\n", url)
+		return
+	}
+
+	args = append(args, url)
+	exec.Command(cmd, args...).Start()
+}
+
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
 }
