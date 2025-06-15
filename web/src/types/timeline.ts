@@ -14,7 +14,7 @@ export interface TimeScale {
   label: string;
 }
 
-export type TimeScaleName = '15m' | '1h' | '6h' | '24h' | '7d' | 'full';
+export type TimeScaleName = '5m' | '15m' | '30m' | '1h' | '2h' | '6h' | '12h' | '24h' | '7d' | 'full';
 
 // Journey Event Types
 export interface JourneyEvent {
@@ -305,11 +305,23 @@ export type Unsubscribe = () => void;
 
 // Constants and Defaults
 export const TIME_SCALES: Record<TimeScaleName, TimeScale> = {
+  '5m': {
+    name: '5m',
+    duration: 5 * 60 * 1000,
+    tickInterval: 1 * 60 * 1000,
+    label: '5 Minutes',
+  },
   '15m': {
     name: '15m',
     duration: 15 * 60 * 1000,
     tickInterval: 5 * 60 * 1000,
     label: '15 Minutes',
+  },
+  '30m': {
+    name: '30m',
+    duration: 30 * 60 * 1000,
+    tickInterval: 10 * 60 * 1000,
+    label: '30 Minutes',
   },
   '1h': {
     name: '1h',
@@ -317,11 +329,23 @@ export const TIME_SCALES: Record<TimeScaleName, TimeScale> = {
     tickInterval: 10 * 60 * 1000,
     label: '1 Hour',
   },
+  '2h': {
+    name: '2h',
+    duration: 2 * 60 * 60 * 1000,
+    tickInterval: 30 * 60 * 1000,
+    label: '2 Hours',
+  },
   '6h': {
     name: '6h',
     duration: 6 * 60 * 60 * 1000,
     tickInterval: 60 * 60 * 1000,
     label: '6 Hours',
+  },
+  '12h': {
+    name: '12h',
+    duration: 12 * 60 * 60 * 1000,
+    tickInterval: 2 * 60 * 60 * 1000,
+    label: '12 Hours',
   },
   '24h': {
     name: '24h',

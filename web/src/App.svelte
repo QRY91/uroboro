@@ -414,9 +414,13 @@
               <div class="control-group">
                 <label>📏 Time Scale</label>
                 <select bind:value={$controls.currentScale} on:change={handleScaleChange}>
+                  <option value="5m">5 Minutes</option>
                   <option value="15m">15 Minutes</option>
+                  <option value="30m">30 Minutes</option>
                   <option value="1h">1 Hour</option>
+                  <option value="2h">2 Hours</option>
                   <option value="6h">6 Hours</option>
+                  <option value="12h">12 Hours</option>
                   <option value="24h">24 Hours</option>
                   <option value="7d">7 Days</option>
                   <option value="full">Full Timeline</option>

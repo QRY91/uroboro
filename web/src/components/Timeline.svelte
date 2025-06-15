@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
-  import { timelineState, timelineActions, eventsInCurrentViewport, controls, viewport } from '@stores/timeline';
+  import { timelineState, timelineActions, eventsInCurrentViewport, controls, viewport, isLoading } from '@stores/timeline';
   import type { TimeScaleName, JourneyEvent, TouchGesture } from '@types/timeline';
-  import { TIME_SCALES } from '@types/timeline';
+  import { TIME_SCALES, DEFAULT_TIMELINE_CONFIG } from '@types/timeline';
   import TimelineEvent from './TimelineEvent.svelte';
   import TimelineRuler from './TimelineRuler.svelte';
   import ViewportScrubber from './ViewportScrubber.svelte';
+  import CanvasTimeline from './CanvasTimeline.svelte';
   import anime from 'animejs';
 
   const dispatch = createEventDispatcher();
@@ -14,7 +15,17 @@
   let timelineContainer: HTMLDivElement;
   let timelineCanvas: HTMLCanvasElement;
   let connectionCanvas: HTMLCanvasElement;
+  let timelineEventsContainer: HTMLDivElement;
   let ctx: CanvasRenderingContext2D | null = null;
+
+  // Dual-mode architecture state
+  // Unified Canvas timeline - no mode switching needed
+  let viewportChangeTimeout: number | null = null;
+  let lastViewportChange = 0;
+  let forceRecreateKey = 0;
+  let cleanupTimeout: number | null = null;
+  // Canvas handles all scroll performance internally
+  let scrollingEventsCache = [];
 
   // Interaction state
   let isDragging = false;
@@ -33,9 +44,24 @@
 
   // Reactive statements with timeline readiness check
   $: timelineReady = mounted && $viewport?.startTime && $viewport?.endTime && $controls?.currentScale && !$isLoading;
-  $: eventsToRender = (timelineReady && initializationComplete) ? $eventsInCurrentViewport : [];
+  $: eventsToRender = getEventsForCanvas(timelineReady, initializationComplete, $eventsInCurrentViewport);
 
-  // Add delay after timeline becomes ready to prevent ghost events
+  // Dynamic lane lifecycle management with throttling
+  $: projectLanes = calculateDynamicProjectLanes(eventsToRender);
+  $: uniqueProjects = projectLanes.map(lane => lane.project);
+  $: contextSwitches = analyzeContextSwitches(eventsToRender.map(e => e.project));
+
+  // Force component recreation on rapid viewport changes
+  $: if ($viewport?.startTime && $viewport?.endTime) {
+    handleViewportChange();
+  }
+
+  // Performance monitoring - only log dense timelines
+  $: if (eventsToRender.length > 50) {
+    console.log('🚀 Performance: Dense timeline -', eventsToRender.length, 'events,', uniqueProjects.length, 'projects');
+  }
+
+  // Add delay after timeline becomes ready for smooth initialization
   $: if (timelineReady && !initializationComplete) {
     setTimeout(() => {
       initializationComplete = true;
@@ -53,11 +79,161 @@
 
     // Start render loop
     startRenderLoop();
+
+    // Mark as mounted to enable event rendering
+    mounted = true;
   });
 
   onDestroy(() => {
     cleanup();
+    if (viewportChangeTimeout) {
+      clearTimeout(viewportChangeTimeout);
+    }
+    if (cleanupTimeout) {
+      clearTimeout(cleanupTimeout);
+    }
   });
+
+  // Handle viewport changes with Canvas optimization
+  function handleViewportChange() {
+    const now = Date.now();
+    const timeSinceLastChange = now - lastViewportChange;
+    lastViewportChange = now;
+
+    // Canvas handles all performance optimization internally
+    // Only gentle cleanup needed for memory management
+    if (viewportChangeTimeout) {
+      clearTimeout(viewportChangeTimeout);
+    }
+
+    viewportChangeTimeout = setTimeout(() => {
+      performGentleCleanup();
+      viewportChangeTimeout = null;
+    }, 1000);
+  }
+
+  // Get events based on current mode
+  function getEventsForCanvas(ready, initialized, viewportEvents) {
+    if (!ready || !initialized) return [];
+    // Canvas handles all performance optimization internally
+    return viewportEvents;
+  }
+
+  // Unified Canvas timeline - no mode switching needed
+
+  // Gentle cleanup function
+  function performGentleCleanup() {
+    if (!timelineEventsContainer) return;
+
+    // Only clean up obviously problematic elements
+    const destroyedElements = timelineEventsContainer.querySelectorAll('.timeline-event.destroyed');
+    const stuckBubbles = timelineEventsContainer.querySelectorAll('.event-content.content-visible');
+
+    destroyedElements.forEach(el => {
+      if (el.parentNode) {
+        el.parentNode.removeChild(el);
+      }
+    });
+
+    // Only hide stuck content bubbles, don't remove them
+    stuckBubbles.forEach(bubble => {
+      bubble.classList.remove('content-visible');
+    });
+
+    // Schedule cleanup only if we have too many elements
+    const eventCount = timelineEventsContainer.querySelectorAll('.timeline-event').length;
+    if (eventCount > eventsToRender.length * 2) {
+      if (cleanupTimeout) {
+        clearTimeout(cleanupTimeout);
+      }
+      cleanupTimeout = setTimeout(() => {
+        forceRecreateKey++;
+        cleanupTimeout = null;
+      }, 2000);
+    }
+  }
+
+  // Calculate dynamic project lanes with lifecycle management
+  function calculateDynamicProjectLanes(events) {
+    if (!events.length) return [];
+
+    // Sort events by timestamp to ensure temporal order
+    const sortedEvents = [...events].sort((a, b) =>
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    // Track project appearance order and activity
+    const projectFirstSeen = new Map();
+    const projectLastSeen = new Map();
+    const projectEventCounts = new Map();
+
+    sortedEvents.forEach((event, index) => {
+      const project = event.project;
+
+      if (!projectFirstSeen.has(project)) {
+        projectFirstSeen.set(project, index);
+      }
+      projectLastSeen.set(project, index);
+      projectEventCounts.set(project, (projectEventCounts.get(project) || 0) + 1);
+    });
+
+    // Determine base track (project with most events at timeline start)
+    const projectsByCount = [...projectEventCounts.entries()]
+      .sort((a, b) => b[1] - a[1]);
+    const baseProject = projectsByCount[0][0];
+
+    // Create dynamic lanes based on temporal appearance
+    const lanes = [];
+    const seenProjects = new Set();
+
+    // Base track always first
+    lanes.push({
+      project: baseProject,
+      laneIndex: 0,
+      firstSeen: projectFirstSeen.get(baseProject),
+      lastSeen: projectLastSeen.get(baseProject),
+      eventCount: projectEventCounts.get(baseProject),
+      isBase: true
+    });
+    seenProjects.add(baseProject);
+
+    // Add other projects in order of appearance
+    sortedEvents.forEach((event, index) => {
+      const project = event.project;
+      if (!seenProjects.has(project)) {
+        lanes.push({
+          project: project,
+          laneIndex: lanes.length,
+          firstSeen: index,
+          lastSeen: projectLastSeen.get(project),
+          eventCount: projectEventCounts.get(project),
+          isBase: false
+        });
+        seenProjects.add(project);
+      }
+    });
+
+    return lanes;
+  }
+
+  // Analyze context switches in project sequence
+  function analyzeContextSwitches(projects) {
+    const switches = new Set();
+    for (let i = 1; i < projects.length; i++) {
+      if (projects[i] !== projects[i - 1]) {
+        switches.add(i);
+      }
+    }
+    return switches;
+  }
+
+  // Performance monitoring for component stability
+  function logPerformanceMetrics() {
+    if (timelineEventsContainer && eventsToRender.length > 100) {
+      const componentCount = timelineEventsContainer.children.length;
+      console.log('🚀 High-density timeline:', componentCount, 'components,', eventsToRender.length, 'events');
+    }
+  }
 
   // Canvas initialization
   function initializeCanvas() {
@@ -379,9 +555,56 @@
       cancelAnimationFrame(animationFrameId);
     }
 
+    // Clear viewport change timeout
+    if (viewportChangeTimeout) {
+      clearTimeout(viewportChangeTimeout);
+      viewportChangeTimeout = null;
+    }
+
+    // Clear cleanup timeout
+    if (cleanupTimeout) {
+      clearTimeout(cleanupTimeout);
+      cleanupTimeout = null;
+    }
+
+    // Aggressive DOM cleanup to prevent stuck components
+    if (timelineEventsContainer) {
+      // Remove all event elements with stuck states
+      const allEvents = timelineEventsContainer.querySelectorAll('.timeline-event');
+      allEvents.forEach(el => {
+        // Clear all inline styles
+        el.style.cssText = '';
+        // Remove all hover states
+        el.classList.remove('hovered', 'selected', 'context-switch');
+        // Hide all content bubbles immediately
+        const contentBubbles = el.querySelectorAll('.event-content');
+        contentBubbles.forEach(bubble => {
+          bubble.classList.remove('content-visible');
+          bubble.style.opacity = '0';
+          bubble.style.visibility = 'hidden';
+        });
+      });
+
+      // Remove any orphaned or stuck elements
+      const stuckElements = timelineEventsContainer.querySelectorAll('.timeline-event.destroyed, .event-content.content-visible');
+      stuckElements.forEach(el => {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      });
+
+      // Clear the entire container as last resort
+      // timelineEventsContainer.innerHTML = '';
+    }
+
     window.removeEventListener('resize', handleResize);
     window.removeEventListener('mousemove', handleGlobalMouseMove);
     window.removeEventListener('mouseup', handleGlobalMouseUp);
+
+    // Force garbage collection hint if available
+    if (window.gc) {
+      setTimeout(() => window.gc(), 100);
+    }
   }
 
   // Format time helpers
@@ -463,15 +686,29 @@
     <canvas bind:this={connectionCanvas} class="connection-canvas" style="pointer-events: none;"></canvas>
 
     <!-- Timeline Events -->
-    <div class="timeline-events">
-      {#each eventsToRender as event (event.id)}
-        <TimelineEvent
-          {event}
-          scale={currentScale}
-          viewport={$viewport}
-          on:click={e => dispatch('eventClick', e.detail)}
-          on:hover={e => dispatch('eventHover', e.detail)} />
-      {/each}
+    <!-- Mode Selector -->
+    <div class="timeline-info">
+      <span>🎬 Professional timeline visualization with smooth interactions</span>
+    </div>
+
+    <!-- Debug Info -->
+    <div class="debug-info" style="position: absolute; bottom: 60px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px; border-radius: 4px; font-size: 12px; z-index: 1000;">
+      Canvas | Events: {eventsToRender.length} | Projects: {uniqueProjects.length} | Switches: {contextSwitches.size}
+    </div>
+
+
+
+    <!-- Unified Canvas Timeline -->
+    <div class="timeline-events" bind:this={timelineEventsContainer}>
+      <CanvasTimeline
+        events={eventsToRender}
+        {projectLanes}
+        interactive={true}
+        currentScale={currentScale}
+        isPlaying={$timelineState.isPlaying}
+        playbackSpeed={$timelineState.playbackSpeed}
+        on:eventClick={e => dispatch('eventClick', e.detail)}
+        on:eventHover={e => dispatch('eventHover', e.detail)} />
     </div>
 
     <!-- Bottom Time Axis -->
@@ -654,14 +891,87 @@
     z-index: 1;
   }
 
+
+
   .timeline-events {
     position: absolute;
     top: 60px;
-    left: 0;
-    width: 100%;
+    left: 190px;
+    width: calc(100% - 190px);
     height: calc(100% - 110px);
     z-index: 2;
     overflow: visible;
+  }
+
+  .scrolling-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+  }
+
+  .timeline-mode-selector {
+    position: absolute;
+    top: 10px;
+    left: 200px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mode-tabs {
+    display: flex;
+    background: rgba(26, 26, 26, 0.9);
+    border-radius: 8px;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+  }
+
+  .mode-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #cccccc);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .mode-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .mode-tab.active {
+    background: var(--accent-color, #00ffff);
+    color: var(--bg-primary, #1a1a1a);
+    box-shadow: 0 2px 8px rgba(0, 255, 255, 0.4);
+  }
+
+  .mode-description {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #cccccc);
+    text-align: center;
+    opacity: 0.8;
+  }
+
+  .scrolling-message {
+    background: rgba(26, 26, 26, 0.9);
+    color: var(--accent-color, #00ffff);
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--accent-color, #00ffff);
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    animation: pulse-glow 1.5s ease-in-out infinite;
   }
 
   .bottom-time-axis {
@@ -763,9 +1073,8 @@
   /* Mobile Optimizations */
   @media (max-width: 768px) {
     .timeline-viewport-controls {
-      flex-wrap: wrap;
-      gap: 1rem;
-      padding: 0.75rem;
+      flex-direction: column;
+      gap: 0.5rem;
     }
 
     .viewport-scrubber {
@@ -784,6 +1093,13 @@
 
     .zoom-controls span {
       display: none;
+    }
+
+
+
+    .timeline-events {
+      left: 130px;
+      width: calc(100% - 130px);
     }
   }
 

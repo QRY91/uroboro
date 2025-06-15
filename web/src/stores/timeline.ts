@@ -97,11 +97,18 @@ export const eventsInCurrentViewport = derived([timelineState], ([$state]) => {
   const startTime = $state.viewport.startTime.getTime();
   const endTime = $state.viewport.endTime.getTime();
 
-  return $state.journeyData.events.filter(event => {
+  const filteredEvents = $state.journeyData.events.filter(event => {
     if (!event || !event.timestamp) return false;
     const eventTime = new Date(event.timestamp).getTime();
     return eventTime >= startTime && eventTime <= endTime;
   });
+
+  // Performance logging only for dense timelines
+  if (filteredEvents.length > 50) {
+    console.log('🚀 Performance: Dense timeline detected -', filteredEvents.length, 'events in viewport');
+  }
+
+  return filteredEvents;
 });
 
 export const timelineStatistics = derived([journeyData], ([$data]) => {

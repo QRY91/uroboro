@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import type { JourneyEvent, TimelineViewport, TimeScaleName } from '@types/timeline';
   import { DEFAULT_TIMELINE_CONFIG } from '@types/timeline';
   import anime from 'animejs';
@@ -8,8 +8,13 @@
 
   // Props
   export let event: JourneyEvent;
+  export let index: number;
+  export let totalEvents: number;
+  export let projectLanes: any[];
+  export let isContextSwitch: boolean = false;
   export let scale: TimeScaleName;
   export let viewport: TimelineViewport;
+  export let mode: 'playback' | 'explorer' = 'playback';
   export let selected = false;
   export let hovered = false;
 
@@ -17,6 +22,10 @@
   let eventElement: HTMLDivElement;
   let eventPosition = { x: 0, y: 0 };
   let eventSize = 16;
+  let projectLane = 0;
+  let isHovering = false;
+  let isDestroyed = false;
+  let viewportStartTime = viewport?.startTime?.getTime();
 
   // Reactive calculations - simplified to trust parent filtering
   $: if (viewport?.startTime && viewport?.endTime && scale && event) {
@@ -30,20 +39,66 @@
     const viewportEnd = viewport.endTime!.getTime();
     const viewportDuration = viewportEnd - viewportStart;
 
-    // Calculate horizontal position
+    // Calculate horizontal position with better spacing
     const relativePosition = (eventTime - viewportStart) / viewportDuration;
-    const newX = relativePosition * 100; // Percentage
+    let baseX = relativePosition * 100; // Percentage
 
-    // Calculate vertical position (simple clustering by project)
-    const projectHash = hashString(event.project);
-    const newY = 80 + (projectHash % 4) * 50; // Distribute across 4 lanes, staying within viewport
+    // Add jitter based on event content hash to prevent exact overlaps
+    const eventHash = hashString(event.id + event.content);
+    const jitterAmount = 0.5; // Max 0.5% jitter
+    const jitter = ((eventHash % 100) - 50) * jitterAmount / 50; // -0.5% to +0.5%
+
+    // Apply jitter and ensure we stay within bounds
+    const newX = Math.max(0.5, Math.min(99.5, baseX + jitter));
+
+    // Calculate vertical position with project clustering
+    calculateProjectLane();
+
+    // Use more vertical space - spread across available height with dynamic lanes
+    const baseY = 60; // Start higher to use more space
+    const laneHeight = Math.min(80, Math.max(40, 400 / Math.max(projectLanes.length, 4))); // Adaptive lane height based on dynamic lanes
+
+    // Add small vertical jitter within lane to prevent exact overlaps
+    const verticalJitter = ((eventHash % 10) - 5) * 2; // -10px to +10px
+    const newY = baseY + (projectLane * laneHeight) + verticalJitter;
 
     // Update position and trigger reactivity
     eventPosition = { x: newX, y: newY };
   }
 
+  // Simple viewport change detection
+  $: if (viewport?.startTime && viewportStartTime && viewport.startTime.getTime() !== viewportStartTime) {
+    // Clear hover state on viewport changes to prevent stuck tooltips
+    isHovering = false;
+    viewportStartTime = viewport.startTime.getTime();
+  }
+
+  function calculateProjectLane() {
+    // Use dynamic lane system - find this event's project in the lanes
+    const lane = projectLanes.find(l => l.project === event.project);
+    if (lane) {
+      projectLane = lane.laneIndex;
+    } else {
+      // Fallback if project not found (shouldn't happen)
+      projectLane = 0;
+    }
+  }
+
   function updateEventSize() {
-    eventSize = DEFAULT_TIMELINE_CONFIG.eventSizes[scale] || 16;
+    // Make event size responsive to timescale for better visibility
+    const scaleSizes = {
+      '5m': 24,    // Largest for most detailed view
+      '15m': 20,
+      '30m': 18,
+      '1h': 16,    // Default size
+      '2h': 14,
+      '6h': 12,
+      '12h': 10,
+      '24h': 8,
+      '7d': 6,     // Smallest for overview
+      'full': 6
+    };
+    eventSize = scaleSizes[scale] || 16;
   }
 
 
@@ -83,11 +138,22 @@
     return colors[index];
   }
 
+  function getProjectLaneColor(projectName: string): string {
+    // Softer background color for the project lane
+    const colors = DEFAULT_TIMELINE_CONFIG.colorScheme.projectColors;
+    const index = hashString(projectName) % colors.length;
+    const baseColor = colors[index];
+    // Convert to rgba with low opacity for lane background
+    return baseColor.replace('rgb', 'rgba').replace(')', ', 0.15)');
+  }
+
   function handleClick() {
+    if (isDestroyed) return;
+
     dispatch('click', { event, element: eventElement });
 
-    // Animate click feedback
-    if (eventElement) {
+    // Simple click feedback without tracking animations
+    if (eventElement && !isDestroyed) {
       anime({
         targets: eventElement,
         scale: [1, 1.2, 1],
@@ -98,28 +164,39 @@
   }
 
   function handleMouseEnter() {
+    if (isDestroyed) return;
+
+    isHovering = true;
     dispatch('hover', { event, hovered: true });
 
-    // Animate hover effect
-    if (eventElement) {
+    // Mode-aware hover effect
+    if (eventElement && !isDestroyed) {
+      const duration = mode === 'playback' ? 200 : 100;
+      const scale = mode === 'playback' ? 1.15 : 1.1;
+
       anime({
         targets: eventElement,
-        scale: 1.15,
-        duration: 150,
+        scale: scale,
+        duration: duration,
         easing: 'easeOutQuart',
       });
     }
   }
 
   function handleMouseLeave() {
+    if (isDestroyed) return;
+
+    isHovering = false;
     dispatch('hover', { event, hovered: false });
 
-    // Animate hover out
-    if (eventElement) {
+    // Mode-aware hover out
+    if (eventElement && !isDestroyed) {
+      const duration = mode === 'playback' ? 200 : 100;
+
       anime({
         targets: eventElement,
         scale: 1.1,
-        duration: 150,
+        duration: duration,
         easing: 'easeOutQuart',
       });
     }
@@ -127,16 +204,23 @@
 
   function getScaleSpecificContent(): { showContent: boolean; showIcon: boolean; showDetails: boolean } {
     switch (scale) {
+      case '5m':
+        return { showContent: true, showIcon: true, showDetails: true };
       case '15m':
         return { showContent: true, showIcon: true, showDetails: true };
+      case '30m':
+        return { showContent: true, showIcon: true, showDetails: false };
       case '1h':
         return { showContent: true, showIcon: true, showDetails: false };
+      case '2h':
+        return { showContent: false, showIcon: true, showDetails: false };
       case '6h':
+      case '12h':
         return { showContent: false, showIcon: true, showDetails: false };
       case '24h':
       case '7d':
       case 'full':
-        return { showContent: false, showIcon: true, showDetails: false };
+        return { showContent: false, showIcon: false, showDetails: false };
       default:
         return { showContent: false, showIcon: true, showDetails: false };
     }
@@ -169,20 +253,42 @@
   $: scaleContent = getScaleSpecificContent();
   $: eventColor = getEventColor(event.type);
   $: projectColor = getProjectColor(event.project);
+  $: projectLaneColor = getProjectLaneColor(event.project);
+  $: shouldShowContent = isHovering && !isDestroyed && (mode === 'playback' || scale === '5m' || scale === '15m');
+
+  // Lifecycle management
+  onMount(() => {
+    isDestroyed = false;
+  });
+
+  onDestroy(() => {
+    isDestroyed = true;
+    isHovering = false;
+
+    // Simple cleanup - just mark as destroyed
+    if (eventElement) {
+      eventElement.classList.add('destroyed');
+    }
+  });
 </script>
 
-<!-- Always show events passed to this component - filtering happens at parent level -->
+<!-- Project-clustered positioning with context-switch visualization -->
   <div
     bind:this={eventElement}
     class="timeline-event"
     class:selected
     class:hovered
-    class:large-scale={scale === '15m' || scale === '1h'}
+    class:large-scale={scale === '5m' || scale === '15m' || scale === '30m' || scale === '1h'}
+    class:context-switch={isContextSwitch}
+    class:destroyed={isDestroyed}
+    class:playback-mode={mode === 'playback'}
+    class:explorer-mode={mode === 'explorer'}
     style="
       left: {eventPosition.x}%;
       top: {eventPosition.y}px;
       --event-color: {eventColor};
       --project-color: {projectColor};
+      --project-lane-color: {projectLaneColor};
       --event-size: {eventSize}px;
     "
     on:click={handleClick}
@@ -191,7 +297,10 @@
     on:keydown={e => e.key === 'Enter' && handleClick()}
     role="button"
     tabindex="0"
-    title="{event.content} - {formatEventTime(event.timestamp)}">
+    title="{event.project}: {event.content} - {formatEventTime(event.timestamp)}">
+
+    <!-- Project lane background -->
+    <div class="project-lane-background"></div>
     <!-- Event core/icon -->
     <div class="event-core">
       {#if scaleContent.showIcon}
@@ -202,9 +311,8 @@
       <div class="event-type-indicator" style="background-color: {eventColor}"></div>
     </div>
 
-    <!-- Content bubble (shown at larger scales) -->
-    {#if scaleContent.showContent}
-      <div class="event-content">
+    <!-- Content bubble (shown on hover only) -->
+    <div class="event-content" class:content-visible={shouldShowContent}>
         <div class="event-header">
           <span class="event-project" style="color: {projectColor}">
             {event.project}
@@ -228,8 +336,7 @@
             {/if}
           </div>
         {/if}
-      </div>
-    {/if}
+    </div>
 
     <!-- Connection points -->
     {#if event.metadata?.connections && event.metadata.connections.length > 0}
@@ -256,7 +363,57 @@
     cursor: pointer;
     z-index: 4;
     transform: translateX(-50%);
-    transition: all 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.2s ease,
+                visibility 0.2s ease;
+  }
+
+  .timeline-event.explorer-mode {
+    transition: transform 0.15s ease,
+                opacity 0.15s ease,
+                visibility 0.15s ease;
+  }
+
+  .timeline-event.playback-mode {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease,
+                visibility 0.3s ease;
+  }
+
+  .timeline-event.destroyed {
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .project-lane-background {
+    position: absolute;
+    left: -20px;
+    right: -20px;
+    top: -8px;
+    bottom: -8px;
+    background: var(--project-lane-color);
+    border-radius: 4px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .timeline-event:hover .project-lane-background {
+    opacity: 0.8;
+    transition-delay: 0.15s;
+  }
+
+  .timeline-event.context-switch {
+    transform: translateX(-50%) scale(1.1);
+  }
+
+  .timeline-event.context-switch .event-core {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.6),
+      0 0 0 3px rgba(255, 255, 255, 0.8),
+      0 0 20px var(--event-color),
+      0 0 40px rgba(255, 255, 255, 0.3);
   }
 
   .timeline-event:hover {
@@ -280,7 +437,8 @@
       0 4px 12px rgba(0, 0, 0, 0.6),
       0 0 0 3px rgba(255, 255, 255, 0.6),
       0 0 16px var(--event-color);
-    transition: all 0.2s ease;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     transform: scale(1.1);
   }
 
@@ -309,7 +467,7 @@
     position: absolute;
     top: calc(var(--event-size) + 8px);
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(-8px) scale(0.95);
     background: rgba(26, 26, 26, 0.98);
     border: 2px solid var(--event-color);
     border-radius: 8px;
@@ -322,6 +480,13 @@
       0 0 12px var(--event-color);
     backdrop-filter: blur(10px);
     z-index: 1;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(-8px) scale(0.95);
+    transition:
+      opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .timeline-event.large-scale .event-content {
@@ -520,12 +685,20 @@
     }
   }
 
+  .event-content.content-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0) scale(1);
+    transition-delay: 0.1s;
+  }
+
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
     .timeline-event,
     .event-core,
     .selection-ring,
-    .hover-glow {
+    .hover-glow,
+    .event-content {
       transition: none;
       animation: none;
     }
