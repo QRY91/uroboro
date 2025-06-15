@@ -355,3 +355,17 @@ func (c *ChromaDBBridge) IsAvailable() bool {
 	_, err := c.runPythonCommand([]string{"--help"})
 	return err == nil
 }
+
+// findPythonExecutable attempts to find a Python executable
+func findPythonExecutable() (string, error) {
+	// List of possible Python executables to try
+	candidates := []string{"python3", "python", "python3.9", "python3.8", "python3.10", "python3.11"}
+
+	for _, candidate := range candidates {
+		if path, err := exec.LookPath(candidate); err == nil {
+			return path, nil
+		}
+	}
+
+	return "", fmt.Errorf("no Python executable found in PATH")
+}

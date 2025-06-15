@@ -274,7 +274,7 @@ func getSuggestions(config CLIConfig, args []string) error {
 
 // showAIStats displays AI feature statistics
 func showAIStats(config CLIConfig) error {
-	fmt.Println("📊 uroboro AI Statistics\n")
+	fmt.Println("📊 uroboro AI Statistics")
 
 	ai, err := NewAIManager(config.ToAIConfig())
 	if err != nil {

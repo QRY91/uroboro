@@ -357,12 +357,12 @@ func (s *StatusService) extractRecentCapturesWithTags(content string, project st
 			// Found a timestamp, extract the capture block
 			captureLines := []string{}
 			j := i + 1
-			
+
 			// Skip empty line after timestamp
 			if j < len(lines) && strings.TrimSpace(lines[j]) == "" {
 				j++
 			}
-			
+
 			// Collect capture content until next header or end
 			var captureProject, captureTags string
 			for j < len(lines) {
@@ -370,7 +370,7 @@ func (s *StatusService) extractRecentCapturesWithTags(content string, project st
 				if strings.HasPrefix(nextLine, "## ") {
 					break
 				}
-				
+
 				// Extract metadata
 				if strings.HasPrefix(nextLine, "Project: ") {
 					captureProject = strings.TrimSpace(strings.TrimPrefix(nextLine, "Project: "))
@@ -381,17 +381,17 @@ func (s *StatusService) extractRecentCapturesWithTags(content string, project st
 				}
 				j++
 			}
-			
+
 			// Filter by project if specified
 			if project != "" && captureProject != project {
 				continue
 			}
-			
+
 			// Filter by tags if specified
 			if tags != "" && !s.captureHasTags(captureTags, tags) {
 				continue
 			}
-			
+
 			// Build capture text
 			if len(captureLines) > 0 {
 				capture := strings.TrimSpace(strings.Join(captureLines, " "))

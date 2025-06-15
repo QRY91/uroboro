@@ -181,6 +181,6 @@ Tags: bugfix,database
 	}
 
 	// TODO: Add assertions for filtered output once method exists
-	// For now, this test defines the contract: 
+	// For now, this test defines the contract:
 	// ShowStatusWithTags(days, dbPath, project, tags) should filter by tags
 }
