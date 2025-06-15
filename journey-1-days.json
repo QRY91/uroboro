@@ -1,69 +1,6 @@
 {
   "events": [
     {
-      "timestamp": "2025-06-14T17:59:05.009195029+02:00",
-      "content": "SlopSquid complete rebrand: CLI tool with tentacles concept deployed to slopsquid.com - moved from browser extension maintenance hell to batch processing CLI with QRY ecosystem integration",
-      "project": "",
-      "tags": null,
-      "context": null,
-      "eventType": "capture",
-      "importance": 1
-    },
-    {
-      "timestamp": "2025-06-14T17:59:11.131999462+02:00",
-      "content": "Osmotic landing page: Fresh/Deno experimentation with biological theme - womb-like colors, cellular absorption metaphor, interactive particle streams",
-      "project": "",
-      "tags": null,
-      "context": null,
-      "eventType": "capture",
-      "importance": 1
-    },
-    {
-      "timestamp": "2025-06-14T17:59:17.950218237+02:00",
-      "content": "Portfolio domain strategy: Using osmotic.dev, miqro.dev, wherewasi.dev as framework experimentation playground and portfolio showcase rather than full standalone products",
-      "project": "",
-      "tags": null,
-      "context": null,
-      "eventType": "capture",
-      "importance": 1
-    },
-    {
-      "timestamp": "2025-06-14T17:59:25.300067053+02:00",
-      "content": "Fixed osmotic pause button click target - z-index conflict with navigation resolved, biological theme colors implemented",
-      "project": "",
-      "tags": null,
-      "context": null,
-      "eventType": "bugfix",
-      "importance": 1
-    },
-    {
-      "timestamp": "2025-06-14T18:04:24.842943767+02:00",
-      "content": "Removed broken pause button from osmotic - kept beautiful biological particle animation flowing continuously",
-      "project": "",
-      "tags": null,
-      "context": null,
-      "eventType": "capture",
-      "importance": 1
-    },
-    {
-      "timestamp": "2025-06-14T18:07:36.391060873+02:00",
-      "content": "WhereWasI HTMX landing page complete - ripcord theme with sky blues and emergency orange, interactive context demo, parachute animations",
-      "project": "",
-      "tags": null,
-      "context": null,
-      "eventType": "capture",
-      "importance": 1
-    },
-    {
-      "timestamp": "2025-06-14T18:16:51.26421209+02:00",
-      "content": "Session summary: Landing page development sprint - Accomplishments: SlopSquid rebrand+deploy, osmotic Fresh/Deno biological theme, wherewasi HTMX ripcord demo. Decisions: CLI over browser extension, domains as framework playground. Next: Complete miqro Astro site, connect HTMX to real CLI",
-      "project": "",
-      "tags": null,
-      "context": null,
-      "eventType": "capture",
-      "importance": 1
-    },
-    {
       "timestamp": "2025-06-14T18:19:42.354349672+02:00",
       "content": "Created context handover document for next session - deployment instructions for osmotic/wherewasi to Cloudflare Pages, miqro Astro design direction with audio theme",
       "project": "",
@@ -674,18 +611,438 @@
       "context": null,
       "eventType": "capture",
       "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:36:21.200310889+02:00",
+      "content": "Git commit: Phase 2: Major Journey Replay web interface enhancements\n\nENHANCED TIMELINE ANIMATIONS:\n- Smart event positioning with lane algorithms to prevent overlapping\n- Different animations for event types (milestone, learning, decision, commit)\n- Entrance animations with milestone-pulse, learning-bounce, decision-flash\n- Enhanced visual styling based on event types and importance\n\nINTERACTIVE TIMELINE CONTROLS:\n- Progress bar with real-time tracking of animation progress\n- Timeline scrubbing - click/drag to jump to any point in journey\n- Improved playback controls with visual feedback\n- Event counter showing current position (X / Y events)\n- Live timestamp display showing current event time\n\nENHANCED LAYOUT \u0026 UX:\n- Timeline header with journey title and live statistics\n- Visual legend showing different event types\n- Timeline axis with time markers for better orientation\n- Hover effects with content previews on events\n- Smart Y-positioning based on lanes, importance, and randomization\n\nTECHNICAL IMPROVEMENTS:\n- Proper event state management (revealed vs hidden)\n- Smooth transitions and entrance animations\n- Performance-optimized rendering for 100+ events\n- Responsive design with better mobile support\n\nPhase 2 Complete: Rich interactive timeline visualization operational!",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "milestone",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:36:29.500032722+02:00",
+      "content": "QOINbots chart pricing fixed, but need to verify event feed prices are accurate, bot stats are scaled correctly, and fix layout overlap between bot card and chart",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:38:49.535539941+02:00",
+      "content": "Fixed QOINbots scaling issues - bot starting balance now 000 (vs 0) to match 00+ asset prices, improved layout spacing between chart and bot roster with proper flex proportions",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:41:19.556437673+02:00",
+      "content": "QOINbots strategic decision point - low values likely from localStorage caching old 0 balances, missing reset functionality, and considering TypeScript migration for market/trading logic before adding multibot features",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:43:17.058116323+02:00",
+      "content": "Starting QOINbots TypeScript migration - Phase 1: Core trading logic (Bot, TradingEngine, GameState) to prevent property mismatches and ensure data flow consistency",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:47:05.810882129+02:00",
+      "content": "CI caught formatting issues - running proper deploy procedure and cleanup before pushing to main",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:49:14.094164005+02:00",
+      "content": "Major TypeScript migration progress - created comprehensive type definitions, converted GameState.ts and Bot.ts with proper typing, set up TS config. Core trading logic now type-safe",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:50:14.74626034+02:00",
+      "content": "Testing newly installed uroboro with Journey Replay feature - ready to visualize development timeline!",
+      "project": "uroboro",
+      "tags": [
+        "installation",
+        "journey-replay",
+        "testing",
+        "setup"
+      ],
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:50:41.476047136+02:00",
+      "content": "Git commit: Fix CI issues and complete deployment procedure\n\n- Fix gofmt formatting issues in status package files\n- Add missing findPythonExecutable function to AI package\n- Fix redundant newline lint issue in ai/cli.go\n- Install updated uroboro binary with Journey Replay features\n- All CI checks now passing (gofmt, go vet, builds)\n\nReady for clean CI deployment! 🚀",
+      "project": "uroboro",
+      "tags": [
+        "git-commit",
+        "bugfix",
+        "feature",
+        "refactoring",
+        "git",
+        "ci",
+        "go",
+        "kubernetes",
+        "deployment"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:51:01.527835107+02:00",
+      "content": "QOINbots resetGame() works but still using old JS files with  balance and bash.45 trades - need to switch imports to use new TypeScript versions with 000 starting balance",
+      "project": "qoinbots",
+      "tags": [
+        "AI",
+        "import-issue",
+        "js-vs-ts",
+        "balance-scaling",
+        "migration-incomplete",
+        "javascript"
+      ],
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:53:26.280840457+02:00",
+      "content": "Updated QOINbots imports to use TypeScript versions - GameState.ts, TradingEngine.ts, Bot.ts with STARTING_BALANCE=000 and proper asset price scaling",
+      "project": "qoinbots",
+      "tags": [
+        "AI",
+        "typescript-imports",
+        "starting-balance-fix",
+        "price-scaling",
+        "core-migration"
+      ],
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:57:31.449856366+02:00",
+      "content": "AMAZING JOURNEY REPLAY VISION: Event tooltips on timeline hits, console text-feed with search, project-based vertical clustering with repulsion physics, visual connections like conspiracy maps, context-switching patterns showing development fate-weaving. Uroboro mythos enhanced!",
+      "project": "uroboro",
+      "tags": [
+        "AI",
+        "vision",
+        "journey-replay",
+        "enhancement",
+        "ux-design",
+        "mythos",
+        "debugging"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T14:02:24.665397818+02:00",
+      "content": "CONSPIRACY MAP JOURNEY REPLAY COMPLETE! 🕷️ Implemented physics-based project clustering, event tooltips on timeline hits, console text-feed with search, twine-like connections between events, project repulsion physics, and full uroboro mythos theming. The loom of fate awaits!",
+      "project": "uroboro",
+      "tags": [
+        "AI",
+        "milestone",
+        "conspiracy-map",
+        "physics",
+        "mythos",
+        "enhancement-complete",
+        "debugging",
+        "feature"
+      ],
+      "context": null,
+      "eventType": "milestone",
+      "importance": 3
+    },
+    {
+      "timestamp": "2025-06-15T14:04:55.056786275+02:00",
+      "content": "Layout bug in Journey Replay - console visible but main timeline visualization not showing. Need to debug CSS flex layout and ensure timeline container has proper height/visibility.",
+      "project": "uroboro",
+      "tags": [
+        "bug",
+        "layout",
+        "css",
+        "debugging",
+        "bugfix",
+        "docker"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T14:10:41.835283236+02:00",
+      "content": "UX improvement needed: 3-column layout with Projects (left) | Chart (middle) | Chronicle (right). Make sidebars collapsible and fix console height - currently too flat. Better responsive design needed.",
+      "project": "uroboro",
+      "tags": [
+        "ux",
+        "layout",
+        "improvement",
+        "design",
+        "debugging",
+        "bugfix",
+        "architecture"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T14:16:13.796436559+02:00",
+      "content": "BRILLIANT new feature idea: Video editor style timeline scrubbing with time scale selection (24hr, 60min, etc.) and viewport panning through journey data. Like solar system example - zoom into specific time windows for detailed play-by-play vs full journey overview.",
+      "project": "uroboro",
+      "tags": [
+        "AI",
+        "feature-request",
+        "timeline-scrubbing",
+        "video-editor",
+        "ux-enhancement",
+        "css",
+        "data-processing"
+      ],
+      "context": null,
+      "eventType": "feature",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T14:17:44.077090974+02:00",
+      "content": "Git commit: Add comprehensive Journey Replay timeline scrubbing implementation plan\n\n- Video editor style timeline with time scale selection (15m, 1h, 6h, 24h, 7d)\n- Viewport panning through development journey data\n- Scale-aware event rendering with detail levels\n- Mobile touch interactions and performance optimizations\n- Complete technical architecture and implementation phases\n- Ready for next development iteration in new chat context\n\nInspired by solar system scale visualization - this will be AMAZING!",
+      "project": "uroboro",
+      "tags": [
+        "git-commit",
+        "feature",
+        "optimization",
+        "css",
+        "git",
+        "architecture",
+        "data-processing",
+        "frontend",
+        "performance"
+      ],
+      "context": null,
+      "eventType": "feature",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T14:38:57.71763133+02:00",
+      "content": "Vite import error -  path mapping not working for TypeScript files, need to fix import paths to use relative paths instead",
+      "project": "qoinbots",
+      "tags": [
+        "AI",
+        "vite-error",
+        "import-paths",
+        "typescript-config",
+        "bugfix"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T14:40:53.151853398+02:00",
+      "content": "Fixed TypeScript import paths to use relative paths, updated type exports - should now resolve Vite import errors and enable 000 starting balance test",
+      "project": "qoinbots",
+      "tags": [
+        "AI",
+        "typescript-fix",
+        "import-paths",
+        "starting-balance",
+        "ready-to-test",
+        "bugfix",
+        "testing"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T14:49:12.121076658+02:00",
+      "content": "Journey Timeline Scrubbing Implementation Complete - Built comprehensive Svelte+TypeScript timeline with video-editor-style controls, viewport management, touch support, and modern architecture",
+      "project": "timeline-implementation",
+      "tags": [
+        "implementation",
+        "svelte",
+        "typescript",
+        "timeline",
+        "frontend",
+        "milestone",
+        "feature",
+        "css",
+        "architecture"
+      ],
+      "context": null,
+      "eventType": "milestone",
+      "importance": 3
+    },
+    {
+      "timestamp": "2025-06-15T16:47:03.540853691+02:00",
+      "content": "Reset function not working reliably from console, adding proper UI reset button for better UX - will add to settings or header area",
+      "project": "qoinbots",
+      "tags": [
+        "AI",
+        "ui-improvement",
+        "reset-button",
+        "ux-enhancement",
+        "feature",
+        "debugging",
+        "frontend"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T16:47:50.264295359+02:00",
+      "content": "Added proper reset button to QOINbots header UI - confirms with dialog, clears localStorage, and reloads to start fresh with 000 balance from TypeScript constants",
+      "project": "qoinbots",
+      "tags": [
+        "AI",
+        "ui-complete",
+        "reset-button",
+        "user-friendly",
+        "typescript-testing",
+        "feature",
+        "frontend"
+      ],
+      "context": null,
+      "eventType": "feature",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T17:42:08.460940173+02:00",
+      "content": "Enhanced timeline with prominent date/time axis - Added top ruler with clear timestamps, bottom time axis with start/end times and duration, much brighter colors for better visibility, proper frame of reference for event positioning",
+      "project": "timeline-implementation",
+      "tags": [
+        "implementation",
+        "ui",
+        "timeline",
+        "colors",
+        "axis",
+        "enhancement",
+        "feature"
+      ],
+      "context": null,
+      "eventType": "feature",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T17:49:50.639768474+02:00",
+      "content": "TypeScript class constructor error - 'cannot be invoked without new' suggests import/export issue with converted GameState, Bot, or TradingEngine classes",
+      "project": "qoinbots",
+      "tags": [
+        "AI",
+        "typescript-error",
+        "class-constructor",
+        "import-export-issue",
+        "bugfix"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T17:51:03.69356281+02:00",
+      "content": "Fixed timeline visibility and layout issues - Removed dramatic loading messages, made events much brighter by default (closer to hover state), fixed vertical positioning so events aren't cut off, made bottom timeline axis properly visible with stronger borders and glows",
+      "project": "timeline-implementation",
+      "tags": [
+        "fix",
+        "ui",
+        "visibility",
+        "layout",
+        "contrast",
+        "bugfix"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T17:56:02.021583472+02:00",
+      "content": "Created JavaScript version of types file to fix Vite import issues - exports STARTING_BALANCE=1000 and other constants for proper game scaling",
+      "project": "qoinbots",
+      "tags": [
+        "AI",
+        "vite-fix",
+        "javascript-constants",
+        "import-resolution",
+        "ready-to-test",
+        "bugfix",
+        "feature",
+        "javascript"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T17:57:22.067639927+02:00",
+      "content": "TypeScript class constructor error persisting - switching back to JavaScript files with updated constants to get 000 balance working quickly",
+      "project": "qoinbots",
+      "tags": [
+        "AI",
+        "pragmatic-fix",
+        "javascript-fallback",
+        "balance-fix",
+        "bugfix",
+        "javascript"
+      ],
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
     }
   ],
   "dateRange": {
-    "start": "2025-06-14T13:36:01.052249316+02:00",
-    "end": "2025-06-15T13:36:01.052249316+02:00"
+    "start": "2025-06-14T18:19:42.016948346+02:00",
+    "end": "2025-06-15T18:19:42.016948346+02:00"
   },
-  "projects": null,
+  "projects": [
+    {
+      "name": "qoinbots",
+      "eventCount": 9,
+      "color": "#4ECDC4",
+      "startDate": "2025-06-15T13:51:01.527835107+02:00",
+      "lastActive": "2025-06-15T17:57:22.067639927+02:00"
+    },
+    {
+      "name": "uroboro",
+      "eventCount": 8,
+      "color": "#FF6B6B",
+      "startDate": "2025-06-15T13:50:14.74626034+02:00",
+      "lastActive": "2025-06-15T14:17:44.077090974+02:00"
+    },
+    {
+      "name": "timeline-implementation",
+      "eventCount": 3,
+      "color": "#45B7D1",
+      "startDate": "2025-06-15T14:49:12.121076658+02:00",
+      "lastActive": "2025-06-15T17:51:03.69356281+02:00"
+    }
+  ],
   "stats": {
-    "totalEvents": 75,
-    "projectCount": 0,
-    "milestoneCount": 2,
-    "productivityScore": 1.12,
+    "totalEvents": 95,
+    "projectCount": 3,
+    "milestoneCount": 5,
+    "productivityScore": 1.1368421052631579,
     "learningMoments": 0
   },
   "milestones": [
@@ -733,6 +1090,52 @@
       "context": null,
       "eventType": "milestone",
       "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:36:21.200310889+02:00",
+      "content": "Git commit: Phase 2: Major Journey Replay web interface enhancements\n\nENHANCED TIMELINE ANIMATIONS:\n- Smart event positioning with lane algorithms to prevent overlapping\n- Different animations for event types (milestone, learning, decision, commit)\n- Entrance animations with milestone-pulse, learning-bounce, decision-flash\n- Enhanced visual styling based on event types and importance\n\nINTERACTIVE TIMELINE CONTROLS:\n- Progress bar with real-time tracking of animation progress\n- Timeline scrubbing - click/drag to jump to any point in journey\n- Improved playback controls with visual feedback\n- Event counter showing current position (X / Y events)\n- Live timestamp display showing current event time\n\nENHANCED LAYOUT \u0026 UX:\n- Timeline header with journey title and live statistics\n- Visual legend showing different event types\n- Timeline axis with time markers for better orientation\n- Hover effects with content previews on events\n- Smart Y-positioning based on lanes, importance, and randomization\n\nTECHNICAL IMPROVEMENTS:\n- Proper event state management (revealed vs hidden)\n- Smooth transitions and entrance animations\n- Performance-optimized rendering for 100+ events\n- Responsive design with better mobile support\n\nPhase 2 Complete: Rich interactive timeline visualization operational!",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "milestone",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T14:02:24.665397818+02:00",
+      "content": "CONSPIRACY MAP JOURNEY REPLAY COMPLETE! 🕷️ Implemented physics-based project clustering, event tooltips on timeline hits, console text-feed with search, twine-like connections between events, project repulsion physics, and full uroboro mythos theming. The loom of fate awaits!",
+      "project": "uroboro",
+      "tags": [
+        "AI",
+        "milestone",
+        "conspiracy-map",
+        "physics",
+        "mythos",
+        "enhancement-complete",
+        "debugging",
+        "feature"
+      ],
+      "context": null,
+      "eventType": "milestone",
+      "importance": 3
+    },
+    {
+      "timestamp": "2025-06-15T14:49:12.121076658+02:00",
+      "content": "Journey Timeline Scrubbing Implementation Complete - Built comprehensive Svelte+TypeScript timeline with video-editor-style controls, viewport management, touch support, and modern architecture",
+      "project": "timeline-implementation",
+      "tags": [
+        "implementation",
+        "svelte",
+        "typescript",
+        "timeline",
+        "frontend",
+        "milestone",
+        "feature",
+        "css",
+        "architecture"
+      ],
+      "context": null,
+      "eventType": "milestone",
+      "importance": 3
     }
   ]
 }

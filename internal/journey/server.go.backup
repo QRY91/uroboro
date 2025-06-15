@@ -1,0 +1,2154 @@
+package journey
+
+import (
+	"encoding/json"
+	"fmt"
+	"html/template"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/QRY91/uroboro/internal/database"
+)
+
+// Server handles HTTP requests for journey visualization
+type Server struct {
+	service *JourneyService
+	port    int
+}
+
+// NewServer creates a new journey visualization server
+func NewServer(db *database.DB, port int) *Server {
+	return &Server{
+		service: NewJourneyService(db),
+		port:    port,
+	}
+}
+
+// Start begins serving the journey visualization
+func (s *Server) Start() error {
+	mux := http.NewServeMux()
+
+	// API endpoints with CORS support
+	mux.HandleFunc("/api/journey", s.withCORS(s.handleJourneyAPI))
+	mux.HandleFunc("/api/health", s.withCORS(s.handleHealth))
+
+	// Serve Svelte app assets
+	mux.HandleFunc("/assets/", s.handleSvelteAssets)
+	mux.HandleFunc("/src/", s.handleSvelteAssets)
+
+	// Serve static files (manifest, icons, etc.)
+	mux.HandleFunc("/manifest.json", s.handleStaticFile)
+	mux.HandleFunc("/icons/", s.handleStaticFile)
+	mux.HandleFunc("/screenshots/", s.handleStaticFile)
+
+	// Main Svelte app (catch-all for SPA routing)
+	mux.HandleFunc("/", s.handleSvelteApp)
+
+	addr := fmt.Sprintf(":%d", s.port)
+	fmt.Printf("🚀 Journey visualization server starting on http://localhost%s\n", addr)
+	fmt.Printf("   📊 Timeline interface: http://localhost%s\n", addr)
+	fmt.Printf("   🔗 API endpoint: http://localhost%s/api/journey\n", addr)
+
+	return http.ListenAndServe(addr, mux)
+}
+
+// handleSvelteApp serves the main Svelte application
+func (s *Server) handleSvelteApp(w http.ResponseWriter, r *http.Request) {
+	// Try to serve built Svelte app first
+	distPath := filepath.Join("web", "dist", "index.html")
+	if _, err := os.Stat(distPath); err == nil {
+		s.serveFile(w, r, distPath)
+		return
+	}
+
+	// Fallback to development server notice if dist doesn't exist
+	if r.URL.Path == "/" {
+		s.handleDevFallback(w, r)
+		return
+	}
+
+	// For SPA routing, always serve index.html for non-API routes
+	if !strings.HasPrefix(r.URL.Path, "/api/") {
+		s.handleDevFallback(w, r)
+		return
+	}
+
+	http.NotFound(w, r)
+}
+
+// handleDevFallback serves a development notice when Svelte app isn't built
+func (s *Server) handleDevFallback(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.New("dev").Parse(devFallbackTemplate))
+
+	data := struct {
+		Title string
+		Port  int
+	}{
+		Title: "Journey Timeline Development",
+		Port:  s.port,
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// handleJourneyAPI serves journey data as JSON
+func (s *Server) handleJourneyAPI(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters
+	options := JourneyOptions{
+		Days:     7, // default
+		Export:   false,
+		Live:     false,
+		Port:     s.port,
+		AutoOpen: false,
+		Share:    false,
+		Title:    "My Journey",
+		Theme:    ThemeDefault,
+	}
+
+	// Parse parameters
+	if daysStr := r.URL.Query().Get("days"); daysStr != "" {
+		if days, err := strconv.Atoi(daysStr); err == nil {
+			options.Days = days
+		}
+	}
+
+	if projects := r.URL.Query().Get("projects"); projects != "" {
+		options.Projects = strings.Split(projects, ",")
+	}
+
+	if theme := r.URL.Query().Get("theme"); theme != "" {
+		options.Theme = theme
+	}
+
+	if title := r.URL.Query().Get("title"); title != "" {
+		options.Title = title
+	}
+
+	// Generate journey data
+	journey, err := s.service.GenerateJourney(options)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to generate journey: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	if err := json.NewEncoder(w).Encode(journey); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// handleHealth provides a health check endpoint
+func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":    "healthy",
+		"timestamp": time.Now().Format(time.RFC3339),
+		"version":   "1.0.0",
+	})
+}
+
+// handleStatic serves static assets (CSS, JS, images)
+func (s *Server) handleStatic(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path[8:] // Remove "/static/" prefix
+
+	switch {
+	case strings.HasSuffix(path, ".css"):
+		w.Header().Set("Content-Type", "text/css")
+		fmt.Fprint(w, journeyCSS)
+	case strings.HasSuffix(path, ".js"):
+		w.Header().Set("Content-Type", "application/javascript")
+		fmt.Fprint(w, journeyJS)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+// withCORS adds CORS headers to responses
+func (s *Server) withCORS(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		handler(w, r)
+	}
+}
+
+// handleSvelteAssets serves Svelte development assets
+func (s *Server) handleSvelteAssets(w http.ResponseWriter, r *http.Request) {
+	// In development, proxy to Vite dev server on port 3000
+	// In production, serve from web/dist directory
+	distPath := filepath.Join("web", "dist", strings.TrimPrefix(r.URL.Path, "/"))
+
+	if _, err := os.Stat(distPath); err == nil {
+		s.serveFile(w, r, distPath)
+		return
+	}
+
+	// Development mode notice
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprintf(w, "Asset not found. Run 'npm run dev' in the web directory for development mode.")
+}
+
+// handleStaticFile serves static files like manifest.json, icons, etc.
+func (s *Server) handleStaticFile(w http.ResponseWriter, r *http.Request) {
+	// Remove leading slash and serve from web/public
+	filePath := filepath.Join("web", "public", strings.TrimPrefix(r.URL.Path, "/"))
+	s.serveFile(w, r, filePath)
+}
+
+// serveFile serves a file with appropriate content type
+func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, filePath string) {
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Set content type based on file extension
+	ext := filepath.Ext(filePath)
+	switch ext {
+	case ".html":
+		w.Header().Set("Content-Type", "text/html")
+	case ".css":
+		w.Header().Set("Content-Type", "text/css")
+	case ".js":
+		w.Header().Set("Content-Type", "application/javascript")
+	case ".json":
+		w.Header().Set("Content-Type", "application/json")
+	case ".png":
+		w.Header().Set("Content-Type", "image/png")
+	case ".svg":
+		w.Header().Set("Content-Type", "image/svg+xml")
+	case ".ico":
+		w.Header().Set("Content-Type", "image/x-icon")
+	default:
+		w.Header().Set("Content-Type", "application/octet-stream")
+	}
+
+	// Serve the file
+	http.ServeFile(w, r, filePath)
+}
+
+// HTML template for the main visualization page
+const devFallbackTemplate = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Development Mode</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: #1a1a1a;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #4ecdc4;
+            margin-bottom: 1rem;
+        }
+        .code {
+            background: #2a2a2a;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            margin: 1rem 0;
+        }
+        .api-link {
+            color: #4ecdc4;
+            text-decoration: none;
+        }
+        .api-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐍 {{.Title}}</h1>
+        <p>The modern Svelte-based timeline interface is not yet built.</p>
+
+        <h2>Development Setup</h2>
+        <p>To run the new timeline interface:</p>
+        <div class="code">
+cd web<br>
+npm install<br>
+npm run dev
+        </div>
+
+        <p>The development server will run on <strong>http://localhost:3000</strong></p>
+
+        <h2>API Access</h2>
+        <p>Journey data is available at:
+           <a href="/api/journey" class="api-link">http://localhost:{{.Port}}/api/journey</a>
+        </p>
+
+        <h2>Production Build</h2>
+        <p>To build for production:</p>
+        <div class="code">
+cd web<br>
+npm run build
+        </div>
+
+        <p>After building, refresh this page to see the timeline interface.</p>
+    </div>
+</body>
+</html>`
+
+/*
+// CSS styles for the journey visualization
+// DISABLED: const journeyCSS = `
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0a;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: rgba(20, 20, 20, 0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #333;
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.timeline-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.progress-bar {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ecdc4, #45b7d1);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.1s ease;
+}
+
+.progress-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.progress-time {
+    font-size: 0.8rem;
+    color: #ccc;
+    white-space: nowrap;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0 2rem;
+}
+
+.timeline-header h2 {
+    margin: 0;
+    color: #4ecdc4;
+    font-size: 1.3rem;
+}
+
+.timeline-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.timeline-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(20, 20, 20, 0.5);
+    border-top: 1px solid #333;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-dot.milestone {
+    border: 2px solid #ff6b6b;
+    background: transparent;
+}
+
+.legend-dot.learning {
+    background: #45b7d1;
+}
+
+.legend-dot.decision {
+    background: #feca57;
+    border-radius: 2px;
+}
+
+.legend-dot.commit {
+    background: #96ceb4;
+    border-radius: 1px;
+}
+
+.legend-dot.capture {
+    background: #4ecdc4;
+}
+
+/* Responsive Design for 3-Column Layout */
+@media (max-width: 1024px) {
+    .left-sidebar, .right-sidebar {
+        width: 280px;
+        min-width: 280px;
+    }
+
+    .center-timeline {
+        min-width: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+
+    .left-sidebar, .right-sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-height: 200px;
+    }
+
+    .left-sidebar {
+        border-right: 1px solid #333;
+        border-bottom: 1px solid #333;
+        order: 1;
+    }
+
+    .center-timeline {
+        min-width: 100%;
+        order: 2;
+        flex: 1;
+    }
+
+    .right-sidebar {
+        border-left: 1px solid #333;
+        border-top: 1px solid #333;
+        order: 3;
+    }
+
+    .sidebar-header {
+        padding: 0.75rem;
+        min-height: 50px;
+    }
+
+    .console-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+
+    .search-input {
+        width: 100%;
+        max-width: none;
+    }
+
+    .event-console {
+        min-height: 150px;
+        max-height: 150px;
+    }
+
+    .timeline-header {
+        padding: 0 1rem;
+    }
+
+    .timeline-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .timeline-info {
+        font-size: 0.8rem;
+    }
+
+    .timeline-legend {
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 0.75rem;
+    }
+
+    .legend-item {
+        font-size: 0.75rem;
+    }
+
+    .controls {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .timeline-progress {
+        min-width: 150px;
+        flex: 1;
+    }
+
+    .active-tooltip {
+        max-width: 250px;
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+
+    .timeline-event {
+        width: 12px;
+        height: 12px;
+    }
+
+    .timeline-event:hover {
+        transform: scale(1.4) !important;
+    }
+
+    .collapsed {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        height: calc(100vh - 120px);
+    }
+
+    .header {
+        padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .playback-controls {
+        gap: 0.25rem;
+    }
+
+    .btn-primary, .btn-secondary {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .timeline {
+        padding: 1rem;
+    }
+
+    .console-entry {
+        padding: 0.4rem;
+        font-size: 0.8rem;
+    }
+
+    .console-time {
+        display: block;
+        margin-bottom: 0.2rem;
+    }
+
+    .timeline-legend {
+        gap: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    .legend-item {
+        font-size: 0.7rem;
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+.btn-primary, .btn-secondary {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #4ecdc4;
+    color: #0a0a0a;
+}
+
+.btn-primary:hover {
+    background: #45b7d1;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #333;
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background: #444;
+}
+
+.speed-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.speed-control label {
+    font-size: 0.9rem;
+}
+
+#speedSlider {
+    width: 80px;
+}
+
+.main-content {
+    display: flex;
+    height: calc(100vh - 140px);
+}
+
+.left-sidebar, .right-sidebar {
+    width: 320px;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid #333;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.left-sidebar {
+    border-right: none;
+}
+
+.right-sidebar {
+    border-left: none;
+}
+
+.left-sidebar.collapsed {
+    width: 40px;
+    min-width: 40px;
+}
+
+.right-sidebar.collapsed {
+    width: 40px;
+    min-width: 40px;
+}
+
+.center-timeline {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0a 100%);
+    min-width: 400px;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(30, 30, 30, 0.9);
+    border-bottom: 1px solid #333;
+    min-height: 60px;
+}
+
+.sidebar-header h3, .sidebar-header h4 {
+    margin: 0;
+    color: #4ecdc4;
+    font-size: 1.1rem;
+}
+
+.collapse-btn {
+    background: none;
+    border: 1px solid #444;
+    color: #4ecdc4;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.collapse-btn:hover {
+    background: #4ecdc4;
+    color: #0a0a0a;
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.collapsed .sidebar-content {
+    display: none;
+}
+
+.collapsed .sidebar-header h3 {
+    display: none;
+}
+
+.console-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.search-input {
+    padding: 0.5rem;
+    background: #333;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 4px;
+    width: 200px;
+    font-size: 0.9rem;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4ecdc4;
+    box-shadow: 0 0 5px rgba(78, 205, 196, 0.3);
+}
+
+.event-console {
+    flex: 1;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    min-height: 400px;
+    max-height: calc(100vh - 300px);
+    border: 1px solid #333;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.console-loading {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.timeline {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    padding: 0;
+    overflow: hidden;
+    min-height: 300px;
+    height: 100%;
+}
+
+.conspiracy-map {
+    background-image:
+        radial-gradient(circle at 20% 30%, rgba(78, 205, 196, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(255, 107, 107, 0.05) 0%, transparent 50%),
+        linear-gradient(45deg, transparent 48%, rgba(78, 205, 196, 0.02) 49%, rgba(78, 205, 196, 0.02) 51%, transparent 52%);
+}
+
+.connection-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.timeline-events {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 2rem;
+    z-index: 2;
+}
+
+.active-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.95);
+    color: #4ecdc4;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #4ecdc4;
+    font-size: 0.85rem;
+    max-width: 300px;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(78, 205, 196, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.active-tooltip.hidden {
+    display: none;
+}
+
+.active-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #4ecdc4;
+}
+
+.filters h4, .stats h4, .projects h4 {
+    margin-bottom: 1rem;
+    color: #4ecdc4;
+    font-size: 1rem;
+}
+
+.stats, .projects {
+    margin-top: 2rem;
+}
+
+.filter-group {
+    margin-bottom: 1rem;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.filter-group select {
+    width: 100%;
+    padding: 0.5rem;
+    background: #333;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+
+.stats, .projects {
+    margin-top: 2rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #333;
+}
+
+.stat-label {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.stat-value {
+    color: #4ecdc4;
+    font-weight: 600;
+}
+
+.project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.project-item {
+    padding: 0.5rem;
+    background: #333;
+    border-radius: 4px;
+    border-left: 4px solid;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.project-item:hover {
+    background: #444;
+    transform: translateX(2px);
+}
+
+.project-name {
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+
+.project-count {
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.event-detail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.event-detail.hidden {
+    display: none;
+}
+
+.event-detail-content {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #fff;
+}
+
+.event-meta {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.event-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.tag {
+    padding: 0.2rem 0.5rem;
+    background: #333;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: #4ecdc4;
+}
+
+.timeline-event {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: pulse 3s infinite;
+    opacity: 0.2;
+    transform: scale(0.3);
+    z-index: 2;
+    border: 2px solid transparent;
+    box-shadow: 0 0 0 0 rgba(78, 205, 196, 0);
+}
+
+.timeline-event:hover {
+    transform: scale(1.8) !important;
+    box-shadow:
+        0 0 20px var(--project-color, rgba(78, 205, 196, 0.6)),
+        0 0 40px var(--project-color, rgba(78, 205, 196, 0.3));
+    z-index: 1000 !important;
+    border-color: var(--project-color, #4ecdc4);
+}
+
+.timeline-event.revealed {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 8px var(--project-color, rgba(78, 205, 196, 0.4));
+}
+
+.timeline-event.highlighted {
+    animation: highlight-pulse 1s ease-in-out 3;
+    z-index: 999;
+}
+
+.timeline-event.connected {
+    box-shadow:
+        0 0 12px var(--project-color, rgba(78, 205, 196, 0.6)),
+        inset 0 0 6px var(--project-color, rgba(78, 205, 196, 0.2));
+}
+
+@keyframes highlight-pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 8px var(--project-color, rgba(78, 205, 196, 0.4));
+    }
+    50% {
+        transform: scale(1.5);
+        box-shadow:
+            0 0 25px var(--project-color, rgba(78, 205, 196, 0.8)),
+            0 0 50px var(--project-color, rgba(78, 205, 196, 0.4));
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 8px var(--project-color, rgba(78, 205, 196, 0.4));
+    }
+}
+
+.timeline-event.milestone {
+    width: 18px;
+    height: 18px;
+    border: 3px solid #ff6b6b;
+    background: transparent;
+}
+
+.timeline-event.learning {
+    background: #45b7d1;
+    border-radius: 50%;
+}
+
+.timeline-event.decision {
+    background: #feca57;
+    border-radius: 4px;
+}
+
+.timeline-event.integration {
+    background: #ff9ff3;
+    transform: rotate(45deg);
+}
+
+.timeline-event.commit {
+    background: #96ceb4;
+    border-radius: 2px;
+}
+
+.event-preview {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    display: none;
+    transition: opacity 0.3s ease;
+    z-index: 1001;
+}
+
+.timeline-axis {
+    box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+}
+
+/* Enhanced Animations */
+@keyframes milestone-entrance {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; }
+    100% { transform: scale(1) rotate(360deg); opacity: 1; }
+}
+
+@keyframes learning-bounce {
+    0% { transform: scale(0) translateY(20px); opacity: 0; }
+    60% { transform: scale(1.2) translateY(-5px); opacity: 0.9; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes decision-flash {
+    0% { transform: scale(0); opacity: 0; background: #fff; }
+    50% { transform: scale(1.3); opacity: 0.8; background: #feca57; }
+    100% { transform: scale(1); opacity: 1; background: #feca57; }
+}
+
+@keyframes default-entrance {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.1); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes milestone-pulse {
+    0%, 100% { box-shadow: 0 0 5px #ff6b6b; }
+    50% { box-shadow: 0 0 20px #ff6b6b, 0 0 30px #ff6b6b40; }
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    font-size: 1.2rem;
+    color: #4ecdc4;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+        box-shadow: 0 0 5px var(--project-color, rgba(78, 205, 196, 0.3));
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 15px var(--project-color, rgba(78, 205, 196, 0.6));
+    }
+    100% {
+        opacity: 0.6;
+        box-shadow: 0 0 5px var(--project-color, rgba(78, 205, 196, 0.3));
+    }
+}
+
+.console-entry {
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    border-left: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.console-entry:hover {
+    background: rgba(78, 205, 196, 0.1);
+    border-left-color: #4ecdc4;
+}
+
+.console-entry.search-match {
+    background: rgba(255, 107, 107, 0.1);
+    border-left-color: #ff6b6b;
+}
+
+.console-time {
+    color: #666;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+}
+
+.console-project {
+    font-weight: bold;
+    margin-right: 0.5rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.console-type {
+    color: #4ecdc4;
+    font-style: italic;
+    margin-right: 0.5rem;
+    text-transform: capitalize;
+}
+
+.console-content {
+    color: #ccc;
+    flex: 1;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.timeline-event {
+    animation: slideIn 0.5s ease-out;
+}
+`
+*/
+
+// JavaScript for the journey visualization interface
+// DISABLED: const journeyJS = `
+class JourneyVisualization {
+    constructor() {
+        this.journeyData = null;
+        this.isPlaying = false;
+        this.currentEventIndex = 0;
+        this.playSpeed = 1;
+        this.animationFrame = null;
+
+        // Enhanced conspiracy map features
+        this.projectClusters = new Map();
+        this.connections = [];
+        this.canvas = null;
+        this.ctx = null;
+        this.eventElements = [];
+        this.searchResults = [];
+        this.activeTooltip = null;
+
+        this.initializeEventListeners();
+        this.loadJourneyData();
+    }
+
+    initializeEventListeners() {
+        document.getElementById('playBtn').addEventListener('click', () => this.play());
+        document.getElementById('pauseBtn').addEventListener('click', () => this.pause());
+        document.getElementById('restartBtn').addEventListener('click', () => this.restart());
+
+        const speedSlider = document.getElementById('speedSlider');
+        speedSlider.addEventListener('input', (e) => {
+            this.playSpeed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = this.playSpeed + 'x';
+        });
+
+        document.getElementById('daysFilter').addEventListener('change', (e) => {
+            this.loadJourneyData({ days: parseInt(e.target.value) });
+        });
+
+        document.getElementById('themeFilter').addEventListener('change', (e) => {
+            this.loadJourneyData({ theme: e.target.value });
+        });
+
+        document.getElementById('closeEventDetail').addEventListener('click', () => {
+            document.getElementById('eventDetail').classList.add('hidden');
+        });
+
+        // Progress slider for timeline scrubbing
+        document.getElementById('progressSlider').addEventListener('input', (e) => {
+            this.scrubToPosition(parseInt(e.target.value));
+        });
+
+        // Console search functionality
+        document.getElementById('eventSearch').addEventListener('input', (e) => {
+            this.searchEvents(e.target.value);
+        });
+
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            document.getElementById('eventSearch').value = '';
+            this.clearSearch();
+        });
+
+        // Collapsible sidebar functionality
+        document.getElementById('leftCollapseBtn').addEventListener('click', () => {
+            this.toggleSidebar('left');
+        });
+
+        document.getElementById('rightCollapseBtn').addEventListener('click', () => {
+            this.toggleSidebar('right');
+        });
+    }
+
+    async loadJourneyData(params = {}) {
+        try {
+            const urlParams = new URLSearchParams();
+            if (params.days) urlParams.set('days', params.days);
+            if (params.theme) urlParams.set('theme', params.theme);
+
+            const response = await fetch('/api/journey?' + urlParams.toString());
+            this.journeyData = await response.json();
+
+            this.renderTimeline();
+            this.updateStats();
+            this.updateProjects();
+            this.updateTimelineInfo();
+        } catch (error) {
+            console.error('Failed to load journey data:', error);
+            document.querySelector('.loading').textContent = 'Failed to load journey data';
+        }
+    }
+
+    renderTimeline() {
+        console.log('renderTimeline called, journeyData:', this.journeyData);
+        const timeline = document.getElementById('timeline');
+        const eventsContainer = document.getElementById('timelineEvents');
+
+        if (!timeline) {
+            console.error('Timeline element not found');
+            return;
+        }
+
+        if (!eventsContainer) {
+            console.error('TimelineEvents container not found');
+            return;
+        }
+
+        eventsContainer.innerHTML = '';
+        console.log('Events container cleared, events count:', this.journeyData?.events?.length || 0);
+
+        if (!this.journeyData || !this.journeyData.events.length) {
+            eventsContainer.innerHTML = '<div class="loading">No events found</div>';
+            console.log('No events to display');
+            return;
+        }
+
+        // Initialize canvas for connections
+        this.initializeCanvas();
+
+        // Create project clusters with physics-based positioning
+        this.createProjectClusters();
+
+        // Create timeline axis
+        this.createTimelineAxis(eventsContainer);
+
+        // Create events with conspiracy map positioning
+        this.eventElements = [];
+        this.journeyData.events.forEach((event, index) => {
+            const eventEl = this.createEventElement(event, index);
+            eventEl.style.opacity = '0.2'; // Start hidden for animation
+            eventEl.style.transform = 'scale(0.3)';
+            eventsContainer.appendChild(eventEl);
+            this.eventElements.push({ element: eventEl, event: event, index: index });
+        });
+
+        // Create connections between related events
+        this.createEventConnections();
+
+        // Initialize console feed
+        this.initializeConsole();
+
+        // Initialize timeline state
+        this.currentEventIndex = 0;
+        this.resetTimeline();
+    }
+
+    createEventElement(event, index) {
+        const eventEl = document.createElement('div');
+        eventEl.className = 'timeline-event ' + event.eventType;
+        eventEl.setAttribute('data-index', index);
+        eventEl.setAttribute('data-timestamp', event.timestamp);
+        eventEl.setAttribute('data-project', event.project || 'unknown');
+
+        // Physics-based positioning for conspiracy map effect
+        const position = this.calculateConspiracyPosition(event, index);
+        eventEl.style.left = position.x + '%';
+        eventEl.style.top = position.y + 'px';
+
+        // Enhanced visual styling based on event type
+        this.styleEventElement(eventEl, event);
+
+        // Set project-based coloring and effects
+        const project = this.journeyData.projects.find(p => p.name === event.project);
+        if (project) {
+            eventEl.style.setProperty('--project-color', project.color);
+            eventEl.style.background = project.color;
+            eventEl.style.boxShadow = '0 0 10px ' + project.color + '40';
+        }
+
+        // Enhanced event interactions
+        eventEl.addEventListener('mouseenter', () => this.onEventHover(eventEl, event));
+        eventEl.addEventListener('mouseleave', () => this.onEventLeave(eventEl));
+        eventEl.addEventListener('click', () => this.highlightEvent(index));
+
+        return eventEl;
+    }
+
+    getTimePercent(timestamp) {
+        const start = new Date(this.journeyData.dateRange.start);
+        const end = new Date(this.journeyData.dateRange.end);
+        const eventTime = new Date(timestamp);
+
+        const totalDuration = end - start;
+        const eventDuration = eventTime - start;
+
+        return Math.max(0, Math.min(100, (eventDuration / totalDuration) * 100));
+    }
+
+    showEventDetail(event) {
+        document.getElementById('eventTitle').textContent = event.content;
+        document.getElementById('eventTime').textContent = new Date(event.timestamp).toLocaleString();
+        document.getElementById('eventProject').textContent = event.project || 'No project';
+        document.getElementById('eventType').textContent = event.eventType;
+
+        const tagsContainer = document.getElementById('eventTags');
+        tagsContainer.innerHTML = '';
+        event.tags.forEach(tag => {
+            const tagEl = document.createElement('span');
+            tagEl.className = 'tag';
+            tagEl.textContent = tag;
+            tagsContainer.appendChild(tagEl);
+        });
+
+        document.getElementById('eventDetail').classList.remove('hidden');
+    }
+
+    updateStats() {
+        if (!this.journeyData) return;
+
+        document.getElementById('totalEvents').textContent = this.journeyData.stats.totalEvents;
+        document.getElementById('projectCount').textContent = this.journeyData.stats.projectCount;
+        document.getElementById('milestoneCount').textContent = this.journeyData.stats.milestoneCount;
+        document.getElementById('learningMoments').textContent = this.journeyData.stats.learningMoments;
+    }
+
+    updateProjects() {
+        if (!this.journeyData) return;
+
+        const projectList = document.getElementById('projectList');
+        projectList.innerHTML = '';
+
+        this.journeyData.projects.forEach(project => {
+            const projectEl = document.createElement('div');
+            projectEl.className = 'project-item';
+            projectEl.style.borderLeftColor = project.color;
+
+            projectEl.innerHTML =
+                '<div class="project-name">' + project.name + '</div>' +
+                '<div class="project-count">' + project.eventCount + ' events</div>';
+
+            projectList.appendChild(projectEl);
+        });
+    }
+
+    play() {
+        if (!this.journeyData || !this.journeyData.events.length) return;
+
+        this.isPlaying = true;
+        this.startTime = Date.now();
+        this.animate();
+
+        // Update button states
+        document.getElementById('playBtn').style.opacity = '0.5';
+        document.getElementById('pauseBtn').style.opacity = '1';
+    }
+
+    pause() {
+        this.isPlaying = false;
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+        }
+
+        // Update button states
+        document.getElementById('playBtn').style.opacity = '1';
+        document.getElementById('pauseBtn').style.opacity = '0.5';
+    }
+
+    restart() {
+        this.pause();
+        this.currentEventIndex = 0;
+        this.resetTimeline();
+
+        // Update button states
+        document.getElementById('playBtn').style.opacity = '1';
+        document.getElementById('pauseBtn').style.opacity = '0.5';
+    }
+
+    animate() {
+        if (!this.isPlaying || !this.journeyData) return;
+
+        const eventInterval = 1000 / this.playSpeed; // Base interval
+        const currentTime = Date.now();
+
+        if (!this.lastEventTime) {
+            this.lastEventTime = currentTime;
+        }
+
+        if (currentTime - this.lastEventTime >= eventInterval) {
+            this.revealNextEvent();
+            this.lastEventTime = currentTime;
+        }
+
+        if (this.currentEventIndex < this.journeyData.events.length) {
+            this.animationFrame = requestAnimationFrame(() => this.animate());
+        } else {
+            this.pause();
+        }
+    }
+
+    // Enhanced methods for conspiracy map visualization
+    initializeCanvas() {
+        this.canvas = document.getElementById('connectionCanvas');
+        this.ctx = this.canvas.getContext('2d');
+
+        // Set canvas size
+        const timeline = document.getElementById('timeline');
+        this.canvas.width = timeline.offsetWidth;
+        this.canvas.height = timeline.offsetHeight;
+
+        // Redraw connections on resize
+        window.addEventListener('resize', () => this.redrawConnections());
+    }
+
+    createProjectClusters() {
+        this.projectClusters.clear();
+
+        // Create vertical bands for each project with repulsion physics
+        const projects = this.journeyData.projects;
+        const containerHeight = 600; // Timeline height
+        const bandHeight = containerHeight / Math.max(projects.length, 3);
+
+        projects.forEach((project, index) => {
+            const baseY = (index * bandHeight) + (bandHeight / 2);
+            const repulsionZone = bandHeight * 0.3; // Overlap prevention
+
+            this.projectClusters.set(project.name, {
+                color: project.color,
+                baseY: baseY,
+                currentEvents: [],
+                repulsionZone: repulsionZone,
+                index: index
+            });
+        });
+    }
+
+    calculateConspiracyPosition(event, index) {
+        const timePercent = this.getTimePercent(event.timestamp);
+        const cluster = this.projectClusters.get(event.project) || this.projectClusters.get('unknown');
+
+        if (!cluster) {
+            return { x: timePercent, y: 300 + Math.random() * 100 };
+        }
+
+        // Calculate Y position with project clustering and internal repulsion
+        let yPosition = cluster.baseY;
+
+        // Add some vertical spread within the cluster
+        const spreadFactor = 60;
+        const randomSpread = (Math.random() - 0.5) * spreadFactor;
+        yPosition += randomSpread;
+
+        // Apply gentle repulsion from other events in same project
+        const sameProjectEvents = cluster.currentEvents;
+        sameProjectEvents.forEach(otherEvent => {
+            const distance = Math.abs(timePercent - otherEvent.x);
+            if (distance < 5) { // Close events repel each other
+                const repulsion = (5 - distance) * 8;
+                yPosition += (Math.random() - 0.5) * repulsion;
+            }
+        });
+
+        // Keep within bounds
+        yPosition = Math.max(50, Math.min(550, yPosition));
+
+        // Store this event's position for future repulsion calculations
+        cluster.currentEvents.push({ x: timePercent, y: yPosition, index: index });
+
+        return { x: timePercent, y: yPosition };
+    }
+
+    createTimelineAxis(container) {
+        const axis = document.createElement('div');
+        axis.className = 'timeline-axis timeline-ruler';
+        axis.style.position = 'absolute';
+        axis.style.bottom = '30px';
+        axis.style.left = '0';
+        axis.style.right = '0';
+        axis.style.height = '2px';
+        axis.style.background = 'linear-gradient(90deg, #4ecdc4, #45b7d1, #ff6b6b)';
+        axis.style.opacity = '0.4';
+        axis.style.boxShadow = '0 0 4px rgba(78, 205, 196, 0.3)';
+        container.appendChild(axis);
+
+        // Add mystical time markers
+        for (let i = 0; i <= 10; i++) {
+            const marker = document.createElement('div');
+            marker.className = 'time-marker time-tick';
+            marker.style.position = 'absolute';
+            marker.style.left = (i * 10) + '%';
+            marker.style.bottom = '25px';
+            marker.style.width = '1px';
+            marker.style.height = '15px';
+            marker.style.background = 'linear-gradient(to top, #4ecdc4, transparent)';
+            marker.style.opacity = '0.3';
+            container.appendChild(marker);
+        }
+    }
+
+    calculateEventLane(event, index) {
+        // Smart lane assignment to prevent overlapping
+        const timePercent = this.getTimePercent(event.timestamp);
+        const laneWidth = 10; // % of timeline per lane
+        return Math.floor(timePercent / laneWidth) % 4;
+    }
+
+    calculateYPosition(event, lane) {
+        const baseY = 150;
+        const laneSpacing = 80;
+        const importanceOffset = (event.importance - 1) * 20;
+        const randomOffset = (Math.random() - 0.5) * 30;
+
+        return baseY + (lane * laneSpacing) + importanceOffset + randomOffset;
+    }
+
+    styleEventElement(eventEl, event) {
+        // Enhanced styling based on event type
+        switch (event.eventType) {
+            case 'milestone':
+                eventEl.style.width = '20px';
+                eventEl.style.height = '20px';
+                eventEl.style.border = '3px solid #ff6b6b';
+                eventEl.style.animation = 'milestone-pulse 2s infinite';
+                break;
+            case 'learning':
+                eventEl.style.background = '#45b7d1';
+                eventEl.style.borderRadius = '50%';
+                break;
+            case 'decision':
+                eventEl.style.background = '#feca57';
+                eventEl.style.borderRadius = '4px';
+                break;
+            case 'integration':
+                eventEl.style.background = '#ff9ff3';
+                eventEl.style.transform = 'rotate(45deg)';
+                break;
+            case 'commit':
+                eventEl.style.background = '#96ceb4';
+                eventEl.style.borderRadius = '2px';
+                break;
+            default:
+                eventEl.style.borderRadius = '50%';
+        }
+    }
+
+    onEventHover(eventEl, event) {
+        eventEl.style.transform = 'scale(1.5)';
+        eventEl.style.zIndex = '1000';
+
+        // Show content preview
+        const preview = eventEl.querySelector('.event-preview');
+        if (preview) {
+            preview.style.display = 'block';
+            preview.style.opacity = '1';
+        }
+    }
+
+    onEventLeave(eventEl) {
+        eventEl.style.transform = 'scale(1)';
+        eventEl.style.zIndex = 'auto';
+
+        // Hide content preview
+        const preview = eventEl.querySelector('.event-preview');
+        if (preview) {
+            preview.style.display = 'none';
+            preview.style.opacity = '0';
+        }
+    }
+
+    resetTimeline() {
+        // Reset all events to initial state
+        document.querySelectorAll('.timeline-event').forEach(eventEl => {
+            eventEl.style.opacity = '0.3';
+            eventEl.style.transform = 'scale(0.5)';
+            eventEl.classList.remove('revealed');
+        });
+    }
+
+    revealNextEvent() {
+        if (this.currentEventIndex >= this.journeyData.events.length) return;
+
+        const eventEl = document.querySelector('[data-index="' + this.currentEventIndex + '"]');
+        const event = this.journeyData.events[this.currentEventIndex];
+
+        if (eventEl) {
+            eventEl.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            eventEl.style.opacity = '1';
+            eventEl.style.transform = 'scale(1)';
+            eventEl.classList.add('revealed');
+
+            // Add entrance animation based on event type
+            this.playEventEntrance(eventEl, event);
+
+            // Show tooltip briefly when event is revealed
+            this.showActiveTooltip(event, eventEl);
+
+            // Add to console feed
+            this.addConsoleEntry(event, this.currentEventIndex);
+
+            // Redraw connections
+            setTimeout(() => this.redrawConnections(), 300);
+        }
+
+        this.currentEventIndex++;
+        this.updateProgress();
+        this.updateEventCounter();
+    }
+
+    playEventEntrance(eventEl, event) {
+        switch (event.eventType) {
+            case 'milestone':
+                eventEl.style.animation = 'milestone-entrance 0.8s ease-out';
+                break;
+            case 'learning':
+                eventEl.style.animation = 'learning-bounce 0.6s ease-out';
+                break;
+            case 'decision':
+                eventEl.style.animation = 'decision-flash 0.4s ease-out';
+                break;
+            default:
+                eventEl.style.animation = 'default-entrance 0.5s ease-out';
+        }
+
+        // Clear animation after completion
+        setTimeout(() => {
+            eventEl.style.animation = '';
+        }, 1000);
+    }
+
+    createEventConnections() {
+        this.connections = [];
+
+        // Create connections between events of the same project
+        this.journeyData.projects.forEach(project => {
+            const projectEvents = this.journeyData.events
+                .map((event, index) => ({ event, index }))
+                .filter(item => item.event.project === project.name);
+
+            // Connect sequential events in the same project
+            for (let i = 0; i < projectEvents.length - 1; i++) {
+                this.connections.push({
+                    from: projectEvents[i].index,
+                    to: projectEvents[i + 1].index,
+                    type: 'project-flow',
+                    color: project.color
+                });
+            }
+        });
+
+        // Create special connections for decision -> learning events
+        this.journeyData.events.forEach((event, index) => {
+            if (event.eventType === 'decision') {
+                // Look for learning events within next 3 events
+                for (let i = index + 1; i < Math.min(index + 4, this.journeyData.events.length); i++) {
+                    if (this.journeyData.events[i].eventType === 'learning') {
+                        this.connections.push({
+                            from: index,
+                            to: i,
+                            type: 'cause-effect',
+                            color: '#feca57'
+                        });
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    redrawConnections() {
+        if (!this.ctx || !this.eventElements.length) return;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.connections.forEach(connection => {
+            const fromElement = this.eventElements[connection.from];
+            const toElement = this.eventElements[connection.to];
+
+            if (!fromElement || !toElement) return;
+
+            const fromEl = fromElement.element;
+            const toEl = toElement.element;
+
+            // Only draw if both elements are revealed
+            if (!fromEl.classList.contains('revealed') || !toEl.classList.contains('revealed')) return;
+
+            const fromRect = fromEl.getBoundingClientRect();
+            const toRect = toEl.getBoundingClientRect();
+            const canvasRect = this.canvas.getBoundingClientRect();
+
+            const fromX = fromRect.left - canvasRect.left + fromRect.width / 2;
+            const fromY = fromRect.top - canvasRect.top + fromRect.height / 2;
+            const toX = toRect.left - canvasRect.left + toRect.width / 2;
+            const toY = toRect.top - canvasRect.top + toRect.height / 2;
+
+            this.drawConnection(fromX, fromY, toX, toY, connection);
+        });
+    }
+
+    drawConnection(fromX, fromY, toX, toY, connection) {
+        this.ctx.save();
+
+        if (connection.type === 'project-flow') {
+            // Flowing lines for project continuity
+            this.ctx.strokeStyle = connection.color + '40';
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([5, 5]);
+        } else if (connection.type === 'cause-effect') {
+            // Mystical arcs for cause-effect relationships
+            this.ctx.strokeStyle = connection.color + '60';
+            this.ctx.lineWidth = 3;
+            this.ctx.setLineDash([]);
+        }
+
+        this.ctx.beginPath();
+
+        // Draw curved line for more organic feel
+        const midX = (fromX + toX) / 2;
+        const midY = (fromY + toY) / 2 - Math.abs(toX - fromX) * 0.2;
+
+        this.ctx.moveTo(fromX, fromY);
+        this.ctx.quadraticCurveTo(midX, midY, toX, toY);
+        this.ctx.stroke();
+
+        this.ctx.restore();
+    }
+
+    initializeConsole() {
+        const console = document.getElementById('eventConsole');
+        console.innerHTML = '<div class="console-loading">Loading events...</div>';
+    }
+
+    addConsoleEntry(event, index) {
+        const console = document.getElementById('eventConsole');
+
+        if (console.children.length === 1 && console.children[0].classList.contains('console-loading')) {
+            console.innerHTML = '';
+        }
+
+        const entry = document.createElement('div');
+        entry.className = 'console-entry';
+        entry.setAttribute('data-index', index);
+
+        const timestamp = new Date(event.timestamp).toLocaleTimeString();
+        const project = event.project || 'unknown';
+
+        entry.innerHTML =
+            '<span class="console-time">[' + timestamp + ']</span>' +
+            '<span class="console-project" style="color: ' + this.getProjectColor(project) + '">' + project + '</span>' +
+            '<span class="console-type">' + event.eventType + '</span>' +
+            '<span class="console-content">' + event.content + '</span>';
+
+        entry.addEventListener('click', () => this.highlightEvent(index));
+
+        console.appendChild(entry);
+        console.scrollTop = console.scrollHeight;
+    }
+
+    getProjectColor(projectName) {
+        const project = this.journeyData.projects.find(p => p.name === projectName);
+        return project ? project.color : '#4ecdc4';
+    }
+
+    searchEvents(query) {
+        const entries = document.querySelectorAll('.console-entry');
+        this.searchResults = [];
+
+        if (!query.trim()) {
+            entries.forEach(entry => entry.classList.remove('search-match'));
+            this.clearEventHighlights();
+            return;
+        }
+
+        const queryLower = query.toLowerCase();
+
+        entries.forEach((entry, index) => {
+            const content = entry.textContent.toLowerCase();
+            if (content.includes(queryLower)) {
+                entry.classList.add('search-match');
+                this.searchResults.push(parseInt(entry.getAttribute('data-index')));
+            } else {
+                entry.classList.remove('search-match');
+            }
+        });
+
+        // Highlight matching events in timeline
+        this.highlightSearchResults();
+    }
+
+    highlightSearchResults() {
+        this.clearEventHighlights();
+
+        this.searchResults.forEach(index => {
+            const eventEl = document.querySelector('[data-index="' + index + '"]');
+            if (eventEl) {
+                eventEl.classList.add('highlighted');
+            }
+        });
+    }
+
+    clearSearch() {
+        document.querySelectorAll('.console-entry').forEach(entry => {
+            entry.classList.remove('search-match');
+        });
+        this.clearEventHighlights();
+        this.searchResults = [];
+    }
+
+    clearEventHighlights() {
+        document.querySelectorAll('.timeline-event').forEach(event => {
+            event.classList.remove('highlighted');
+        });
+    }
+
+    highlightEvent(index) {
+        this.clearEventHighlights();
+
+        const eventEl = document.querySelector('[data-index="' + index + '"]');
+        if (eventEl) {
+            eventEl.classList.add('highlighted');
+
+            // Show event detail
+            const event = this.journeyData.events[index];
+            this.showEventDetail(event);
+
+            // Scroll console to this entry
+            const consoleEntry = document.querySelector('.console-entry[data-index="' + index + '"]');
+            if (consoleEntry) {
+                consoleEntry.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
+    showActiveTooltip(event, element) {
+        const tooltip = document.getElementById('activeTooltip');
+        const rect = element.getBoundingClientRect();
+        const timelineRect = document.getElementById('timeline').getBoundingClientRect();
+
+        tooltip.innerHTML =
+            '<div style="color: #4ecdc4; font-weight: bold; margin-bottom: 0.5rem;">' +
+                (event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)) +
+            '</div>' +
+            '<div style="margin-bottom: 0.5rem;">' +
+                event.content.substring(0, 100) + (event.content.length > 100 ? '...' : '') +
+            '</div>' +
+            '<div style="font-size: 0.75rem; opacity: 0.8;">' +
+                new Date(event.timestamp).toLocaleString() +
+            '</div>';
+
+        tooltip.style.left = (rect.left - timelineRect.left) + 'px';
+        tooltip.style.top = (rect.top - timelineRect.top - 80) + 'px';
+        tooltip.classList.remove('hidden');
+
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            tooltip.classList.add('hidden');
+        }, 3000);
+    }
+
+    // Sidebar collapse functionality
+    toggleSidebar(side) {
+        const sidebar = document.getElementById(side + 'Sidebar');
+        const button = document.getElementById(side + 'CollapseBtn');
+
+        if (sidebar.classList.contains('collapsed')) {
+            // Expand
+            sidebar.classList.remove('collapsed');
+            if (side === 'left') {
+                button.textContent = '◀';
+                button.title = 'Collapse sidebar';
+            } else {
+                button.textContent = '▶';
+                button.title = 'Collapse sidebar';
+            }
+        } else {
+            // Collapse
+            sidebar.classList.add('collapsed');
+            if (side === 'left') {
+                button.textContent = '▶';
+                button.title = 'Expand sidebar';
+            } else {
+                button.textContent = '◀';
+                button.title = 'Expand sidebar';
+            }
+        }
+
+        // Redraw canvas connections after layout change
+        setTimeout(() => {
+            if (this.canvas) {
+                const timeline = document.getElementById('timeline');
+                this.canvas.width = timeline.offsetWidth;
+                this.canvas.height = timeline.offsetHeight;
+                this.redrawConnections();
+            }
+        }, 300);
+    }
+
+    // Progress tracking and scrubbing methods
+    updateProgress() {
+        if (!this.journeyData || !this.journeyData.events.length) return;
+
+        const progress = (this.currentEventIndex / this.journeyData.events.length) * 100;
+        const progressFill = document.getElementById('progressFill');
+        const progressSlider = document.getElementById('progressSlider');
+
+        if (progressFill) {
+            progressFill.style.width = progress + '%';
+        }
+        if (progressSlider) {
+            progressSlider.value = progress;
+        }
+    }
+
+    updateEventCounter() {
+        const counter = document.getElementById('eventCounter');
+        const currentDate = document.getElementById('currentDate');
+
+        if (counter && this.journeyData) {
+            counter.textContent = this.currentEventIndex + ' / ' + this.journeyData.events.length + ' events';
+        }
+
+        if (currentDate && this.journeyData && this.currentEventIndex > 0) {
+            const currentEvent = this.journeyData.events[this.currentEventIndex - 1];
+            if (currentEvent) {
+                const date = new Date(currentEvent.timestamp);
+                currentDate.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            }
+        }
+    }
+
+    updateTimelineInfo() {
+        const totalTime = document.getElementById('totalTime');
+        const currentTime = document.getElementById('currentTime');
+
+        if (this.journeyData && this.journeyData.events.length > 0) {
+            const duration = this.calculateJourneyDuration();
+            if (totalTime) {
+                totalTime.textContent = this.formatDuration(duration);
+            }
+            if (currentTime) {
+                currentTime.textContent = '0:00';
+            }
+
+            // Update event counter
+            this.updateEventCounter();
+        }
+    }
+
+    calculateJourneyDuration() {
+        if (!this.journeyData || this.journeyData.events.length < 2) return 0;
+
+        const firstEvent = new Date(this.journeyData.events[0].timestamp);
+        const lastEvent = new Date(this.journeyData.events[this.journeyData.events.length - 1].timestamp);
+        return Math.floor((lastEvent - firstEvent) / (1000 * 60 * 60)); // hours
+    }
+
+    formatDuration(hours) {
+        if (hours < 1) return '0:30'; // Minimum display
+        if (hours < 24) return hours + ':00';
+        const days = Math.floor(hours / 24);
+        const remainingHours = hours % 24;
+        return days + 'd ' + remainingHours + 'h';
+    }
+
+    scrubToPosition(percentage) {
+        if (!this.journeyData || !this.journeyData.events.length) return;
+
+        this.pause();
+        const targetIndex = Math.floor((percentage / 100) * this.journeyData.events.length);
+
+        // Reset timeline
+        this.resetTimeline();
+
+        // Reveal events up to target index instantly
+        for (let i = 0; i < targetIndex; i++) {
+            const eventEl = document.querySelector('[data-index="' + i + '"]');
+            if (eventEl) {
+                eventEl.style.transition = 'none';
+                eventEl.style.opacity = '1';
+                eventEl.style.transform = 'scale(1)';
+                eventEl.classList.add('revealed');
+            }
+        }
+
+        this.currentEventIndex = targetIndex;
+        this.updateProgress();
+        this.updateEventCounter();
+
+        // Restore transitions
+        setTimeout(() => {
+            document.querySelectorAll('.timeline-event').forEach(el => {
+                el.style.transition = 'all 0.5s ease-out';
+            });
+        }, 50);
+    }
+}
+
+// Initialize the visualization when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new JourneyVisualization();
+});
+`

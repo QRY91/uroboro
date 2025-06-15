@@ -20,7 +20,7 @@ type TimelineEvent struct {
 // JourneyData represents the complete journey data for a time period
 type JourneyData struct {
 	Events     []TimelineEvent  `json:"events"`
-	DateRange  DateRange        `json:"dateRange"`
+	Timeline   Timeline         `json:"timeline"`
 	Projects   []ProjectSummary `json:"projects"`
 	Stats      JourneyStats     `json:"stats"`
 	Milestones []TimelineEvent  `json:"milestones"`
@@ -30,6 +30,13 @@ type JourneyData struct {
 type DateRange struct {
 	Start time.Time `json:"start"`
 	End   time.Time `json:"end"`
+}
+
+// Timeline represents timeline information for the frontend
+type Timeline struct {
+	StartTime     time.Time `json:"startTime"`
+	EndTime       time.Time `json:"endTime"`
+	TotalDuration int64     `json:"totalDuration"` // Duration in milliseconds
 }
 
 // ProjectSummary provides summary information about a project

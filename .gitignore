@@ -169,4 +169,6 @@ dmypy.json
 # Preferences
 .trash/
 
+web/node_modules/
+
 *PROCEDURE.md

@@ -1,0 +1,154 @@
+{
+  "name": "Uroboro Journey Timeline",
+  "short_name": "Uroboro Timeline",
+  "description": "Interactive timeline visualization for development journey replay with video-editor-style scrubbing controls",
+  "version": "1.0.0",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#4ecdc4",
+  "background_color": "#1a1a1a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["productivity", "developer", "timeline", "visualization"],
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "15 Minute View",
+      "short_name": "15m View",
+      "description": "Open timeline with 15-minute scale",
+      "url": "/?scale=15m",
+      "icons": [
+        {
+          "src": "/icons/shortcut-15m.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "24 Hour View",
+      "short_name": "Daily View",
+      "description": "Open timeline with 24-hour scale",
+      "url": "/?scale=24h",
+      "icons": [
+        {
+          "src": "/icons/shortcut-24h.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Full Journey",
+      "short_name": "Full View",
+      "description": "Open complete journey timeline",
+      "url": "/?scale=full",
+      "icons": [
+        {
+          "src": "/icons/shortcut-full.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-timeline.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Desktop timeline view with scrubbing controls"
+    },
+    {
+      "src": "/screenshots/mobile-timeline.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Mobile timeline view with touch controls"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/import",
+      "accept": {
+        "application/json": [".json"],
+        "text/plain": [".txt", ".log"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+uroboro",
+      "url": "/?action=open&data=%s"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "iarc_rating_id": "",
+  "handle_links": "preferred",
+  "capture_links": "existing-client-navigate"
+}

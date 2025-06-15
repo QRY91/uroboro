@@ -55,9 +55,16 @@ func (j *JourneyService) GenerateJourney(options JourneyOptions) (*JourneyData, 
 	// Identify milestones
 	milestones := j.identifyMilestones(allEvents)
 
+	// Calculate total duration in milliseconds
+	totalDuration := dateRange.End.Sub(dateRange.Start).Milliseconds()
+
 	return &JourneyData{
-		Events:     allEvents,
-		DateRange:  dateRange,
+		Events: allEvents,
+		Timeline: Timeline{
+			StartTime:     dateRange.Start,
+			EndTime:       dateRange.End,
+			TotalDuration: totalDuration,
+		},
 		Projects:   projects,
 		Stats:      stats,
 		Milestones: milestones,
