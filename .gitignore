@@ -50,7 +50,7 @@ DUMP_HERE/
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db 
+Thumbs.db
 .vercel
 
 # Brainstorming and experimental ideas
@@ -168,3 +168,5 @@ dmypy.json
 
 # Preferences
 .trash/
+
+#*PROCEDURE.md
