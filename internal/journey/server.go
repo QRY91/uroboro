@@ -159,9 +159,20 @@ const indexTemplate = `<!DOCTYPE html>
         <header class="header">
             <h1>{{.Title}}</h1>
             <div class="controls">
-                <button id="playBtn" class="btn-primary">▶ Play</button>
-                <button id="pauseBtn" class="btn-secondary">⏸ Pause</button>
-                <button id="restartBtn" class="btn-secondary">⏮ Restart</button>
+                <div class="playback-controls">
+                    <button id="playBtn" class="btn-primary">▶ Play</button>
+                    <button id="pauseBtn" class="btn-secondary">⏸ Pause</button>
+                    <button id="restartBtn" class="btn-secondary">⏮ Restart</button>
+                </div>
+                <div class="timeline-progress">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                        <input type="range" id="progressSlider" class="progress-slider" min="0" max="100" value="0">
+                    </div>
+                    <div class="progress-time">
+                        <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+                    </div>
+                </div>
                 <div class="speed-control">
                     <label>Speed:</label>
                     <input type="range" id="speedSlider" min="0.5" max="3" step="0.5" value="1">
@@ -172,8 +183,37 @@ const indexTemplate = `<!DOCTYPE html>
 
         <main class="main-content">
             <div class="timeline-container">
+                <div class="timeline-header">
+                    <h2 id="timelineTitle">Development Journey</h2>
+                    <div class="timeline-info">
+                        <span id="eventCounter">0 / 0 events</span>
+                        <span id="currentDate">Select timeline to begin</span>
+                    </div>
+                </div>
                 <div id="timeline" class="timeline">
                     <div class="loading">Loading journey data...</div>
+                </div>
+                <div class="timeline-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot milestone"></div>
+                        <span>Milestones</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot learning"></div>
+                        <span>Learning</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot decision"></div>
+                        <span>Decisions</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot commit"></div>
+                        <span>Commits</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot capture"></div>
+                        <span>Captures</span>
+                    </div>
                 </div>
             </div>
 
@@ -288,7 +328,125 @@ body {
 .controls {
     display: flex;
     align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.timeline-progress {
+    display: flex;
+    align-items: center;
     gap: 1rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.progress-bar {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ecdc4, #45b7d1);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.1s ease;
+}
+
+.progress-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.progress-time {
+    font-size: 0.8rem;
+    color: #ccc;
+    white-space: nowrap;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0 2rem;
+}
+
+.timeline-header h2 {
+    margin: 0;
+    color: #4ecdc4;
+    font-size: 1.3rem;
+}
+
+.timeline-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.timeline-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(20, 20, 20, 0.5);
+    border-top: 1px solid #333;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-dot.milestone {
+    border: 2px solid #ff6b6b;
+    background: transparent;
+}
+
+.legend-dot.learning {
+    background: #45b7d1;
+}
+
+.legend-dot.decision {
+    background: #feca57;
+    border-radius: 2px;
+}
+
+.legend-dot.commit {
+    background: #96ceb4;
+    border-radius: 1px;
+}
+
+.legend-dot.capture {
+    background: #4ecdc4;
 }
 
 .btn-primary, .btn-secondary {
@@ -335,7 +493,7 @@ body {
 
 .main-content {
     display: flex;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 140px);
 }
 
 .timeline-container {
@@ -343,13 +501,16 @@ body {
     position: relative;
     overflow: hidden;
     background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0a 100%);
+    display: flex;
+    flex-direction: column;
 }
 
 .timeline {
     position: relative;
     width: 100%;
-    height: 100%;
+    flex: 1;
     padding: 2rem;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -506,39 +667,107 @@ body {
 
 .timeline-event {
     position: absolute;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s ease;
     animation: pulse 2s infinite;
+    opacity: 0.3;
+    transform: scale(0.5);
+    z-index: 1;
 }
 
 .timeline-event:hover {
-    transform: scale(1.5);
-    box-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
+    transform: scale(1.5) !important;
+    box-shadow: 0 0 20px var(--project-color, rgba(78, 205, 196, 0.5));
+    z-index: 1000 !important;
+}
+
+.timeline-event.revealed {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .timeline-event.milestone {
-    width: 16px;
-    height: 16px;
-    border: 2px solid #ff6b6b;
+    width: 18px;
+    height: 18px;
+    border: 3px solid #ff6b6b;
+    background: transparent;
 }
 
 .timeline-event.learning {
     background: #45b7d1;
+    border-radius: 50%;
 }
 
 .timeline-event.decision {
     background: #feca57;
+    border-radius: 4px;
 }
 
 .timeline-event.integration {
     background: #ff9ff3;
+    transform: rotate(45deg);
 }
 
 .timeline-event.commit {
     background: #96ceb4;
+    border-radius: 2px;
+}
+
+.event-preview {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    display: none;
+    transition: opacity 0.3s ease;
+    z-index: 1001;
+}
+
+.timeline-axis {
+    box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+}
+
+/* Enhanced Animations */
+@keyframes milestone-entrance {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; }
+    100% { transform: scale(1) rotate(360deg); opacity: 1; }
+}
+
+@keyframes learning-bounce {
+    0% { transform: scale(0) translateY(20px); opacity: 0; }
+    60% { transform: scale(1.2) translateY(-5px); opacity: 0.9; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes decision-flash {
+    0% { transform: scale(0); opacity: 0; background: #fff; }
+    50% { transform: scale(1.3); opacity: 0.8; background: #feca57; }
+    100% { transform: scale(1); opacity: 1; background: #feca57; }
+}
+
+@keyframes default-entrance {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.1); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes milestone-pulse {
+    0%, 100% { box-shadow: 0 0 5px #ff6b6b; }
+    50% { box-shadow: 0 0 20px #ff6b6b, 0 0 30px #ff6b6b40; }
 }
 
 .loading {
@@ -608,6 +837,11 @@ class JourneyVisualization {
         document.getElementById('closeEventDetail').addEventListener('click', () => {
             document.getElementById('eventDetail').classList.add('hidden');
         });
+
+        // Progress slider for timeline scrubbing
+        document.getElementById('progressSlider').addEventListener('input', (e) => {
+            this.scrubToPosition(parseInt(e.target.value));
+        });
     }
 
     async loadJourneyData(params = {}) {
@@ -622,6 +856,7 @@ class JourneyVisualization {
             this.renderTimeline();
             this.updateStats();
             this.updateProjects();
+            this.updateTimelineInfo();
         } catch (error) {
             console.error('Failed to load journey data:', error);
             document.querySelector('.loading').textContent = 'Failed to load journey data';
@@ -637,38 +872,67 @@ class JourneyVisualization {
             return;
         }
 
+        // Create main timeline container with improved layout
         const container = document.createElement('div');
         container.className = 'timeline-events';
         container.style.position = 'relative';
         container.style.width = '100%';
         container.style.height = '100%';
+        container.style.overflow = 'hidden';
 
+        // Create timeline axis
+        this.createTimelineAxis(container);
+
+        // Create events with staggered positioning
         this.journeyData.events.forEach((event, index) => {
             const eventEl = this.createEventElement(event, index);
+            eventEl.style.opacity = '0.3'; // Start hidden for animation
+            eventEl.style.transform = 'scale(0.5)';
             container.appendChild(eventEl);
         });
 
         timeline.appendChild(container);
+
+        // Initialize timeline state
+        this.currentEventIndex = 0;
+        this.resetTimeline();
     }
 
     createEventElement(event, index) {
         const eventEl = document.createElement('div');
         eventEl.className = 'timeline-event ' + event.eventType;
+        eventEl.setAttribute('data-index', index);
+        eventEl.setAttribute('data-timestamp', event.timestamp);
 
-        // Position based on time and importance
+        // Enhanced positioning algorithm
         const timePercent = this.getTimePercent(event.timestamp);
-        const importanceY = (event.importance - 1) * 25; // Spread by importance
+        const lane = this.calculateEventLane(event, index);
+        const yPosition = this.calculateYPosition(event, lane);
 
         eventEl.style.left = timePercent + '%';
-        eventEl.style.top = (200 + importanceY + Math.random() * 100) + 'px';
+        eventEl.style.top = yPosition + 'px';
 
-        // Set color based on project
+        // Enhanced visual styling based on event type
+        this.styleEventElement(eventEl, event);
+
+        // Set color based on project with enhanced visuals
         const project = this.journeyData.projects.find(p => p.name === event.project);
         if (project) {
+            eventEl.style.setProperty('--project-color', project.color);
             eventEl.style.background = project.color;
+            eventEl.style.boxShadow = '0 0 10px ' + project.color + '40';
         }
 
+        // Add hover effects
+        eventEl.addEventListener('mouseenter', () => this.onEventHover(eventEl, event));
+        eventEl.addEventListener('mouseleave', () => this.onEventLeave(eventEl));
         eventEl.addEventListener('click', () => this.showEventDetail(event));
+
+        // Add content preview
+        const preview = document.createElement('div');
+        preview.className = 'event-preview';
+        preview.textContent = event.content.substring(0, 50) + '...';
+        eventEl.appendChild(preview);
 
         return eventEl;
     }
@@ -731,8 +995,15 @@ class JourneyVisualization {
     }
 
     play() {
+        if (!this.journeyData || !this.journeyData.events.length) return;
+
         this.isPlaying = true;
+        this.startTime = Date.now();
         this.animate();
+
+        // Update button states
+        document.getElementById('playBtn').style.opacity = '0.5';
+        document.getElementById('pauseBtn').style.opacity = '1';
     }
 
     pause() {
@@ -740,20 +1011,289 @@ class JourneyVisualization {
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
         }
+
+        // Update button states
+        document.getElementById('playBtn').style.opacity = '1';
+        document.getElementById('pauseBtn').style.opacity = '0.5';
     }
 
     restart() {
         this.pause();
         this.currentEventIndex = 0;
-        this.renderTimeline();
+        this.resetTimeline();
+
+        // Update button states
+        document.getElementById('playBtn').style.opacity = '1';
+        document.getElementById('pauseBtn').style.opacity = '0.5';
     }
 
     animate() {
-        if (!this.isPlaying) return;
+        if (!this.isPlaying || !this.journeyData) return;
 
-        // Animation logic would go here
-        // For now, just continue the animation loop
-        this.animationFrame = requestAnimationFrame(() => this.animate());
+        const eventInterval = 1000 / this.playSpeed; // Base interval
+        const currentTime = Date.now();
+
+        if (!this.lastEventTime) {
+            this.lastEventTime = currentTime;
+        }
+
+        if (currentTime - this.lastEventTime >= eventInterval) {
+            this.revealNextEvent();
+            this.lastEventTime = currentTime;
+        }
+
+        if (this.currentEventIndex < this.journeyData.events.length) {
+            this.animationFrame = requestAnimationFrame(() => this.animate());
+        } else {
+            this.pause();
+        }
+    }
+
+    // New enhanced methods for Phase 2
+    createTimelineAxis(container) {
+        const axis = document.createElement('div');
+        axis.className = 'timeline-axis';
+        axis.style.position = 'absolute';
+        axis.style.bottom = '50px';
+        axis.style.left = '0';
+        axis.style.right = '0';
+        axis.style.height = '2px';
+        axis.style.background = 'linear-gradient(90deg, #4ecdc4, #45b7d1)';
+        axis.style.opacity = '0.6';
+        container.appendChild(axis);
+
+        // Add time markers
+        for (let i = 0; i <= 10; i++) {
+            const marker = document.createElement('div');
+            marker.className = 'time-marker';
+            marker.style.position = 'absolute';
+            marker.style.left = (i * 10) + '%';
+            marker.style.bottom = '45px';
+            marker.style.width = '1px';
+            marker.style.height = '10px';
+            marker.style.background = '#4ecdc4';
+            marker.style.opacity = '0.4';
+            container.appendChild(marker);
+        }
+    }
+
+    calculateEventLane(event, index) {
+        // Smart lane assignment to prevent overlapping
+        const timePercent = this.getTimePercent(event.timestamp);
+        const laneWidth = 10; // % of timeline per lane
+        return Math.floor(timePercent / laneWidth) % 4;
+    }
+
+    calculateYPosition(event, lane) {
+        const baseY = 150;
+        const laneSpacing = 80;
+        const importanceOffset = (event.importance - 1) * 20;
+        const randomOffset = (Math.random() - 0.5) * 30;
+
+        return baseY + (lane * laneSpacing) + importanceOffset + randomOffset;
+    }
+
+    styleEventElement(eventEl, event) {
+        // Enhanced styling based on event type
+        switch (event.eventType) {
+            case 'milestone':
+                eventEl.style.width = '20px';
+                eventEl.style.height = '20px';
+                eventEl.style.border = '3px solid #ff6b6b';
+                eventEl.style.animation = 'milestone-pulse 2s infinite';
+                break;
+            case 'learning':
+                eventEl.style.background = '#45b7d1';
+                eventEl.style.borderRadius = '50%';
+                break;
+            case 'decision':
+                eventEl.style.background = '#feca57';
+                eventEl.style.borderRadius = '4px';
+                break;
+            case 'integration':
+                eventEl.style.background = '#ff9ff3';
+                eventEl.style.transform = 'rotate(45deg)';
+                break;
+            case 'commit':
+                eventEl.style.background = '#96ceb4';
+                eventEl.style.borderRadius = '2px';
+                break;
+            default:
+                eventEl.style.borderRadius = '50%';
+        }
+    }
+
+    onEventHover(eventEl, event) {
+        eventEl.style.transform = 'scale(1.5)';
+        eventEl.style.zIndex = '1000';
+
+        // Show content preview
+        const preview = eventEl.querySelector('.event-preview');
+        if (preview) {
+            preview.style.display = 'block';
+            preview.style.opacity = '1';
+        }
+    }
+
+    onEventLeave(eventEl) {
+        eventEl.style.transform = 'scale(1)';
+        eventEl.style.zIndex = 'auto';
+
+        // Hide content preview
+        const preview = eventEl.querySelector('.event-preview');
+        if (preview) {
+            preview.style.display = 'none';
+            preview.style.opacity = '0';
+        }
+    }
+
+    resetTimeline() {
+        // Reset all events to initial state
+        document.querySelectorAll('.timeline-event').forEach(eventEl => {
+            eventEl.style.opacity = '0.3';
+            eventEl.style.transform = 'scale(0.5)';
+            eventEl.classList.remove('revealed');
+        });
+    }
+
+    revealNextEvent() {
+        if (this.currentEventIndex >= this.journeyData.events.length) return;
+
+        const eventEl = document.querySelector('[data-index="' + this.currentEventIndex + '"]');
+        if (eventEl) {
+            eventEl.style.transition = 'all 0.5s ease-out';
+            eventEl.style.opacity = '1';
+            eventEl.style.transform = 'scale(1)';
+            eventEl.classList.add('revealed');
+
+            // Add entrance animation based on event type
+            const event = this.journeyData.events[this.currentEventIndex];
+            this.playEventEntrance(eventEl, event);
+        }
+
+        this.currentEventIndex++;
+        this.updateProgress();
+        this.updateEventCounter();
+    }
+
+    playEventEntrance(eventEl, event) {
+        switch (event.eventType) {
+            case 'milestone':
+                eventEl.style.animation = 'milestone-entrance 0.8s ease-out';
+                break;
+            case 'learning':
+                eventEl.style.animation = 'learning-bounce 0.6s ease-out';
+                break;
+            case 'decision':
+                eventEl.style.animation = 'decision-flash 0.4s ease-out';
+                break;
+            default:
+                eventEl.style.animation = 'default-entrance 0.5s ease-out';
+        }
+
+        // Clear animation after completion
+        setTimeout(() => {
+            eventEl.style.animation = '';
+        }, 1000);
+    }
+
+    // Progress tracking and scrubbing methods
+    updateProgress() {
+        if (!this.journeyData || !this.journeyData.events.length) return;
+
+        const progress = (this.currentEventIndex / this.journeyData.events.length) * 100;
+        const progressFill = document.getElementById('progressFill');
+        const progressSlider = document.getElementById('progressSlider');
+
+        if (progressFill) {
+            progressFill.style.width = progress + '%';
+        }
+        if (progressSlider) {
+            progressSlider.value = progress;
+        }
+    }
+
+    updateEventCounter() {
+        const counter = document.getElementById('eventCounter');
+        const currentDate = document.getElementById('currentDate');
+
+        if (counter && this.journeyData) {
+            counter.textContent = this.currentEventIndex + ' / ' + this.journeyData.events.length + ' events';
+        }
+
+        if (currentDate && this.journeyData && this.currentEventIndex > 0) {
+            const currentEvent = this.journeyData.events[this.currentEventIndex - 1];
+            if (currentEvent) {
+                const date = new Date(currentEvent.timestamp);
+                currentDate.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            }
+        }
+    }
+
+    updateTimelineInfo() {
+        const totalTime = document.getElementById('totalTime');
+        const currentTime = document.getElementById('currentTime');
+
+        if (this.journeyData && this.journeyData.events.length > 0) {
+            const duration = this.calculateJourneyDuration();
+            if (totalTime) {
+                totalTime.textContent = this.formatDuration(duration);
+            }
+            if (currentTime) {
+                currentTime.textContent = '0:00';
+            }
+
+            // Update event counter
+            this.updateEventCounter();
+        }
+    }
+
+    calculateJourneyDuration() {
+        if (!this.journeyData || this.journeyData.events.length < 2) return 0;
+
+        const firstEvent = new Date(this.journeyData.events[0].timestamp);
+        const lastEvent = new Date(this.journeyData.events[this.journeyData.events.length - 1].timestamp);
+        return Math.floor((lastEvent - firstEvent) / (1000 * 60 * 60)); // hours
+    }
+
+    formatDuration(hours) {
+        if (hours < 1) return '0:30'; // Minimum display
+        if (hours < 24) return hours + ':00';
+        const days = Math.floor(hours / 24);
+        const remainingHours = hours % 24;
+        return days + 'd ' + remainingHours + 'h';
+    }
+
+    scrubToPosition(percentage) {
+        if (!this.journeyData || !this.journeyData.events.length) return;
+
+        this.pause();
+        const targetIndex = Math.floor((percentage / 100) * this.journeyData.events.length);
+
+        // Reset timeline
+        this.resetTimeline();
+
+        // Reveal events up to target index instantly
+        for (let i = 0; i < targetIndex; i++) {
+            const eventEl = document.querySelector('[data-index="' + i + '"]');
+            if (eventEl) {
+                eventEl.style.transition = 'none';
+                eventEl.style.opacity = '1';
+                eventEl.style.transform = 'scale(1)';
+                eventEl.classList.add('revealed');
+            }
+        }
+
+        this.currentEventIndex = targetIndex;
+        this.updateProgress();
+        this.updateEventCounter();
+
+        // Restore transitions
+        setTimeout(() => {
+            document.querySelectorAll('.timeline-event').forEach(el => {
+                el.style.transition = 'all 0.5s ease-out';
+            });
+        }, 50);
     }
 }
 

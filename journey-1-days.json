@@ -593,18 +593,99 @@
       "context": null,
       "eventType": "capture",
       "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:23:02.087414455+02:00",
+      "content": "BRANCH UNIFICATION COMPLETE - Successfully merged posthog-integration and journey-replay features to main branch. Both PostHog analytics and Journey Replay working perfectly together. Clean unified codebase ready for continued development!",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:23:26.853131225+02:00",
+      "content": "Git commit: Branch unification complete - PostHog + Journey Replay unified\n\n- Merged feature/posthog-integration: Complete PostHog analytics integration\n- Merged feature/journey-replay: Journey Replay visualization feature\n- Both features working together seamlessly\n- PostHog capturing session analytics, publish events, and journey data exports\n- Journey Replay integrated into publish command (--journey flag)\n- Clean unified main branch ready for continued development\n- Deleted merged feature branches for clean git history\n\nAll systems operational on main branch!",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "integration",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:27:53.081340309+02:00",
+      "content": "Added marketing stubs for new features to landing page - 'The snake went on a journey and found a new friend!' section showcasing Journey Replay and PostHog integration. Ready to expand with full feature descriptions and demos later.",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:28:06.659132603+02:00",
+      "content": "Git commit: Add marketing stubs for Journey Replay and PostHog features\n\n- Added new 'Snake went on a journey and found a new friend!' section\n- Showcases both Journey Replay (🎬) and PostHog Analytics (📊) features\n- Beautiful storytelling around the uroboro journey and PostHog friendship\n- Feature preview cards with highlights and command examples\n- Styled with matching visual design and responsive layout\n- Coming Soon notice with patch notes link\n- Ready to expand with full demos and detailed descriptions\n\nMarketing foundation in place for both major features!",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:28:54.387681862+02:00",
+      "content": "QOINbots Svelte trading now fully working, but chart Y-axis auto-scaling makes market trends unreadable - need to check original vanilla JS chart implementation for better approach",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:31:11.102222048+02:00",
+      "content": "Completely rewrote QOINbots chart component - now uses real market data with fixed Y-axis bounds, price history tracking, and proper timeframes instead of random mock data",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "bugfix",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:32:43.645327802+02:00",
+      "content": "QOINbots chart showing price plummet from 00 to  - need to scale up prices for better UX, big numbers more engaging than tiny decimals",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:34:28.45187335+02:00",
+      "content": "Scaled up QOINbots asset prices for better UX - QOIN now 00 (vs ), HODL 500 (vs 0), MOON 5 (vs bash.001), with smart price formatting for readability",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
+    },
+    {
+      "timestamp": "2025-06-15T13:35:54.826991815+02:00",
+      "content": "PHASE 2 MAJOR PROGRESS: Enhanced Journey Replay web interface with advanced timeline animations, progress tracking, event scrubbing, improved visualizations, and smart event positioning. Beautiful interactive timeline with playback controls!",
+      "project": "",
+      "tags": null,
+      "context": null,
+      "eventType": "capture",
+      "importance": 1
     }
   ],
   "dateRange": {
-    "start": "2025-06-14T13:22:51.484679062+02:00",
-    "end": "2025-06-15T13:22:51.484679062+02:00"
+    "start": "2025-06-14T13:36:01.052249316+02:00",
+    "end": "2025-06-15T13:36:01.052249316+02:00"
   },
   "projects": null,
   "stats": {
-    "totalEvents": 66,
+    "totalEvents": 75,
     "projectCount": 0,
     "milestoneCount": 2,
-    "productivityScore": 1.1363636363636365,
+    "productivityScore": 1.12,
     "learningMoments": 0
   },
   "milestones": [
