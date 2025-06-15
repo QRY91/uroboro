@@ -74,6 +74,10 @@ uro publish --blog --preview
 uroboro publish --blog --format html --title "This Week's Wins"
 uro publish --devlog
 
+# Canvas timeline visualization
+uro publish --journey
+# Opens interactive timeline at http://localhost:8080
+
 # Check status
 uro status --days 7
 ```
@@ -181,6 +185,8 @@ uro status
 - **📝 2-Minute Publish** - Content generation enhanced with trinity intelligence
 - **🏠 100% Local AI** - Ollama, no external APIs
 - **💰 $0/month costs** - No subscription, no usage fees
+- **🎬 Canvas Timeline Visualization** - Interactive journey replay with `--journey` flag
+- **📊 PostHog Analytics Integration** - Personal development insights (privacy-first)
 - **🔒 Private by design** - Your code stays on your machine
 - **🔗 Git integration** - When you need it, not when we think you should
 
@@ -190,6 +196,7 @@ uro status
 |------|---------------|----------------|
 | [**⚡ Core Workflow**](assets/uroboro_demo_core.gif) | capture → status → publish | The actual working product |
 | [**🔗 Git Integration**](assets/uroboro_demo_git.gif) | Auto-capture commits | Optional but functional |
+| [**🎬 Canvas Timeline**](http://localhost:8080) | `--journey` visualization | "Version control for your head" |
 | [**🎬 Complete Overview**](assets/uroboro_demo.gif) | Full workflow | Tool that documents itself |
 
 ## 🧹 The Great CLI Cleanup
@@ -245,7 +252,56 @@ uroboro publish --blog
 
 # If using cloned repo:
 ./uroboro publish --blog
+
+# Bonus: Visualize your journey
+uroboro publish --journey
+# Opens Canvas timeline at http://localhost:8080
 ```
+
+## 🎬 Canvas Timeline Visualization
+
+**"Version control for your head"** - Interactive timeline showing your development journey.
+
+```bash
+# Launch Canvas timeline visualization
+uroboro publish --journey
+
+# Customize timeline
+uroboro publish --journey --days 7 --port 8080
+```
+
+**Features:**
+- **Project Lanes** - Visual organization by project with consistent colors
+- **Event Flow** - Chronological visualization of captures, commits, and milestones  
+- **Smooth Performance** - Canvas-based rendering handles hundreds of events
+- **Interactive** - Hover for details, click for event information
+- **Professional Quality** - Pixel-perfect visualization ready for sharing
+
+**Perfect for:**
+- Retrospective reviews of development progress
+- Understanding work patterns and context switches
+- Creating compelling portfolio demonstrations
+- Neurodivergent developers who benefit from visual pattern recognition
+
+## 📊 PostHog Analytics Integration
+
+**Personal development insights with privacy-first analytics.**
+
+```bash
+# Analytics happen automatically when enabled
+# View insights at your PostHog dashboard
+```
+
+**Features:**
+- **Development Pattern Tracking** - Capture frequency, session duration, productivity metrics
+- **Privacy-First Design** - Enhanced privacy mode, configurable data sharing
+- **Flow State Analysis** - Understand your most productive development patterns
+- **Goal Correlation** - Connect work patterns with project milestones
+
+**Configuration:**
+- Set up through `uroboro config` command
+- Optional feature - works great without it
+- Respects privacy preferences and local-first philosophy
 
 ## 📋 Core Commands Reference
 
@@ -289,6 +345,9 @@ uroboro publish --devlog
 # Generate social content
 uro publish --social
 
+# Canvas timeline visualization
+uro publish --journey
+
 # Custom timeframe
 uro publish --blog --days 7
 
@@ -305,6 +364,7 @@ uro publish --devlog --db=myproject.sqlite --days 14
 - Blog posts from your dev work
 - Social media content
 - Technical dev logs
+- Canvas timeline visualization (--journey flag)
 - Voice matching (working on making it sound like you)
 - 2-minute generation time
 - Cross-tool data access via SQLite queries
