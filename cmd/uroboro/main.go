@@ -15,6 +15,7 @@ import (
 	"github.com/QRY91/uroboro/internal/config"
 	"github.com/QRY91/uroboro/internal/context"
 	"github.com/QRY91/uroboro/internal/database"
+	"github.com/QRY91/uroboro/internal/feast"
 	"github.com/QRY91/uroboro/internal/journey"
 	"github.com/QRY91/uroboro/internal/publish"
 	"github.com/QRY91/uroboro/internal/ripcord"
@@ -41,6 +42,8 @@ func main() {
 		handlePublish(os.Args[2:])
 	case "status", "-s":
 		handleStatus(os.Args[2:])
+	case "feast", "-f":
+		handleFeast(os.Args[2:])
 	case "analytics", "-a":
 		handleAnalytics(os.Args[2:])
 	case "session":
@@ -274,6 +277,17 @@ func handleStatus(args []string) {
 
 	fmt.Println()
 
+	// Run auto-feast check if using database
+	if dbPath != "" {
+		db, err := database.NewDB(dbPath)
+		if err == nil {
+			defer db.Close()
+			feastEngine := feast.NewFeastEngine(db, feast.DefaultFeastConfig())
+			// Run auto-feast silently before showing status
+			feastEngine.AutoFeastCheck()
+		}
+	}
+
 	service := status.NewStatusService()
 	err := service.ShowStatus(*days, dbPath, *project)
 	if err != nil {
@@ -488,6 +502,7 @@ func printUsage() {
 	fmt.Println("  uroboro capture \"content\" [flags]    # Capture development insights")
 	fmt.Println("  uroboro publish [flags]               # Generate content from captures")
 	fmt.Println("  uroboro status [flags]                # Show development pipeline status")
+	fmt.Println("  uroboro feast [flags]                 # Archive old captures (ouroboros)")
 	fmt.Println("  uroboro analytics [flags]             # Show personal development analytics")
 	fmt.Println("  uroboro session [command]             # Manage development sessions")
 	fmt.Println("  uroboro config [command]              # Configure uroboro")
@@ -497,6 +512,7 @@ func printUsage() {
 	fmt.Println("  uro -p --devlog      # publish devlog")
 	fmt.Println("  uro -p --journey     # journey replay visualization")
 	fmt.Println("  uro -s              # status")
+	fmt.Println("  uro -f              # feast (archive old captures)")
 	fmt.Println("  uro -a              # analytics")
 	fmt.Println("  uro session info    # current session")
 	fmt.Println()
@@ -872,4 +888,57 @@ func openBrowser(url string) {
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return !os.IsNotExist(err)
+}
+
+// handleFeast manages the feast command for archiving old captures
+func handleFeast(args []string) {
+	var days int
+	var silent bool
+	var auto bool
+
+	// Parse flags
+	feastFlags := flag.NewFlagSet("feast", flag.ExitOnError)
+	feastFlags.IntVar(&days, "days", 30, "Archive captures older than N days")
+	feastFlags.BoolVar(&silent, "silent", false, "Archive without showing digest")
+	feastFlags.BoolVar(&auto, "auto", false, "Run auto-feast (used internally)")
+
+	err := feastFlags.Parse(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing feast flags: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Initialize database
+	dbPath, err := getDefaultDBPath()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get default database path: %v\n", err)
+		os.Exit(1)
+	}
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	// Create feast engine
+	config := feast.DefaultFeastConfig()
+	if silent {
+		config.SilentMode = true
+		config.ShowDigest = false
+	}
+
+	feastEngine := feast.NewFeastEngine(db, config)
+
+	// Perform feast operation
+	if auto {
+		err = feastEngine.AutoFeastCheck()
+	} else {
+		err = feastEngine.ManualFeast(days, silent)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Feast operation failed: %v\n", err)
+		os.Exit(1)
+	}
 }
