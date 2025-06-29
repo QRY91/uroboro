@@ -58,6 +58,35 @@ func NewFeastEngine(db *database.DB, config *FeastConfig) *FeastEngine {
 	}
 }
 
+// isTerminal checks if we're running in an interactive terminal
+func isTerminal() bool {
+	fileInfo, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
+	// Check if stdin is a character device (terminal)
+	return (fileInfo.Mode() & os.ModeCharDevice) != 0
+}
+
+// colorize adds ANSI color codes if terminal supports it
+func colorize(text, color string) string {
+	if !isTerminal() {
+		return text
+	}
+	colors := map[string]string{
+		"green":  "\033[32m",
+		"yellow": "\033[33m",
+		"blue":   "\033[34m",
+		"red":    "\033[31m",
+		"bold":   "\033[1m",
+		"reset":  "\033[0m",
+	}
+	if code, exists := colors[color]; exists {
+		return code + text + colors["reset"]
+	}
+	return text
+}
+
 // EnsureArchiveTable creates the archived_captures table if it doesn't exist
 func (f *FeastEngine) EnsureArchiveTable() error {
 	// Check if table exists and has foreign key constraints
@@ -218,8 +247,16 @@ func (f *FeastEngine) ShowDigest(items []database.Capture) (DigestResult, error)
 		return DigestResult{ArchiveAll: true}, nil
 	}
 
-	// Show digest header
-	fmt.Printf("🐍 Auto-feast digest (%d items ready for archive):\n", len(items))
+	// Check if we're in an interactive terminal
+	if !isTerminal() {
+		fmt.Printf("🐍 Auto-feast: %d items ready for archive (non-interactive mode)\n", len(items))
+		fmt.Println("   Defaulting to archive all items")
+		return DigestResult{ArchiveAll: true}, nil
+	}
+
+	// Show digest header with colors
+	fmt.Printf("%s\n", colorize("🐍 Auto-feast digest", "bold"))
+	fmt.Printf("   %s items ready for archive\n\n", colorize(fmt.Sprintf("%d", len(items)), "yellow"))
 
 	// Show up to MaxDigestItems
 	displayCount := len(items)
@@ -235,22 +272,24 @@ func (f *FeastEngine) ShowDigest(items []database.Capture) (DigestResult, error)
 			project = item.Project.String
 		}
 
-		fmt.Printf("   ✨ %s: \"%s\" [%s]\n", timeAgo,
-			truncateString(item.Content, 60), project)
+		fmt.Printf("   ✨ %s: \"%s\" %s\n",
+			colorize(timeAgo, "blue"),
+			truncateString(item.Content, 60),
+			colorize("["+project+"]", "green"))
 	}
 
 	if len(items) > displayCount {
-		fmt.Printf("   ... and %d more items\n", len(items)-displayCount)
+		fmt.Printf("   %s\n", colorize(fmt.Sprintf("... and %d more items", len(items)-displayCount), "yellow"))
 	}
 
 	fmt.Println()
 
 	if !f.config.RescueEnabled {
-		fmt.Print("Press Enter to archive all, 's' to skip: ")
+		fmt.Printf("%s ", colorize("Press Enter to archive all, 's' to skip:", "bold"))
 		return f.handleSimpleInput(items)
 	}
 
-	fmt.Print("Press 'r' to rescue items, 's' to skip digest, Enter to archive all: ")
+	fmt.Printf("%s ", colorize("Press 'r' to rescue items, 's' to skip digest, Enter to archive all:", "bold"))
 	return f.handleDigestInput(items)
 }
 
@@ -259,11 +298,6 @@ func (f *FeastEngine) handleSimpleInput(items []database.Capture) (DigestResult,
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		// If we can't read input (e.g., non-interactive environment), default to archive all
-		if err.Error() == "EOF" {
-			fmt.Println("\nNo interactive input detected - defaulting to archive all")
-			return DigestResult{ArchiveAll: true}, nil
-		}
 		return DigestResult{}, fmt.Errorf("failed to read input: %w", err)
 	}
 
@@ -271,6 +305,7 @@ func (f *FeastEngine) handleSimpleInput(items []database.Capture) (DigestResult,
 
 	switch input {
 	case "s", "skip":
+		fmt.Printf("%s\n", colorize("🐍 Feast skipped", "yellow"))
 		return DigestResult{Skip: true}, nil
 	default:
 		return DigestResult{ArchiveAll: true}, nil
@@ -282,11 +317,6 @@ func (f *FeastEngine) handleDigestInput(items []database.Capture) (DigestResult,
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		// If we can't read input (e.g., non-interactive environment), default to archive all
-		if err.Error() == "EOF" {
-			fmt.Println("\nNo interactive input detected - defaulting to archive all")
-			return DigestResult{ArchiveAll: true}, nil
-		}
 		return DigestResult{}, fmt.Errorf("failed to read input: %w", err)
 	}
 
@@ -296,6 +326,7 @@ func (f *FeastEngine) handleDigestInput(items []database.Capture) (DigestResult,
 	case "r", "rescue":
 		return f.handleRescue(items)
 	case "s", "skip":
+		fmt.Printf("%s\n", colorize("🐍 Feast skipped", "yellow"))
 		return DigestResult{Skip: true}, nil
 	default:
 		return DigestResult{ArchiveAll: true}, nil
@@ -304,7 +335,7 @@ func (f *FeastEngine) handleDigestInput(items []database.Capture) (DigestResult,
 
 // handleRescue allows user to select items to rescue from archiving
 func (f *FeastEngine) handleRescue(items []database.Capture) (DigestResult, error) {
-	fmt.Println("\nItems available for rescue:")
+	fmt.Printf("\n%s\n", colorize("Items available for rescue:", "bold"))
 	displayCount := len(items)
 	if displayCount > f.config.MaxDigestItems {
 		displayCount = f.config.MaxDigestItems
@@ -313,20 +344,23 @@ func (f *FeastEngine) handleRescue(items []database.Capture) (DigestResult, erro
 	for i := 0; i < displayCount; i++ {
 		item := items[i]
 		timeAgo := formatTimeAgo(item.Timestamp)
-		fmt.Printf("   %d. %s: \"%s\"\n", i+1, timeAgo,
-			truncateString(item.Content, 80))
+		project := "no project"
+		if item.Project.Valid && item.Project.String != "" {
+			project = item.Project.String
+		}
+
+		fmt.Printf("   %s %s: \"%s\" %s\n",
+			colorize(fmt.Sprintf("%d.", i+1), "yellow"),
+			colorize(timeAgo, "blue"),
+			truncateString(item.Content, 60),
+			colorize("["+project+"]", "green"))
 	}
 
-	fmt.Print("\nEnter numbers to rescue (comma-separated, e.g., 1,3,5): ")
+	fmt.Printf("\n%s ", colorize("Enter numbers to rescue (comma-separated, e.g., 1,3,5):", "bold"))
 
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		// If we can't read input (e.g., non-interactive environment), rescue nothing
-		if err.Error() == "EOF" {
-			fmt.Println("\nNo interactive input detected - proceeding without rescue")
-			return DigestResult{ArchiveAll: true}, nil
-		}
 		return DigestResult{}, fmt.Errorf("failed to read rescue input: %w", err)
 	}
 
@@ -343,11 +377,15 @@ func (f *FeastEngine) handleRescue(items []database.Capture) (DigestResult, erro
 		numStr = strings.TrimSpace(numStr)
 		num, err := strconv.Atoi(numStr)
 		if err != nil || num < 1 || num > displayCount {
-			fmt.Printf("Ignoring invalid number: %s\n", numStr)
+			fmt.Printf("%s: %s\n", colorize("Ignoring invalid number", "red"), numStr)
 			continue
 		}
 
 		rescuedItems = append(rescuedItems, items[num-1])
+	}
+
+	if len(rescuedItems) > 0 {
+		fmt.Printf("%s %d items\n", colorize("✅ Rescued:", "green"), len(rescuedItems))
 	}
 
 	return DigestResult{
@@ -456,12 +494,18 @@ func (f *FeastEngine) AutoFeastCheck() error {
 	}
 
 	if len(itemsToArchive) > 0 {
+		// Show progress for large operations
+		if len(itemsToArchive) > 50 {
+			fmt.Printf("🐍 Archiving %d items...\n", len(itemsToArchive))
+		}
+
 		err = f.ArchiveCaptures(itemsToArchive, "auto_feast")
 		if err != nil {
 			return fmt.Errorf("failed to archive captures: %w", err)
 		}
 
-		fmt.Printf("🐍 Feasted on %d items\n", len(itemsToArchive))
+		fmt.Printf("%s\n", colorize(fmt.Sprintf("🐍 Feasted on %d items", len(itemsToArchive)), "green"))
+		fmt.Printf("   %s\n", colorize("The snake eats its tail", "blue"))
 	}
 
 	return nil
@@ -516,15 +560,20 @@ func (f *FeastEngine) ManualFeast(days int, silent bool) error {
 	}
 
 	if len(itemsToArchive) > 0 {
+		// Show progress for large operations
+		if len(itemsToArchive) > 50 {
+			fmt.Printf("🐍 Archiving %d items...\n", len(itemsToArchive))
+		}
+
 		err = f.ArchiveCaptures(itemsToArchive, "manual_feast")
 		if err != nil {
 			return fmt.Errorf("failed to archive captures: %w", err)
 		}
 
-		fmt.Printf("🐍 FEAST: Consumed %d items\n", len(itemsToArchive))
-		fmt.Println("   The snake eats its tail")
+		fmt.Printf("%s\n", colorize(fmt.Sprintf("🐍 FEAST: Consumed %d items", len(itemsToArchive)), "green"))
+		fmt.Printf("   %s\n", colorize("The snake eats its tail", "blue"))
 	} else {
-		fmt.Println("🐍 All items rescued - nothing archived")
+		fmt.Printf("%s\n", colorize("🐍 All items rescued - nothing archived", "yellow"))
 	}
 
 	return nil

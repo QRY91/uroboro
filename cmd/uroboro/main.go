@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -250,6 +251,9 @@ func handleStatus(args []string) {
 	ripcordFlag := fs.Bool("ripcord", false, "Copy status summary to clipboard")
 	dbFlag := fs.String("db", "", "Database path (optional)")
 	project := fs.String("project", "", "Project name")
+	archivedFlag := fs.Bool("archived", false, "Show archived captures instead of active ones")
+	allFlag := fs.Bool("all", false, "Show both active and archived capture counts")
+	archiveStatsFlag := fs.Bool("archive-stats", false, "Show archive statistics")
 
 	if err := fs.Parse(args); err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Error parsing status flags: %v\n", err)
@@ -277,8 +281,8 @@ func handleStatus(args []string) {
 
 	fmt.Println()
 
-	// Run auto-feast check if using database
-	if dbPath != "" {
+	// Run auto-feast check if using database (only if not showing archived data)
+	if dbPath != "" && !*archivedFlag && !*archiveStatsFlag {
 		db, err := database.NewDB(dbPath)
 		if err == nil {
 			defer db.Close()
@@ -286,6 +290,22 @@ func handleStatus(args []string) {
 			// Run auto-feast silently before showing status
 			feastEngine.AutoFeastCheck()
 		}
+	}
+
+	// Handle archive-specific commands
+	if *archiveStatsFlag {
+		showArchiveStats(dbPath)
+		return
+	}
+
+	if *archivedFlag {
+		showArchivedCaptures(*days, dbPath, *project)
+		return
+	}
+
+	if *allFlag {
+		showAllCapturesSummary(*days, dbPath, *project)
+		return
 	}
 
 	service := status.NewStatusService()
@@ -502,6 +522,9 @@ func printUsage() {
 	fmt.Println("  uroboro capture \"content\" [flags]    # Capture development insights")
 	fmt.Println("  uroboro publish [flags]               # Generate content from captures")
 	fmt.Println("  uroboro status [flags]                # Show development pipeline status")
+	fmt.Println("    --archived                          # Show archived captures")
+	fmt.Println("    --all                              # Show both active and archived counts")
+	fmt.Println("    --archive-stats                    # Show feast and archive statistics")
 	fmt.Println("  uroboro feast [flags]                 # Archive old captures (ouroboros)")
 	fmt.Println("  uroboro analytics [flags]             # Show personal development analytics")
 	fmt.Println("  uroboro session [command]             # Manage development sessions")
@@ -512,6 +535,8 @@ func printUsage() {
 	fmt.Println("  uro -p --devlog      # publish devlog")
 	fmt.Println("  uro -p --journey     # journey replay visualization")
 	fmt.Println("  uro -s              # status")
+	fmt.Println("  uro -s --archived   # browse archived captures")
+	fmt.Println("  uro -s --all        # active + archived summary")
 	fmt.Println("  uro -f              # feast (archive old captures)")
 	fmt.Println("  uro -a              # analytics")
 	fmt.Println("  uro session info    # current session")
@@ -526,6 +551,8 @@ func printUsage() {
 	fmt.Println("  🏷️  Auto-tagging")
 	fmt.Println("  📋 Ripcord functionality")
 	fmt.Println("  🗄️  Optional database storage")
+	fmt.Println("  🐍 Auto-feast (archive old captures)")
+	fmt.Println("  📚 Archive browsing and statistics")
 	fmt.Println("  📁 File-based fallback")
 	fmt.Println("  🎬 Journey replay visualization")
 }
@@ -940,5 +967,243 @@ func handleFeast(args []string) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Feast operation failed: %v\n", err)
 		os.Exit(1)
+	}
+}
+
+// showArchivedCaptures displays archived captures
+func showArchivedCaptures(days int, dbPath string, project string) {
+	if dbPath == "" {
+		fmt.Printf("❌ Archive browsing requires database storage\n")
+		fmt.Printf("   Configure database path with: uro config set db_path <path>\n")
+		return
+	}
+
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		fmt.Printf("❌ Failed to connect to database: %v\n", err)
+		return
+	}
+	defer db.Close()
+
+	fmt.Println("🐍 uroboro status --archived")
+	fmt.Printf("🗄️  Database: %s\n\n", dbPath)
+
+	// Query archived captures
+	query := `
+		SELECT original_id, timestamp, content, project, archived_at, archive_reason
+		FROM archived_captures
+		WHERE archived_at >= datetime('now', '-' || ? || ' days')
+	`
+	args := []interface{}{days}
+
+	if project != "" {
+		query += " AND project = ?"
+		args = append(args, project)
+	}
+
+	query += " ORDER BY archived_at DESC LIMIT 20"
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		fmt.Printf("❌ Failed to query archived captures: %v\n", err)
+		return
+	}
+	defer rows.Close()
+
+	var count int
+	fmt.Printf("📚 Archived Captures (last %d days):\n", days)
+
+	for rows.Next() {
+		var originalID int64
+		var timestamp, content, archivedAt, archiveReason string
+		var projectName sql.NullString
+
+		err := rows.Scan(&originalID, &timestamp, &content, &projectName, &archivedAt, &archiveReason)
+		if err != nil {
+			continue
+		}
+
+		count++
+
+		// Truncate content if too long
+		if len(content) > 80 {
+			content = content[:80] + "..."
+		}
+
+		project := "no project"
+		if projectName.Valid && projectName.String != "" {
+			project = projectName.String
+		}
+
+		// Parse archived date for display
+		archivedTime, _ := time.Parse("2006-01-02 15:04:05", archivedAt)
+		archivedAgo := time.Since(archivedTime)
+
+		var timeAgo string
+		if archivedAgo.Hours() < 24 {
+			timeAgo = fmt.Sprintf("%.0fh ago", archivedAgo.Hours())
+		} else {
+			timeAgo = fmt.Sprintf("%.0fd ago", archivedAgo.Hours()/24)
+		}
+
+		fmt.Printf("  📦 [%s] %s (archived %s)\n", project, content, timeAgo)
+	}
+
+	if count == 0 {
+		fmt.Println("  No archived captures found")
+	} else {
+		fmt.Printf("\nTotal archived captures shown: %d\n", count)
+	}
+}
+
+// showAllCapturesSummary shows summary of both active and archived captures
+func showAllCapturesSummary(days int, dbPath string, project string) {
+	if dbPath == "" {
+		fmt.Printf("❌ Archive summary requires database storage\n")
+		return
+	}
+
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		fmt.Printf("❌ Failed to connect to database: %v\n", err)
+		return
+	}
+	defer db.Close()
+
+	fmt.Println("🐍 uroboro status --all")
+	fmt.Printf("🗄️  Database: %s\n\n", dbPath)
+
+	// Count active captures
+	activeQuery := `
+		SELECT COUNT(*) FROM captures
+		WHERE timestamp >= datetime('now', '-' || ? || ' days')
+	`
+	activeArgs := []interface{}{days}
+	if project != "" {
+		activeQuery += " AND project = ?"
+		activeArgs = append(activeArgs, project)
+	}
+
+	var activeCount int
+	err = db.QueryRow(activeQuery, activeArgs...).Scan(&activeCount)
+	if err != nil {
+		activeCount = 0
+	}
+
+	// Count archived captures
+	archivedQuery := `
+		SELECT COUNT(*) FROM archived_captures
+		WHERE archived_at >= datetime('now', '-' || ? || ' days')
+	`
+	archivedArgs := []interface{}{days}
+	if project != "" {
+		archivedQuery += " AND project = ?"
+		archivedArgs = append(archivedArgs, project)
+	}
+
+	var archivedCount int
+	err = db.QueryRow(archivedQuery, archivedArgs...).Scan(&archivedCount)
+	if err != nil {
+		archivedCount = 0
+	}
+
+	fmt.Printf("📊 Capture Summary (last %d days):\n", days)
+	fmt.Printf("  🟢 Active captures: %d\n", activeCount)
+	fmt.Printf("  📦 Archived captures: %d\n", archivedCount)
+	fmt.Printf("  📈 Total captures: %d\n\n", activeCount+archivedCount)
+
+	if activeCount > 0 {
+		fmt.Printf("Recent active captures:\n")
+		// Show recent active captures
+		service := status.NewStatusService()
+		service.ShowStatus(days, dbPath, project)
+	}
+}
+
+// showArchiveStats displays feast and archive statistics
+func showArchiveStats(dbPath string) {
+	if dbPath == "" {
+		fmt.Printf("❌ Archive statistics require database storage\n")
+		return
+	}
+
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		fmt.Printf("❌ Failed to connect to database: %v\n", err)
+		return
+	}
+	defer db.Close()
+
+	fmt.Println("🐍 uroboro status --archive-stats")
+	fmt.Printf("🗄️  Database: %s\n\n", dbPath)
+
+	// Total archived items
+	var totalArchived int
+	err = db.QueryRow("SELECT COUNT(*) FROM archived_captures").Scan(&totalArchived)
+	if err != nil {
+		totalArchived = 0
+	}
+
+	// Recent archive activity (last 30 days)
+	var recentArchived int
+	err = db.QueryRow(`
+		SELECT COUNT(*) FROM archived_captures
+		WHERE archived_at >= datetime('now', '-30 days')
+	`).Scan(&recentArchived)
+	if err != nil {
+		recentArchived = 0
+	}
+
+	// Archive by reason
+	autoFeastQuery := `
+		SELECT COUNT(*) FROM archived_captures
+		WHERE archive_reason = 'auto_feast' AND archived_at >= datetime('now', '-30 days')
+	`
+	var autoFeastCount int
+	err = db.QueryRow(autoFeastQuery).Scan(&autoFeastCount)
+	if err != nil {
+		autoFeastCount = 0
+	}
+
+	manualFeastQuery := `
+		SELECT COUNT(*) FROM archived_captures
+		WHERE archive_reason = 'manual_feast' AND archived_at >= datetime('now', '-30 days')
+	`
+	var manualFeastCount int
+	err = db.QueryRow(manualFeastQuery).Scan(&manualFeastCount)
+	if err != nil {
+		manualFeastCount = 0
+	}
+
+	// Top archived projects (last 30 days)
+	projectQuery := `
+		SELECT project, COUNT(*) as count FROM archived_captures
+		WHERE archived_at >= datetime('now', '-30 days') AND project IS NOT NULL
+		GROUP BY project ORDER BY count DESC LIMIT 5
+	`
+
+	fmt.Printf("📊 Archive Statistics:\n")
+	fmt.Printf("  📦 Total archived: %d items\n", totalArchived)
+	fmt.Printf("  📅 Last 30 days: %d items\n", recentArchived)
+	fmt.Printf("  🤖 Auto-feast: %d items\n", autoFeastCount)
+	fmt.Printf("  👤 Manual feast: %d items\n\n", manualFeastCount)
+
+	rows, err := db.Query(projectQuery)
+	if err == nil {
+		defer rows.Close()
+
+		fmt.Printf("🏷️  Top Archived Projects (last 30 days):\n")
+		hasProjects := false
+		for rows.Next() {
+			var project string
+			var count int
+			if rows.Scan(&project, &count) == nil {
+				fmt.Printf("  📁 %s: %d items\n", project, count)
+				hasProjects = true
+			}
+		}
+		if !hasProjects {
+			fmt.Printf("  No project data available\n")
+		}
 	}
 }
