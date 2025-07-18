@@ -172,3 +172,6 @@ dmypy.json
 web/node_modules/
 
 *PROCEDURE.md
+
+# Journey timeline exports (generated content, contains personal data)
+journey-*.json
