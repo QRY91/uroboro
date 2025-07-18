@@ -1,6 +1,6 @@
 # uroboro.dev Landing Page
 
-The official landing page for uroboro - The Unified Development Assistant (formerly the QRY Trinity).
+The official landing page for uroboro - Automatic development work capture with timeline visualization.
 
 ## 🚀 Quick Start
 
@@ -30,8 +30,8 @@ landing-page/
 
 ## 🎨 Features
 
-- **Trinity Integration Showcase** - Highlights the successful unification of wherewasi, examinator, and uroboro
-- **Smart Feature Demonstration** - Interactive examples of project detection, auto-tagging, and ripcord functionality
+- **Timeline Visualization Showcase** - Interactive demonstration of development journey visualization
+- **Smart Feature Demonstration** - Examples of automatic project detection and auto-tagging
 - **Responsive Design** - Works on desktop, tablet, and mobile
 - **Interactive Voice Demo** - Click between writing styles to see examples
 - **Smooth Animations** - Subtle scroll animations and transitions
@@ -40,21 +40,21 @@ landing-page/
 
 ## 🎯 Sections
 
-1. **Hero** - Unified Development Assistant value proposition with Trinity messaging
-2. **Trinity Integration** - Showcases the successful unification of three tools into one
+1. **Hero** - Development work capture with timeline visualization value proposition
+2. **Timeline Showcase** - Interactive demonstration of the killer feature
 3. **Problem** - Resonates with developer content creation struggles  
-4. **Solution** - 3-step process enhanced with Trinity intelligence
-5. **Demo Carousel** - Interactive demonstrations of core workflow with Trinity features
-6. **Truth Section** - Benefits of Trinity integration and three-command philosophy
-7. **Technical Deep-dive** - Local AI benefits and Trinity intelligence
+4. **Solution** - Simple 3-command workflow with automatic capture
+5. **Demo Carousel** - Interactive demonstrations of core timeline workflow
+6. **Truth Section** - Benefits of timeline visualization and three-command philosophy
+7. **Technical Deep-dive** - Local-first benefits and privacy focus
 8. **CTA** - Clear next steps for visitors
 
-## 🐍 Trinity Features Highlighted
+## 🎬 Key Features Highlighted
 
-- **Smart Project Detection** - Zero-configuration auto-discovery from git repos, package files, directory names
-- **Content-Based Auto-Tagging** - Intelligent pattern analysis for action types and technology domains
-- **Ripcord Functionality** - Cross-platform instant context extraction to clipboard
-- **Unified Intelligence** - Three tools' capabilities merged while maintaining simplicity
+- **Timeline Visualization** - See your development work as a beautiful interactive story
+- **Smart Project Detection** - Zero-configuration auto-discovery from git repos and package files
+- **Content-Based Auto-Tagging** - Automatic pattern analysis for development insights
+- **Local-First Privacy** - Your data stays on your machine, no cloud dependencies
 
 ## 🎪 Voice Styles Demonstrated
 
@@ -112,10 +112,10 @@ Edit CSS variables in `style.css`:
 - Voice examples: Edit `voiceExamples` object in `script.js`
 - Contact info: Update footer links in `index.html`
 
-### Adding New Voices
-1. Add voice configuration to uroboro `config/settings.json`
-2. Add example to `voiceExamples` in `script.js`
-3. Add tab button to voice showcase section
+### Adding New Content Examples
+1. Add timeline examples to showcase different project types
+2. Add content generation examples to `voiceExamples` in `script.js`
+3. Add new demonstration sections as needed
 
 ## 📊 Analytics
 
@@ -153,12 +153,12 @@ To enhance SEO:
 
 ## 🤝 Contributing
 
-This landing page showcases the unified uroboro tool and Trinity integration success. To contribute:
+This landing page showcases uroboro's timeline visualization and development capture capabilities. To contribute:
 
 1. Fork the main repository
 2. Make changes in the `landing-page/` directory  
 3. Test locally with `npm run dev` or `python3 -m http.server 8000`
-4. Ensure Trinity messaging is consistent with main README
+4. Ensure messaging focuses on timeline visualization as the killer feature
 5. Submit a pull request
 
 ## 📄 License

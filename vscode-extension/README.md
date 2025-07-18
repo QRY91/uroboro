@@ -1,6 +1,6 @@
 # uroboro VS Code Extension
 
-**Seamless development insight capture without breaking flow.**
+**Seamless development insight capture with beautiful timeline visualization.**
 
 ## 🎯 Core Features
 
@@ -19,15 +19,15 @@
 - Click to view full uroboro status
 - Quick access to publish commands
 
-### Publish from Editor
-- Command palette: "uroboro: Publish Content"
-- Choose blog post, social content, or dev log
-- Auto-opens generated blog posts in editor
+### Timeline & Publishing
+- Command palette: "uroboro: View Timeline" - opens interactive timeline
+- Publish options: blog post, dev log, or timeline visualization
+- Timeline visualization: see your development journey as a story
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-1. Have uroboro installed: `pip install -e .` (from uroboro repo)
+1. Have uroboro installed: `go install github.com/QRY91/uroboro/cmd/uroboro@latest`
 2. VS Code 1.74.0 or newer
 
 ### Installation (Development)
@@ -54,16 +54,16 @@ Ctrl+Shift+U → Type insight → Enter
 
 **Publish from editor:**
 ```
-Ctrl+Shift+P → "uroboro: Quick Publish Blog"
-🔄 Generating content...
-✅ Blog post published
+Ctrl+Shift+P → "uroboro: View Timeline" 
+🎬 Opening interactive timeline...
+✅ Timeline visualization at http://localhost:8080
 ```
 
 ## ⚙️ Configuration
 
 Access via Settings → Extensions → uroboro:
 
-- **Python Path**: Path to Python with uroboro installed
+- **uroboro Path**: Path to uroboro binary (default: finds in PATH)
 - **Auto Git Capture**: Automatically capture git commits  
 - **Show Status Bar**: Display uroboro status in status bar
 - **Capture Template**: Format for code context captures
@@ -82,8 +82,8 @@ Access via Settings → Extensions → uroboro:
 
 This extension bridges VS Code with the uroboro CLI tool:
 
-- **Zero dependencies**: Uses your existing uroboro installation
-- **Local-first**: No external services, works offline
+- **Timeline visualization**: See your development work as an interactive story
+- **Local-first**: No external services, works offline  
 - **Lightweight**: Minimal resource usage
 - **Privacy-focused**: Your insights stay on your machine
 
@@ -93,7 +93,8 @@ The extension executes these CLI commands:
 ```bash
 uro capture "insight" --tags code-context
 uro status --recent  
-uro publish --type blog
+uro publish --journey  # Opens timeline visualization
+uro publish --blog     # Generates shareable content
 ```
 
-Perfect for the fat-snake branch - full-featured integration without bloating main. 
+Seamlessly integrates with simplified uroboro - timeline visualization is the killer feature.
