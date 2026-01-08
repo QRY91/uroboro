@@ -1,23 +1,17 @@
 package journey
 
-import (
-	"time"
-)
+import "time"
 
-// TimelineEvent represents a single event in the development journey
 type TimelineEvent struct {
-	Timestamp    time.Time              `json:"timestamp"`
-	Content      string                 `json:"content"`
-	Project      string                 `json:"project"`
-	Tags         []string               `json:"tags"`
-	Context      map[string]interface{} `json:"context"`
-	EventType    string                 `json:"eventType"`
-	Importance   int                    `json:"importance"`
-	GitHash      string                 `json:"gitHash,omitempty"`
-	FilesChanged []string               `json:"filesChanged,omitempty"`
+	Timestamp  time.Time `json:"timestamp"`
+	Content    string    `json:"content"`
+	Project    string    `json:"project"`
+	Tags       []string  `json:"tags"`
+	EventType  string    `json:"eventType"`
+	Importance int       `json:"importance"`
+	GitHash    string    `json:"gitHash,omitempty"`
 }
 
-// JourneyData represents the complete journey data for a time period
 type JourneyData struct {
 	Events     []TimelineEvent  `json:"events"`
 	Timeline   Timeline         `json:"timeline"`
@@ -26,20 +20,17 @@ type JourneyData struct {
 	Milestones []TimelineEvent  `json:"milestones"`
 }
 
-// DateRange represents a time range for journey data
 type DateRange struct {
 	Start time.Time `json:"start"`
 	End   time.Time `json:"end"`
 }
 
-// Timeline represents timeline information for the frontend
 type Timeline struct {
 	StartTime     time.Time `json:"startTime"`
 	EndTime       time.Time `json:"endTime"`
-	TotalDuration int64     `json:"totalDuration"` // Duration in milliseconds
+	TotalDuration int64     `json:"totalDuration"`
 }
 
-// ProjectSummary provides summary information about a project
 type ProjectSummary struct {
 	Name       string    `json:"name"`
 	EventCount int       `json:"eventCount"`
@@ -48,7 +39,6 @@ type ProjectSummary struct {
 	LastActive time.Time `json:"lastActive"`
 }
 
-// JourneyStats provides statistical information about the journey
 type JourneyStats struct {
 	TotalEvents       int     `json:"totalEvents"`
 	ProjectCount      int     `json:"projectCount"`
@@ -57,46 +47,26 @@ type JourneyStats struct {
 	LearningMoments   int     `json:"learningMoments"`
 }
 
-// JourneyOptions represents configuration options for journey generation
-type JourneyOptions struct {
-	Days      int        `json:"days"`
-	DateRange *DateRange `json:"dateRange,omitempty"`
-	Projects  []string   `json:"projects,omitempty"`
-	Export    bool       `json:"export"`
-	Live      bool       `json:"live"`
-	Port      int        `json:"port"`
-	AutoOpen  bool       `json:"autoOpen"`
-	Share     bool       `json:"share"`
-	Title     string     `json:"title"`
-	Theme     string     `json:"theme"`
+type Options struct {
+	Days      int
+	DateRange *DateRange
+	Projects  []string
+	Port      int
 }
 
-// EventType constants for different types of timeline events
 const (
-	EventTypeCapture     = "capture"
-	EventTypeCommit      = "commit"
-	EventTypeMilestone   = "milestone"
-	EventTypeLearning    = "learning"
-	EventTypeDecision    = "decision"
-	EventTypeIntegration = "integration"
-	EventTypeBugfix      = "bugfix"
-	EventTypeFeature     = "feature"
-	EventTypeRefactor    = "refactor"
+	EventTypeCapture   = "capture"
+	EventTypeCommit    = "commit"
+	EventTypeMilestone = "milestone"
+	EventTypeLearning  = "learning"
+	EventTypeDecision  = "decision"
+	EventTypeBugfix    = "bugfix"
+	EventTypeFeature   = "feature"
 )
 
-// Importance levels for events
 const (
 	ImportanceLow      = 1
 	ImportanceMedium   = 2
 	ImportanceHigh     = 3
 	ImportanceCritical = 4
-)
-
-// Theme constants for journey visualization
-const (
-	ThemeDefault = "default"
-	ThemeDark    = "dark"
-	ThemeLight   = "light"
-	ThemeMatrix  = "matrix"
-	ThemeNeon    = "neon"
 )

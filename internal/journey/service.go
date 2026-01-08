@@ -10,372 +10,275 @@ import (
 	"github.com/QRY91/uroboro/internal/database"
 )
 
-// JourneyService handles journey data processing and timeline generation
-type JourneyService struct {
+type Service struct {
 	db *database.DB
 }
 
-// NewJourneyService creates a new journey service
-func NewJourneyService(db *database.DB) *JourneyService {
-	return &JourneyService{db: db}
+func NewService(db *database.DB) *Service {
+	return &Service{db: db}
 }
 
-// GenerateJourney creates a complete journey dataset for the specified options
-func (j *JourneyService) GenerateJourney(options JourneyOptions) (*JourneyData, error) {
-	// Determine date range
-	dateRange := j.getDateRange(options)
+func (s *Service) GenerateJourney(opts Options) (*JourneyData, error) {
+	dateRange := s.getDateRange(opts)
 
-	// Get captures from database
-	captures, err := j.getCapturesInRange(dateRange, options.Projects)
+	captures, err := s.getCapturesInRange(dateRange, opts.Projects)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get captures: %w", err)
+		return nil, fmt.Errorf("get captures: %w", err)
 	}
 
-	// Get git commits if available
-	commits := j.getGitCommitsInRange(dateRange)
-
-	// Process captures into timeline events
-	events := j.processCapturesToEvents(captures)
-
-	// Process commits into timeline events
-	commitEvents := j.processCommitsToEvents(commits)
-
-	// Combine and sort all events
+	events := s.capturesToEvents(captures)
+	commitEvents := s.commitsToEvents(s.getGitCommits(dateRange))
 	allEvents := append(events, commitEvents...)
-	sort.Slice(allEvents, func(i, k int) bool {
-		return allEvents[i].Timestamp.Before(allEvents[k].Timestamp)
+
+	sort.Slice(allEvents, func(i, j int) bool {
+		return allEvents[i].Timestamp.Before(allEvents[j].Timestamp)
 	})
 
-	// Generate project summaries
-	projects := j.generateProjectSummaries(allEvents)
-
-	// Calculate journey statistics
-	stats := j.calculateJourneyStats(allEvents, projects)
-
-	// Identify milestones
-	milestones := j.identifyMilestones(allEvents)
-
-	// Calculate total duration in milliseconds
-	totalDuration := dateRange.End.Sub(dateRange.Start).Milliseconds()
+	projects := s.generateProjectSummaries(allEvents)
 
 	return &JourneyData{
 		Events: allEvents,
 		Timeline: Timeline{
 			StartTime:     dateRange.Start,
 			EndTime:       dateRange.End,
-			TotalDuration: totalDuration,
+			TotalDuration: dateRange.End.Sub(dateRange.Start).Milliseconds(),
 		},
 		Projects:   projects,
-		Stats:      stats,
-		Milestones: milestones,
+		Stats:      s.calcStats(allEvents, projects),
+		Milestones: s.findMilestones(allEvents),
 	}, nil
 }
 
-// getDateRange determines the date range based on options
-func (j *JourneyService) getDateRange(options JourneyOptions) DateRange {
-	if options.DateRange != nil {
-		return *options.DateRange
+func (s *Service) getDateRange(opts Options) DateRange {
+	if opts.DateRange != nil {
+		return *opts.DateRange
 	}
-
 	end := time.Now()
-	start := end.AddDate(0, 0, -options.Days)
-
-	return DateRange{Start: start, End: end}
+	return DateRange{Start: end.AddDate(0, 0, -opts.Days), End: end}
 }
 
-// getCapturesInRange retrieves captures from the database within the specified date range
-func (j *JourneyService) getCapturesInRange(dateRange DateRange, projects []string) ([]database.Capture, error) {
-	if len(projects) > 0 {
-		// Filter by specific projects
-		var allCaptures []database.Capture
-		for _, project := range projects {
-			captures, err := j.db.GetCapturesByProject(project)
-			if err != nil {
-				return nil, err
-			}
-			// Filter by date range
-			for _, capture := range captures {
-				if capture.Timestamp.After(dateRange.Start) && capture.Timestamp.Before(dateRange.End) {
-					allCaptures = append(allCaptures, capture)
+func (s *Service) getCapturesInRange(dr DateRange, projects []string) ([]database.Capture, error) {
+	q := database.CaptureQuery{Since: &dr.Start}
+
+	if len(projects) == 1 {
+		q.Project = projects[0]
+	}
+
+	captures, err := s.db.QueryCaptures(q)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter by end date and multiple projects if needed
+	var result []database.Capture
+	for _, c := range captures {
+		if c.Timestamp.After(dr.End) {
+			continue
+		}
+		if len(projects) > 1 {
+			found := false
+			for _, p := range projects {
+				if c.Project == p {
+					found = true
+					break
 				}
 			}
+			if !found {
+				continue
+			}
 		}
-		return allCaptures, nil
+		result = append(result, c)
 	}
-
-	// Get all captures in date range
-	return j.db.GetCapturesSince(dateRange.Start)
+	return result, nil
 }
 
-// getGitCommitsInRange retrieves git commits within the specified date range
-func (j *JourneyService) getGitCommitsInRange(dateRange DateRange) []GitCommit {
+func (s *Service) getGitCommits(dr DateRange) []GitCommit {
 	cmd := exec.Command("git", "log",
 		"--pretty=format:%H|%s|%at|%an",
-		fmt.Sprintf("--since=%s", dateRange.Start.Format("2006-01-02")),
-		fmt.Sprintf("--until=%s", dateRange.End.Format("2006-01-02")))
+		fmt.Sprintf("--since=%s", dr.Start.Format("2006-01-02")),
+		fmt.Sprintf("--until=%s", dr.End.Format("2006-01-02")))
 
 	output, err := cmd.Output()
 	if err != nil {
-		return []GitCommit{}
+		return nil
 	}
 
 	var commits []GitCommit
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
+	for _, line := range strings.Split(string(output), "\n") {
 		if line == "" {
 			continue
 		}
 		parts := strings.Split(line, "|")
 		if len(parts) >= 4 {
-			timestamp, err := time.Parse("1136239445", parts[2])
-			if err != nil {
-				continue
-			}
+			var ts time.Time
+			fmt.Sscanf(parts[2], "%d", &ts)
+			ts = time.Unix(ts.Unix(), 0)
 			commits = append(commits, GitCommit{
-				Hash:      parts[0],
-				Message:   parts[1],
-				Timestamp: timestamp,
-				Author:    parts[3],
+				Hash: parts[0], Message: parts[1], Timestamp: ts, Author: parts[3],
 			})
 		}
 	}
 	return commits
 }
 
-// processCapturesToEvents converts database captures to timeline events
-func (j *JourneyService) processCapturesToEvents(captures []database.Capture) []TimelineEvent {
+func (s *Service) capturesToEvents(captures []database.Capture) []TimelineEvent {
 	var events []TimelineEvent
-
-	for _, capture := range captures {
-		var project string
-		if capture.Project.Valid {
-			project = capture.Project.String
-		}
-
+	for _, c := range captures {
 		var tags []string
-		if capture.Tags.Valid && capture.Tags.String != "" {
-			tags = strings.Split(capture.Tags.String, ",")
+		if c.Tags != "" {
+			for _, t := range strings.Split(c.Tags, ",") {
+				tags = append(tags, strings.TrimSpace(t))
+			}
 		}
-
-		event := TimelineEvent{
-			Timestamp:  capture.Timestamp,
-			Content:    capture.Content,
-			Project:    project,
+		events = append(events, TimelineEvent{
+			Timestamp:  c.Timestamp,
+			Content:    c.Content,
+			Project:    c.Project,
 			Tags:       tags,
-			EventType:  j.determineEventType(capture),
-			Importance: j.calculateImportance(capture),
-		}
-
-		// Clean up tags
-		for i, tag := range event.Tags {
-			event.Tags[i] = strings.TrimSpace(tag)
-		}
-
-		events = append(events, event)
+			EventType:  s.determineEventType(c.Content, c.Tags),
+			Importance: s.calcImportance(c.Content, c.Tags),
+		})
 	}
-
 	return events
 }
 
-// processCommitsToEvents converts git commits to timeline events
-func (j *JourneyService) processCommitsToEvents(commits []GitCommit) []TimelineEvent {
+func (s *Service) commitsToEvents(commits []GitCommit) []TimelineEvent {
 	var events []TimelineEvent
-
-	for _, commit := range commits {
-		event := TimelineEvent{
-			Timestamp:  commit.Timestamp,
-			Content:    commit.Message,
-			Project:    j.inferProjectFromCommit(commit),
+	for _, c := range commits {
+		events = append(events, TimelineEvent{
+			Timestamp:  c.Timestamp,
+			Content:    c.Message,
+			Project:    "git",
 			Tags:       []string{"git", "commit"},
 			EventType:  EventTypeCommit,
-			Importance: j.calculateCommitImportance(commit),
-			GitHash:    commit.Hash,
-		}
-
-		events = append(events, event)
+			Importance: s.calcCommitImportance(c.Message),
+			GitHash:    c.Hash,
+		})
 	}
-
 	return events
 }
 
-// generateProjectSummaries creates project summaries from events
-func (j *JourneyService) generateProjectSummaries(events []TimelineEvent) []ProjectSummary {
-	projectMap := make(map[string]*ProjectSummary)
+func (s *Service) generateProjectSummaries(events []TimelineEvent) []ProjectSummary {
+	pm := make(map[string]*ProjectSummary)
 	colors := []string{"#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57", "#FF9FF3", "#54A0FF", "#5F27CD"}
-	colorIndex := 0
+	ci := 0
 
-	for _, event := range events {
-		if event.Project == "" {
+	for _, e := range events {
+		if e.Project == "" {
 			continue
 		}
-
-		if _, exists := projectMap[event.Project]; !exists {
-			projectMap[event.Project] = &ProjectSummary{
-				Name:       event.Project,
-				EventCount: 0,
-				Color:      colors[colorIndex%len(colors)],
-				StartDate:  event.Timestamp,
-				LastActive: event.Timestamp,
+		if _, ok := pm[e.Project]; !ok {
+			pm[e.Project] = &ProjectSummary{
+				Name: e.Project, Color: colors[ci%len(colors)],
+				StartDate: e.Timestamp, LastActive: e.Timestamp,
 			}
-			colorIndex++
+			ci++
 		}
-
-		summary := projectMap[event.Project]
-		summary.EventCount++
-
-		if event.Timestamp.Before(summary.StartDate) {
-			summary.StartDate = event.Timestamp
+		p := pm[e.Project]
+		p.EventCount++
+		if e.Timestamp.Before(p.StartDate) {
+			p.StartDate = e.Timestamp
 		}
-		if event.Timestamp.After(summary.LastActive) {
-			summary.LastActive = event.Timestamp
+		if e.Timestamp.After(p.LastActive) {
+			p.LastActive = e.Timestamp
 		}
 	}
 
-	var summaries []ProjectSummary
-	for _, summary := range projectMap {
-		summaries = append(summaries, *summary)
+	var result []ProjectSummary
+	for _, p := range pm {
+		result = append(result, *p)
 	}
-
-	// Sort by event count descending
-	sort.Slice(summaries, func(i, k int) bool {
-		return summaries[i].EventCount > summaries[k].EventCount
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].EventCount > result[j].EventCount
 	})
-
-	return summaries
+	return result
 }
 
-// calculateJourneyStats computes statistics for the journey
-func (j *JourneyService) calculateJourneyStats(events []TimelineEvent, projects []ProjectSummary) JourneyStats {
+func (s *Service) calcStats(events []TimelineEvent, projects []ProjectSummary) JourneyStats {
 	stats := JourneyStats{
-		TotalEvents:     len(events),
-		ProjectCount:    len(projects),
-		MilestoneCount:  0,
-		LearningMoments: 0,
+		TotalEvents:  len(events),
+		ProjectCount: len(projects),
 	}
-
-	for _, event := range events {
-		if event.EventType == EventTypeMilestone {
+	var totalImp int
+	for _, e := range events {
+		totalImp += e.Importance
+		if e.EventType == EventTypeMilestone {
 			stats.MilestoneCount++
 		}
-		if event.EventType == EventTypeLearning || containsLearningTag(event.Tags) {
+		if e.EventType == EventTypeLearning || hasTag(e.Tags, "learning") {
 			stats.LearningMoments++
 		}
 	}
-
-	// Calculate productivity score based on events per day and importance
 	if len(events) > 0 {
-		totalImportance := 0
-		for _, event := range events {
-			totalImportance += event.Importance
-		}
-		stats.ProductivityScore = float64(totalImportance) / float64(len(events))
+		stats.ProductivityScore = float64(totalImp) / float64(len(events))
 	}
-
 	return stats
 }
 
-// identifyMilestones finds significant milestone events
-func (j *JourneyService) identifyMilestones(events []TimelineEvent) []TimelineEvent {
-	var milestones []TimelineEvent
-
-	for _, event := range events {
-		if j.isMilestone(event) {
-			milestones = append(milestones, event)
+func (s *Service) findMilestones(events []TimelineEvent) []TimelineEvent {
+	var ms []TimelineEvent
+	for _, e := range events {
+		if e.EventType == EventTypeMilestone || e.Importance >= ImportanceHigh {
+			ms = append(ms, e)
 		}
 	}
-
-	return milestones
+	return ms
 }
 
-// Helper methods for event processing
-func (j *JourneyService) determineEventType(capture database.Capture) string {
-	var tags string
-	if capture.Tags.Valid {
-		tags = strings.ToLower(capture.Tags.String)
-	}
-	content := strings.ToLower(capture.Content)
-
-	if strings.Contains(tags, "milestone") || strings.Contains(content, "milestone") {
+func (s *Service) determineEventType(content, tags string) string {
+	lc, lt := strings.ToLower(content), strings.ToLower(tags)
+	switch {
+	case strings.Contains(lt, "milestone") || strings.Contains(lc, "milestone"):
 		return EventTypeMilestone
-	}
-	if strings.Contains(tags, "learning") || strings.Contains(content, "learned") {
+	case strings.Contains(lt, "learning") || strings.Contains(lc, "learned"):
 		return EventTypeLearning
-	}
-	if strings.Contains(tags, "decision") || strings.Contains(content, "decided") {
+	case strings.Contains(lt, "decision") || strings.Contains(lc, "decided"):
 		return EventTypeDecision
-	}
-	if strings.Contains(tags, "integration") || strings.Contains(content, "integrated") {
-		return EventTypeIntegration
-	}
-	if strings.Contains(tags, "bug") || strings.Contains(content, "fixed") {
+	case strings.Contains(lt, "bug") || strings.Contains(lc, "fixed"):
 		return EventTypeBugfix
-	}
-	if strings.Contains(tags, "feature") || strings.Contains(content, "implemented") {
+	case strings.Contains(lt, "feature") || strings.Contains(lc, "implemented"):
 		return EventTypeFeature
+	default:
+		return EventTypeCapture
 	}
-
-	return EventTypeCapture
 }
 
-func (j *JourneyService) calculateImportance(capture database.Capture) int {
-	var tags string
-	if capture.Tags.Valid {
-		tags = strings.ToLower(capture.Tags.String)
-	}
-	content := strings.ToLower(capture.Content)
-
-	if strings.Contains(tags, "critical") || strings.Contains(content, "critical") {
+func (s *Service) calcImportance(content, tags string) int {
+	lc, lt := strings.ToLower(content), strings.ToLower(tags)
+	switch {
+	case strings.Contains(lt, "critical") || strings.Contains(lc, "critical"):
 		return ImportanceCritical
-	}
-	if strings.Contains(tags, "milestone") || strings.Contains(tags, "important") {
+	case strings.Contains(lt, "milestone") || strings.Contains(lt, "important"):
 		return ImportanceHigh
-	}
-	if strings.Contains(tags, "decision") || strings.Contains(tags, "integration") {
+	case strings.Contains(lt, "decision") || strings.Contains(lt, "integration"):
 		return ImportanceMedium
+	default:
+		return ImportanceLow
 	}
-
-	return ImportanceLow
 }
 
-func (j *JourneyService) calculateCommitImportance(commit GitCommit) int {
-	message := strings.ToLower(commit.Message)
-
-	if strings.Contains(message, "feat") || strings.Contains(message, "feature") {
+func (s *Service) calcCommitImportance(msg string) int {
+	m := strings.ToLower(msg)
+	switch {
+	case strings.Contains(m, "feat"):
 		return ImportanceHigh
-	}
-	if strings.Contains(message, "fix") || strings.Contains(message, "bug") {
+	case strings.Contains(m, "fix") || strings.Contains(m, "refactor"):
 		return ImportanceMedium
+	default:
+		return ImportanceLow
 	}
-	if strings.Contains(message, "refactor") || strings.Contains(message, "improve") {
-		return ImportanceMedium
-	}
-
-	return ImportanceLow
 }
 
-func (j *JourneyService) inferProjectFromCommit(commit GitCommit) string {
-	// Try to infer project from commit message or current directory
-	// This is a simple heuristic - could be improved
-	return "default"
-}
-
-func (j *JourneyService) isMilestone(event TimelineEvent) bool {
-	return event.EventType == EventTypeMilestone || event.Importance >= ImportanceHigh
-}
-
-func containsLearningTag(tags []string) bool {
-	for _, tag := range tags {
-		if strings.ToLower(tag) == "learning" || strings.ToLower(tag) == "insight" {
+func hasTag(tags []string, target string) bool {
+	for _, t := range tags {
+		if strings.ToLower(t) == target {
 			return true
 		}
 	}
 	return false
 }
 
-// GitCommit represents a git commit for timeline processing
 type GitCommit struct {
-	Hash      string
-	Message   string
-	Timestamp time.Time
-	Author    string
+	Hash, Message, Author string
+	Timestamp             time.Time
 }
