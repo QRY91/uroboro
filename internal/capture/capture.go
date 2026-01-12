@@ -12,124 +12,93 @@ import (
 	"github.com/QRY91/uroboro/internal/tagging"
 )
 
-type CaptureService struct {
+type Service struct {
 	db *database.DB
 }
 
-func NewCaptureService() *CaptureService {
-	return &CaptureService{}
-}
-
-func NewCaptureServiceWithDB(dbPath string) (*CaptureService, error) {
+func NewService(dbPath string) (*Service, error) {
 	db, err := database.NewDB(dbPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize database: %w", err)
+		return nil, err
 	}
-
-	return &CaptureService{db: db}, nil
+	return &Service{db: db}, nil
 }
 
-func (c *CaptureService) Capture(content, project, tags string) error {
-	// Smart project detection if no project provided
+func (s *Service) Close() error {
+	if s.db != nil {
+		return s.db.Close()
+	}
+	return nil
+}
+
+func (s *Service) Capture(content, project, tags string) error {
+	// Auto-detect project if not provided
 	if project == "" {
 		detector := context.NewProjectDetector()
-		if detectedProject := detector.DetectProject(); detectedProject != "" {
-			project = detectedProject
+		if detected := detector.DetectProject(); detected != "" {
+			project = detected
 			fmt.Printf("🔍 Auto-detected project: %s\n", project)
 		}
 	}
 
-	// Smart tagging enhancement
+	// Auto-enhance tags
 	analyzer := tagging.NewTagAnalyzer()
 	originalTags := tags
 	tags = analyzer.EnhanceTags(content, tags)
-
-	// Show auto-detected tags if any were added
 	if tags != originalTags {
-		suggestedTags := analyzer.GetSuggestedTags(content)
-		if suggestedTags != "" {
-			fmt.Printf("🏷️  Auto-detected tags: %s\n", suggestedTags)
+		if suggested := analyzer.GetSuggestedTags(content); suggested != "" {
+			fmt.Printf("🏷️  Auto-detected tags: %s\n", suggested)
 		}
 	}
 
-	// If database is available, use it
-	if c.db != nil {
-		return c.captureToDatabase(content, project, tags)
+	// Store to database if available, otherwise file
+	if s.db != nil {
+		capture, err := s.db.InsertCapture(content, project, tags)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("✅ Captured [ID:%d]: %s\n", capture.ID, truncate(content, 60))
+		if capture.Project != "" {
+			fmt.Printf("   Project: %s\n", capture.Project)
+		}
+		return nil
 	}
 
-	// Otherwise, fall back to file storage
-	return c.captureToFile(content, project, tags)
+	return s.captureToFile(content, project, tags)
 }
 
-func (c *CaptureService) captureToDatabase(content, project, tags string) error {
-	capture, err := c.db.InsertCapture(content, project, tags)
-	if err != nil {
-		return fmt.Errorf("failed to capture to database: %w", err)
-	}
-
-	fmt.Printf("✅ Captured [ID:%d]: %s\n", capture.ID, truncateContent(content, 60))
-	if capture.Project.Valid && capture.Project.String != "" {
-		fmt.Printf("   Project: %s\n", capture.Project.String)
-	}
-	return nil
-}
-
-func (c *CaptureService) captureToFile(content, project, tags string) error {
-	timestamp := time.Now().Format("2006-01-02T15:04:05")
-
-	// Get cross-platform data directory
+func (s *Service) captureToFile(content, project, tags string) error {
 	dataDir := common.GetDataDir()
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		return fmt.Errorf("failed to create data directory: %w", err)
+		return err
 	}
 
-	// Create daily note filename
-	today := time.Now().Format("2006-01-02")
-	filename := filepath.Join(dataDir, fmt.Sprintf("%s.md", today))
-
-	// Prepare entry
-	entry := fmt.Sprintf("\n## %s\n\n%s\n", timestamp, content)
-
+	filename := filepath.Join(dataDir, time.Now().Format("2006-01-02")+".md")
+	entry := fmt.Sprintf("\n## %s\n\n%s\n", time.Now().Format("2006-01-02T15:04:05"), content)
 	if project != "" {
 		entry += fmt.Sprintf("Project: %s\n", project)
 	}
-
 	if tags != "" {
 		entry += fmt.Sprintf("Tags: %s\n", tags)
 	}
 
-	// Append to daily notes file
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to open daily notes file: %w", err)
+		return err
 	}
 	defer f.Close()
 
 	if _, err := f.WriteString(entry); err != nil {
-		return fmt.Errorf("failed to write to daily notes: %w", err)
+		return err
 	}
 
-	fmt.Printf("✅ Captured: %s\n", truncateContent(content, 60))
+	fmt.Printf("✅ Captured: %s\n", truncate(content, 60))
 	return nil
 }
 
-func truncateContent(content string, maxLen int) string {
-	if len(content) <= maxLen {
-		return content
+func truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
 	}
-	return content[:maxLen] + "..."
-}
-
-// CaptureWithMetadata is an alias for Capture method to maintain compatibility
-func (c *CaptureService) CaptureWithMetadata(content, project, tags string) error {
-	return c.Capture(content, project, tags)
-}
-
-// ProcessToolMessages processes unprocessed tool messages for cross-tool integration
-func (c *CaptureService) ProcessToolMessages() error {
-	if c.db == nil {
-		return fmt.Errorf("database not available for tool message processing")
-	}
-
-	return c.db.ProcessUroboroCaptures()
+	return s[:n] + "..."
 }
