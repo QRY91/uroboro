@@ -83,8 +83,11 @@ func (db *DB) migrate() error {
 	return nil
 }
 
-func (db *DB) InsertCapture(content, project, tags string) (*Capture, error) {
+func (db *DB) InsertCapture(content, project, tags string, timestamp *time.Time) (*Capture, error) {
 	ts := time.Now()
+	if timestamp != nil {
+		ts = *timestamp
+	}
 	result, err := db.db.Exec(
 		`INSERT INTO captures (content, project, tags, timestamp) VALUES (?, ?, ?, ?)`,
 		content, project, tags, ts,

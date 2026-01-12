@@ -31,7 +31,7 @@ func (s *Service) Close() error {
 	return nil
 }
 
-func (s *Service) Capture(content, project, tags string) error {
+func (s *Service) Capture(content, project, tags string, timestamp *time.Time) error {
 	// Auto-detect project if not provided
 	if project == "" {
 		detector := context.NewProjectDetector()
@@ -53,7 +53,7 @@ func (s *Service) Capture(content, project, tags string) error {
 
 	// Store to database if available, otherwise file
 	if s.db != nil {
-		capture, err := s.db.InsertCapture(content, project, tags)
+		capture, err := s.db.InsertCapture(content, project, tags, timestamp)
 		if err != nil {
 			return err
 		}
@@ -61,20 +61,27 @@ func (s *Service) Capture(content, project, tags string) error {
 		if capture.Project != "" {
 			fmt.Printf("   Project: %s\n", capture.Project)
 		}
+		if timestamp != nil {
+			fmt.Printf("   Time: %s\n", timestamp.Format("2006-01-02 15:04"))
+		}
 		return nil
 	}
 
-	return s.captureToFile(content, project, tags)
+	return s.captureToFile(content, project, tags, timestamp)
 }
 
-func (s *Service) captureToFile(content, project, tags string) error {
+func (s *Service) captureToFile(content, project, tags string, timestamp *time.Time) error {
 	dataDir := common.GetDataDir()
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return err
 	}
 
-	filename := filepath.Join(dataDir, time.Now().Format("2006-01-02")+".md")
-	entry := fmt.Sprintf("\n## %s\n\n%s\n", time.Now().Format("2006-01-02T15:04:05"), content)
+	ts := time.Now()
+	if timestamp != nil {
+		ts = *timestamp
+	}
+	filename := filepath.Join(dataDir, ts.Format("2006-01-02")+".md")
+	entry := fmt.Sprintf("\n## %s\n\n%s\n", ts.Format("2006-01-02T15:04:05"), content)
 	if project != "" {
 		entry += fmt.Sprintf("Project: %s\n", project)
 	}

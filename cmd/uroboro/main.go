@@ -42,16 +42,28 @@ func main() {
 
 func handleCapture(args []string) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "Usage: uroboro capture \"content\" [--project NAME] [--tags LIST]")
+		fmt.Fprintln(os.Stderr, "Usage: uroboro capture \"content\" [--project NAME] [--tags LIST] [--time TIME]")
 		os.Exit(1)
 	}
 
 	fs := flag.NewFlagSet("capture", flag.ExitOnError)
 	project := fs.String("project", "", "Project name")
 	tags := fs.String("tags", "", "Comma-separated tags")
+	timeStr := fs.String("time", "", "Timestamp (e.g., '2024-01-15 14:30' or '2024-01-15T14:30:00')")
 	fs.Parse(args[1:])
 
 	content := args[0]
+
+	var timestamp *time.Time
+	if *timeStr != "" {
+		t, err := parseTimestamp(*timeStr)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid time format: %v\n", err)
+			fmt.Fprintln(os.Stderr, "Supported formats: '2024-01-15 14:30', '2024-01-15T14:30:00', '2024-01-15'")
+			os.Exit(1)
+		}
+		timestamp = &t
+	}
 
 	svc, err := capture.NewService(getDBPath())
 	if err != nil {
@@ -60,10 +72,26 @@ func handleCapture(args []string) {
 	}
 	defer svc.Close()
 
-	if err := svc.Capture(content, *project, *tags); err != nil {
+	if err := svc.Capture(content, *project, *tags, timestamp); err != nil {
 		fmt.Fprintf(os.Stderr, "Capture failed: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func parseTimestamp(s string) (time.Time, error) {
+	formats := []string{
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04",
+		"2006-01-02 15:04",
+		"2006-01-02",
+	}
+	for _, format := range formats {
+		if t, err := time.ParseInLocation(format, s, time.Local); err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("could not parse '%s'", s)
 }
 
 func handleTimeline(args []string) {
@@ -196,6 +224,12 @@ Aliases:
   uro -s               status
   uro -r               report
 
+Capture options:
+  --project NAME       Project name (auto-detected if in git repo)
+  --tags LIST          Comma-separated tags
+  --time TIME          Timestamp for retroactive logging (default: now)
+                       Formats: '2024-01-15 14:30', '2024-01-15T14:30:00', '2024-01-15'
+
 Report options:
   --days N             Days to include (default: 7)
   --project NAME       Filter by project
@@ -205,6 +239,7 @@ Report options:
 
 Examples:
   uro capture "Fixed auth bug in login flow"
+  uro capture "Morning standup notes" --time "2024-01-15 09:00"
   uro timeline --days 14
   uro report --days 7 --format markdown
   uro report --project myapp --format csv --output timesheet.csv`)
