@@ -217,11 +217,18 @@ func (m *Model) moveCursor(delta int) {
 }
 
 func (m *Model) ensureVisible() {
-	visibleLines := m.height - 4
+	// Reserve space for title, help, and day headers (estimate ~2 lines per day group)
+	visibleEvents := m.height - 6
+	if m.groupByDay {
+		visibleEvents = m.height / 2 // Conservative estimate when day headers are shown
+	}
+	if visibleEvents < 5 {
+		visibleEvents = 5
+	}
 	if m.cursor < m.offset {
 		m.offset = m.cursor
-	} else if m.cursor >= m.offset+visibleLines {
-		m.offset = m.cursor - visibleLines + 1
+	} else if m.cursor >= m.offset+visibleEvents {
+		m.offset = m.cursor - visibleEvents + 1
 	}
 }
 
@@ -299,36 +306,36 @@ func (m Model) renderEvents() string {
 	var sb strings.Builder
 	var lastDay string
 	lineCount := 0
+	eventIdx := 0
 
 	for i, event := range m.filtered {
-		if i < m.offset {
+		// Skip events before offset (counting actual events, not lines)
+		if eventIdx < m.offset {
+			eventIdx++
 			continue
-		}
-		if lineCount >= visibleLines {
-			break
 		}
 
 		// Day header
 		if m.groupByDay {
 			day := event.Timestamp.Format("Mon, Jan 2 2006")
 			if day != lastDay {
-				if lineCount > 0 {
+				if lineCount < visibleLines {
+					sb.WriteString(headerStyle.Render(fmt.Sprintf("── %s ──", day)))
 					sb.WriteString("\n")
 					lineCount++
 				}
-				sb.WriteString(headerStyle.Render(fmt.Sprintf("── %s ──", day)))
-				sb.WriteString("\n")
-				lineCount++
 				lastDay = day
-				if lineCount >= visibleLines {
-					break
-				}
 			}
+		}
+
+		if lineCount >= visibleLines {
+			break
 		}
 
 		sb.WriteString(m.renderEvent(i, event))
 		sb.WriteString("\n")
 		lineCount++
+		eventIdx++
 	}
 
 	return sb.String()

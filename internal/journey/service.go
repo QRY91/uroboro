@@ -31,7 +31,7 @@ func (s *Service) GenerateJourney(opts Options) (*JourneyData, error) {
 	allEvents := append(events, commitEvents...)
 
 	sort.Slice(allEvents, func(i, j int) bool {
-		return allEvents[i].Timestamp.Before(allEvents[j].Timestamp)
+		return allEvents[i].Timestamp.After(allEvents[j].Timestamp)
 	})
 
 	projects := s.generateProjectSummaries(allEvents)
@@ -110,9 +110,9 @@ func (s *Service) getGitCommits(dr DateRange) []GitCommit {
 		}
 		parts := strings.Split(line, "|")
 		if len(parts) >= 4 {
-			var ts time.Time
-			fmt.Sscanf(parts[2], "%d", &ts)
-			ts = time.Unix(ts.Unix(), 0)
+			var unix int64
+			fmt.Sscanf(parts[2], "%d", &unix)
+			ts := time.Unix(unix, 0)
 			commits = append(commits, GitCommit{
 				Hash: parts[0], Message: parts[1], Timestamp: ts, Author: parts[3],
 			})

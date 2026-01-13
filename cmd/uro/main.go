@@ -27,22 +27,10 @@ func main() {
 	switch os.Args[1] {
 	case "capture", "-c":
 		handleCapture(os.Args[2:])
-	case "d", "decide":
-		handleCapture(prependTags(os.Args[2:], "decision"))
-	case "b", "block", "blocker":
-		handleCapture(prependTags(os.Args[2:], "blocker"))
-	case "q", "question":
-		handleCapture(prependTags(os.Args[2:], "question"))
 	case "search":
 		handleSearch(os.Args[2:])
-	case "mcp":
-		handleMCP()
-	case "recap":
-		handleRecap(os.Args[2:])
 	case "timeline", "-t":
 		handleTimeline(os.Args[2:])
-	case "web", "-w":
-		handleWeb(os.Args[2:])
 	case "status", "-s":
 		handleStatus(os.Args[2:])
 	case "report", "-r":
@@ -163,7 +151,6 @@ func handleTimeline(args []string) {
 	days := fs.Int("days", 7, "Number of days to show")
 	project := fs.String("project", "", "Filter by project")
 	export := fs.Bool("export", false, "Export to JSON file")
-	exportHTML := fs.Bool("export-html", false, "Export to standalone HTML file")
 	fs.Parse(args)
 
 	db, err := database.NewDB(getDBPath())
@@ -198,21 +185,6 @@ func handleTimeline(args []string) {
 		enc := json.NewEncoder(f)
 		enc.SetIndent("", "  ")
 		enc.Encode(data)
-		fmt.Printf("Exported to %s\n", filename)
-		return
-	}
-
-	if *exportHTML {
-		html, err := GenerateStandaloneHTML(data)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "HTML generation error: %v\n", err)
-			os.Exit(1)
-		}
-		filename := fmt.Sprintf("timeline-%d-days.html", *days)
-		if err := os.WriteFile(filename, []byte(html), 0644); err != nil {
-			fmt.Fprintf(os.Stderr, "Write error: %v\n", err)
-			os.Exit(1)
-		}
 		fmt.Printf("Exported to %s\n", filename)
 		return
 	}
@@ -294,21 +266,14 @@ func printUsage() {
 
 Commands:
   capture "content"    Capture a work insight
-  d "X over Y"         Quick decision capture
-  b "waiting on X"     Quick blocker capture
-  q "open question"    Quick question capture
   search "keyword"     Search past captures
-  recap                Show recent decisions, blockers, commits
   timeline             View interactive timeline (TUI)
-  web                  View timeline in browser (GUI)
   status               Show recent activity
   report               Generate time report for billing
-  mcp                  Start MCP server (for Claude Code)
 
 Aliases:
   uro -c "content"     capture
   uro -t               timeline
-  uro -w               web
   uro -s               status
   uro -r               report
 
@@ -323,22 +288,6 @@ Search options:
   --days N             Limit to last N days
   --limit N            Maximum results (default: 20)
 
-Timeline options:
-  --days N             Days to show (default: 7)
-  --project NAME       Filter by project
-  --export             Export to JSON file
-  --export-html        Export to standalone HTML file
-
-Web options:
-  --days N             Days to show (default: 7)
-  --port N             HTTP port (default: 8080)
-  --project NAME       Filter by project
-
-Recap options:
-  --days N             Days to look back (default: 7)
-  --project NAME       Filter by project
-  --branch NAME        Scope to git branch
-
 Report options:
   --days N             Days to include (default: 7)
   --project NAME       Filter by project
@@ -347,26 +296,16 @@ Report options:
   --gap MINUTES        Session gap threshold (default: 30)
 
 Examples:
-  uro d "JWT over sessions - stateless scaling"
-  uro b "waiting on backend API"
-  uro q "token revocation strategy?"
-  uro recap --days 14
+  uro capture "Fixed auth bug in login flow"
+  uro capture "Morning standup notes" --time "2024-01-15 09:00"
   uro search "auth" --project myapp
   uro timeline --days 14
-  uro web --port 3000
-  uro timeline --export-html --days 30`)
+  uro report --days 7 --format markdown
+  uro report --project myapp --format csv --output timesheet.csv`)
 }
 
 func getDBPath() string {
 	dbPath := common.GetDefaultDBPath()
 	os.MkdirAll(filepath.Dir(dbPath), 0755)
 	return dbPath
-}
-
-func prependTags(args []string, tag string) []string {
-	if len(args) == 0 {
-		return args
-	}
-	// Keep content first, then add --tags flag
-	return append([]string{args[0], "--tags", tag}, args[1:]...)
 }

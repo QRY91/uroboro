@@ -3144,3 +3144,179 @@ button:focus,
         font-size: 1rem;
     }
 }
+
+/* ================================
+   NEW SECTIONS - Landing Page Revision 2025-01
+   ================================ */
+
+/* Demo Scenario Styling */
+.demo-scenario {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.demo-context {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Recap Output Styling */
+.recap-output {
+    text-align: left;
+    font-style: normal;
+}
+
+.recap-output pre {
+    margin: 0;
+    padding: var(--space-sm);
+    background: var(--bg-dark);
+    border-radius: var(--radius);
+    overflow-x: auto;
+}
+
+.recap-output code {
+    background: none;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    white-space: pre;
+}
+
+.recap-header {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* How It Works Section */
+.how-it-works {
+    background: rgba(42, 31, 61, 0.6);
+    backdrop-filter: blur(5px);
+}
+
+.workflow-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xl);
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.workflow-step {
+    background: var(--bg-primary);
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.workflow-step .step-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--text-inverse);
+    margin: 0 auto var(--space-md);
+}
+
+.workflow-step h3 {
+    margin-bottom: var(--space-md);
+    color: var(--text-primary);
+}
+
+.workflow-step .code-block {
+    margin-bottom: var(--space-md);
+}
+
+.workflow-step p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Claude Code Integration Section */
+.claude-integration {
+    background: rgba(30, 27, 46, 0.6);
+    backdrop-filter: blur(5px);
+}
+
+.integration-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2xl);
+    max-width: 1000px;
+    margin: 0 auto;
+    align-items: start;
+}
+
+.integration-description p {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-lg);
+}
+
+.integration-features {
+    list-style: none;
+    padding: 0;
+}
+
+.integration-features li {
+    padding: var(--space-sm) 0;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+}
+
+.integration-features li:last-child {
+    border-bottom: none;
+}
+
+.integration-features strong {
+    color: var(--accent);
+    font-family: var(--font-mono);
+}
+
+.integration-demo {
+    background: var(--bg-primary);
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+}
+
+.integration-demo h4 {
+    margin-bottom: var(--space-md);
+    color: var(--text-primary);
+}
+
+.integration-demo .code-block {
+    margin-bottom: var(--space-md);
+}
+
+.integration-demo .code-block pre {
+    margin: 0;
+}
+
+/* Responsive for new sections */
+@media (max-width: 768px) {
+    .workflow-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+    }
+
+    .integration-content {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+    }
+
+    .value-props {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .value-props {
+        grid-template-columns: 1fr;
+    }
+}

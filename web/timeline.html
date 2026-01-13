@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>uroboro timeline</title>
+  <link rel="stylesheet" href="timeline.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+  <div class="container" x-data="timeline()" x-init="init()">
+    <!-- Header -->
+    <header>
+      <h1>uroboro</h1>
+      <div class="stats">
+        <span x-text="filteredEvents.length + ' events'"></span>
+        <span x-text="data.projects?.length + ' projects'"></span>
+      </div>
+    </header>
+
+    <!-- Filters -->
+    <div class="filters">
+      <select x-model="projectFilter">
+        <option value="">All Projects</option>
+        <template x-for="p in data.projects" :key="p.name">
+          <option :value="p.name" x-text="p.name"></option>
+        </template>
+      </select>
+
+      <select x-model="typeFilter">
+        <option value="">All Types</option>
+        <template x-for="t in eventTypes" :key="t">
+          <option :value="t" x-text="t"></option>
+        </template>
+      </select>
+
+      <input
+        type="search"
+        x-model="searchQuery"
+        placeholder="Search content, project, tags..."
+        @keydown.escape="searchQuery = ''"
+      >
+
+      <button
+        @click="groupByDay = !groupByDay"
+        :class="{ active: groupByDay }"
+      >
+        Group by Day
+      </button>
+    </div>
+
+    <!-- Timeline -->
+    <main class="timeline">
+      <!-- Empty state -->
+      <div class="empty-state" x-show="filteredEvents.length === 0">
+        No events match filters.
+      </div>
+
+      <!-- Grouped view -->
+      <template x-if="groupByDay">
+        <div>
+          <template x-for="(group, date) in groupedEvents" :key="date">
+            <div class="day-group">
+              <h2 class="day-header" x-text="date"></h2>
+              <template x-for="event in group" :key="event.timestamp + event.content">
+                <div
+                  class="event"
+                  :style="'border-left-color: ' + getProjectColor(event.project)"
+                  @click="selectedEvent = event"
+                >
+                  <time x-text="formatTime(event.timestamp)"></time>
+                  <span class="project" :style="'color: ' + getProjectColor(event.project)" x-text="event.project || '-'"></span>
+                  <span class="type-icon" :class="'type-' + event.eventType" x-text="getTypeIcon(event.eventType)"></span>
+                  <span class="content" x-text="event.content"></span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <!-- Flat view -->
+      <template x-if="!groupByDay">
+        <div>
+          <template x-for="event in filteredEvents" :key="event.timestamp + event.content">
+            <div
+              class="event"
+              :style="'border-left-color: ' + getProjectColor(event.project)"
+              @click="selectedEvent = event"
+            >
+              <time x-text="formatTime(event.timestamp)"></time>
+              <span class="project" :style="'color: ' + getProjectColor(event.project)" x-text="event.project || '-'"></span>
+              <span class="type-icon" :class="'type-' + event.eventType" x-text="getTypeIcon(event.eventType)"></span>
+              <span class="content" x-text="event.content"></span>
+            </div>
+          </template>
+        </div>
+      </template>
+    </main>
+
+    <!-- Detail Modal -->
+    <div
+      class="modal-backdrop"
+      x-show="selectedEvent"
+      x-transition.opacity
+      @click.self="selectedEvent = null"
+      @keydown.escape.window="selectedEvent = null"
+    >
+      <div class="modal-content" x-show="selectedEvent" x-transition.scale.90>
+        <h3>Event Details</h3>
+        <dl>
+          <dt>Time</dt>
+          <dd x-text="selectedEvent ? formatDateTime(selectedEvent.timestamp) : ''"></dd>
+
+          <dt>Project</dt>
+          <dd :style="'color: ' + getProjectColor(selectedEvent?.project)" x-text="selectedEvent?.project || '-'"></dd>
+
+          <dt>Type</dt>
+          <dd x-text="selectedEvent?.eventType"></dd>
+
+          <template x-if="selectedEvent?.tags?.length">
+            <dt>Tags</dt>
+          </template>
+          <template x-if="selectedEvent?.tags?.length">
+            <dd x-text="selectedEvent?.tags?.join(', ')"></dd>
+          </template>
+
+          <template x-if="selectedEvent?.gitHash">
+            <dt>Commit</dt>
+          </template>
+          <template x-if="selectedEvent?.gitHash">
+            <dd x-text="selectedEvent?.gitHash?.slice(0, 8)"></dd>
+          </template>
+        </dl>
+
+        <div class="content-block" x-text="selectedEvent?.content"></div>
+
+        <button @click="selectedEvent = null">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function timeline() {
+      return {
+        // Data - injected by Go server or embedded as JSON
+        data: window.JOURNEY_DATA || { events: [], projects: [], stats: {}, milestones: [] },
+
+        // Filter state
+        projectFilter: '',
+        typeFilter: '',
+        searchQuery: '',
+        groupByDay: true,
+        selectedEvent: null,
+
+        // Constants
+        eventTypes: ['capture', 'commit', 'milestone', 'learning', 'decision', 'bugfix', 'feature'],
+        projectColors: {},
+        colorPalette: [
+          '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
+          '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'
+        ],
+
+        init() {
+          // Build project color map
+          if (this.data.projects) {
+            this.data.projects.forEach((p, i) => {
+              this.projectColors[p.name] = p.color || this.colorPalette[i % this.colorPalette.length];
+            });
+          }
+        },
+
+        get filteredEvents() {
+          if (!this.data.events) return [];
+
+          return this.data.events.filter(e => {
+            // Project filter
+            if (this.projectFilter && e.project !== this.projectFilter) return false;
+
+            // Type filter
+            if (this.typeFilter && e.eventType !== this.typeFilter) return false;
+
+            // Search filter
+            if (this.searchQuery) {
+              const q = this.searchQuery.toLowerCase();
+              const inContent = (e.content || '').toLowerCase().includes(q);
+              const inProject = (e.project || '').toLowerCase().includes(q);
+              const inTags = (e.tags || []).some(t => t.toLowerCase().includes(q));
+              if (!inContent && !inProject && !inTags) return false;
+            }
+
+            return true;
+          });
+        },
+
+        get groupedEvents() {
+          const groups = {};
+
+          this.filteredEvents.forEach(event => {
+            const date = new Date(event.timestamp).toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            });
+
+            if (!groups[date]) groups[date] = [];
+            groups[date].push(event);
+          });
+
+          return groups;
+        },
+
+        formatTime(ts) {
+          return new Date(ts).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+        },
+
+        formatDateTime(ts) {
+          return new Date(ts).toLocaleString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+        },
+
+        getProjectColor(project) {
+          return this.projectColors[project] || '#626262';
+        },
+
+        getTypeIcon(type) {
+          const icons = {
+            commit: 'git',
+            milestone: '***',
+            learning: 'lrn',
+            decision: 'dec',
+            bugfix: 'fix',
+            feature: 'fea'
+          };
+          return icons[type] || 'cap';
+        }
+      };
+    }
+  </script>
+</body>
+</html>

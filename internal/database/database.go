@@ -106,6 +106,7 @@ type CaptureQuery struct {
 	Project string
 	Limit   int
 	Since   *time.Time
+	Keyword string // Text search in content (case-insensitive LIKE)
 }
 
 func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
@@ -123,6 +124,10 @@ func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
 	if q.Project != "" {
 		query += ` AND project = ?`
 		args = append(args, q.Project)
+	}
+	if q.Keyword != "" {
+		query += ` AND content LIKE ?`
+		args = append(args, "%"+q.Keyword+"%")
 	}
 
 	query += ` ORDER BY timestamp DESC`
