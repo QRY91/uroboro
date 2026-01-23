@@ -30,12 +30,26 @@ uro recap --days 7
 # Interactive timeline (TUI)
 uro timeline
 
+# Web timeline (scrollable, detailed)
+uro web --port 8080
+
+# Graph view (auto-scaled overview, fits screen)
+uro graph --days 90
+
 # Activity summary
 uro status
 
 # Time reports for billing
 uro report --days 7 --format markdown
 ```
+
+## Visualization
+
+**Timeline** (`uro timeline`) — Terminal UI for browsing events with filters.
+
+**Web** (`uro web`) — Scrollable browser timeline with compact mode that collapses rest periods.
+
+**Graph** (`uro graph`) — Canvas scatter plot showing all activity at a glance. Projects on Y-axis, time on X-axis. Scales to thousands of days.
 
 ## Claude Code Integration
 
@@ -81,7 +95,7 @@ All captures stored locally:
 ~/.local/share/uroboro/uroboro.sqlite
 ```
 
-Export via `uro timeline --export` (JSON) or `uro report --format csv`.
+Export via `uro timeline --export` (JSON), `uro timeline --export-html` (standalone HTML), or `uro report --format csv`.
 
 ## License
 

@@ -97,6 +97,7 @@ func getMCPTools() []map[string]interface{} {
 					"decision":     map[string]string{"type": "string", "description": "What was decided (e.g., 'JWT over sessions')"},
 					"reasoning":    map[string]string{"type": "string", "description": "Why (e.g., 'stateless, scales horizontally')"},
 					"alternatives": map[string]string{"type": "string", "description": "What else was considered"},
+					"timestamp":    map[string]string{"type": "string", "description": "ISO timestamp for retroactive logging (e.g., 2024-01-15T14:30:00)"},
 				},
 				"required": []string{"decision"},
 			},
@@ -109,6 +110,7 @@ func getMCPTools() []map[string]interface{} {
 				"properties": map[string]interface{}{
 					"blocker":    map[string]string{"type": "string", "description": "What is blocking"},
 					"waiting_on": map[string]string{"type": "string", "description": "Who/what we're waiting on"},
+					"timestamp":  map[string]string{"type": "string", "description": "ISO timestamp for retroactive logging (e.g., 2024-01-15T14:30:00)"},
 				},
 				"required": []string{"blocker"},
 			},
@@ -119,7 +121,8 @@ func getMCPTools() []map[string]interface{} {
 			"inputSchema": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
-					"question": map[string]string{"type": "string", "description": "The open question"},
+					"question":  map[string]string{"type": "string", "description": "The open question"},
+					"timestamp": map[string]string{"type": "string", "description": "ISO timestamp for retroactive logging (e.g., 2024-01-15T14:30:00)"},
 				},
 				"required": []string{"question"},
 			},
@@ -130,8 +133,9 @@ func getMCPTools() []map[string]interface{} {
 			"inputSchema": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
-					"content": map[string]string{"type": "string", "description": "What to capture"},
-					"tags":    map[string]string{"type": "string", "description": "Comma-separated tags"},
+					"content":   map[string]string{"type": "string", "description": "What to capture"},
+					"tags":      map[string]string{"type": "string", "description": "Comma-separated tags"},
+					"timestamp": map[string]string{"type": "string", "description": "ISO timestamp for retroactive logging (e.g., 2024-01-15T14:30:00)"},
 				},
 				"required": []string{"content"},
 			},
@@ -183,6 +187,7 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			Decision     string `json:"decision"`
 			Reasoning    string `json:"reasoning"`
 			Alternatives string `json:"alternatives"`
+			Timestamp    string `json:"timestamp"`
 		}
 		json.Unmarshal(params.Arguments, &args)
 
@@ -194,13 +199,14 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			content += " (considered: " + args.Alternatives + ")"
 		}
 
-		err = mcpCapture(content, []string{"decision"})
+		err = mcpCapture(content, []string{"decision"}, args.Timestamp)
 		resultText = "Decision recorded"
 
 	case "uro_blocker":
 		var args struct {
 			Blocker   string `json:"blocker"`
 			WaitingOn string `json:"waiting_on"`
+			Timestamp string `json:"timestamp"`
 		}
 		json.Unmarshal(params.Arguments, &args)
 
@@ -209,22 +215,24 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			content += " (waiting on: " + args.WaitingOn + ")"
 		}
 
-		err = mcpCapture(content, []string{"blocker"})
+		err = mcpCapture(content, []string{"blocker"}, args.Timestamp)
 		resultText = "Blocker recorded"
 
 	case "uro_question":
 		var args struct {
-			Question string `json:"question"`
+			Question  string `json:"question"`
+			Timestamp string `json:"timestamp"`
 		}
 		json.Unmarshal(params.Arguments, &args)
 
-		err = mcpCapture(args.Question, []string{"question"})
+		err = mcpCapture(args.Question, []string{"question"}, args.Timestamp)
 		resultText = "Question recorded"
 
 	case "uro_capture":
 		var args struct {
-			Content string `json:"content"`
-			Tags    string `json:"tags"`
+			Content   string `json:"content"`
+			Tags      string `json:"tags"`
+			Timestamp string `json:"timestamp"`
 		}
 		json.Unmarshal(params.Arguments, &args)
 
@@ -235,7 +243,7 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			}
 		}
 
-		err = mcpCapture(args.Content, tags)
+		err = mcpCapture(args.Content, tags, args.Timestamp)
 		resultText = "Captured"
 
 	case "uro_recap":
@@ -290,7 +298,7 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 	}
 }
 
-func mcpCapture(content string, tags []string) error {
+func mcpCapture(content string, tags []string, timestampStr string) error {
 	db, err := database.NewDB(getDBPath())
 	if err != nil {
 		return err
@@ -300,8 +308,33 @@ func mcpCapture(content string, tags []string) error {
 	project := detectProject()
 	tagsStr := strings.Join(tags, ",")
 
-	_, err = db.InsertCapture(content, project, tagsStr, nil)
+	var ts *time.Time
+	if timestampStr != "" {
+		parsed, err := mcpParseTimestamp(timestampStr)
+		if err != nil {
+			return fmt.Errorf("invalid timestamp: %w", err)
+		}
+		ts = &parsed
+	}
+
+	_, err = db.InsertCapture(content, project, tagsStr, ts)
 	return err
+}
+
+func mcpParseTimestamp(s string) (time.Time, error) {
+	formats := []string{
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04",
+		"2006-01-02 15:04",
+		"2006-01-02",
+	}
+	for _, format := range formats {
+		if t, err := time.ParseInLocation(format, s, time.Local); err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("could not parse '%s'", s)
 }
 
 func mcpRecap(days int) (string, error) {

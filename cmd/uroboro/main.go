@@ -43,6 +43,8 @@ func main() {
 		handleTimeline(os.Args[2:])
 	case "web", "-w":
 		handleWeb(os.Args[2:])
+	case "graph", "-g":
+		handleGraph(os.Args[2:])
 	case "status", "-s":
 		handleStatus(os.Args[2:])
 	case "report", "-r":
@@ -300,7 +302,8 @@ Commands:
   search "keyword"     Search past captures
   recap                Show recent decisions, blockers, commits
   timeline             View interactive timeline (TUI)
-  web                  View timeline in browser (GUI)
+  web                  View scrollable timeline in browser
+  graph                View auto-scaled overview graph (fits screen)
   status               Show recent activity
   report               Generate time report for billing
   mcp                  Start MCP server (for Claude Code)
@@ -309,6 +312,7 @@ Aliases:
   uro -c "content"     capture
   uro -t               timeline
   uro -w               web
+  uro -g               graph
   uro -s               status
   uro -r               report
 
@@ -334,6 +338,11 @@ Web options:
   --port N             HTTP port (default: 8080)
   --project NAME       Filter by project
 
+Graph options:
+  --days N             Days to show (default: 30)
+  --port N             HTTP port (default: 8080)
+  --project NAME       Filter by project
+
 Recap options:
   --days N             Days to look back (default: 7)
   --project NAME       Filter by project
@@ -354,6 +363,7 @@ Examples:
   uro search "auth" --project myapp
   uro timeline --days 14
   uro web --port 3000
+  uro graph --days 60
   uro timeline --export-html --days 30`)
 }
 
