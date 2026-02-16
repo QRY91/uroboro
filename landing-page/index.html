@@ -224,6 +224,55 @@
         </div>
     </section>
 
+    <!-- Visualization Section -->
+    <section class="visualize" aria-labelledby="visualize-heading">
+        <div class="container">
+            <header class="section-header">
+                <h2 id="visualize-heading">Visualize Your Work</h2>
+                <p class="section-subtitle">Three ways to see what happened</p>
+            </header>
+
+            <div class="viz-grid" role="list">
+                <div class="viz-card" role="listitem">
+                    <div class="viz-header">
+                        <span class="viz-icon" aria-hidden="true">&#9614;</span>
+                        <h3>Timeline TUI</h3>
+                    </div>
+                    <div class="code-block">
+                        <code>$ uro timeline</code>
+                    </div>
+                    <p>Interactive terminal UI with vim-style navigation. Filter by project, type, or keyword. Group by day.</p>
+                </div>
+
+                <div class="viz-card" role="listitem">
+                    <div class="viz-header">
+                        <span class="viz-icon" aria-hidden="true">&#9783;</span>
+                        <h3>Web Timeline</h3>
+                    </div>
+                    <div class="code-block">
+                        <code>$ uro web --port 8080</code>
+                    </div>
+                    <p>Scrollable browser timeline with compact mode that collapses rest periods. List and horizontal views.</p>
+                </div>
+
+                <div class="viz-card" role="listitem">
+                    <div class="viz-header">
+                        <span class="viz-icon" aria-hidden="true">&#11044;</span>
+                        <h3>Graph View</h3>
+                    </div>
+                    <div class="code-block">
+                        <code>$ uro graph --days 90</code>
+                    </div>
+                    <p>Canvas scatter plot of all activity. Projects on Y-axis, time on X-axis. Scales to thousands of days.</p>
+                </div>
+            </div>
+
+            <div class="viz-extras">
+                <p>Export to <strong>JSON</strong>, <strong>HTML</strong>, <strong>Markdown</strong>, or <strong>CSV</strong>. Generate time reports for billing with <code>uro report</code>.</p>
+            </div>
+        </div>
+    </section>
+
     <!-- Claude Code Integration Section -->
     <section class="claude-integration" aria-labelledby="claude-heading">
         <div class="container">
@@ -239,21 +288,16 @@
                         <li><strong>uro_decision</strong> — Captured when Claude makes architectural choices</li>
                         <li><strong>uro_blocker</strong> — Logged when work is blocked on external factors</li>
                         <li><strong>uro_question</strong> — Saved when open questions are deferred</li>
+                        <li><strong>uro_capture</strong> — General context capture with tags</li>
                         <li><strong>uro_recap</strong> — Claude checks context at session start</li>
+                        <li><strong>uro_search</strong> — Search past captures by keyword</li>
                     </ul>
                 </div>
 
                 <div class="integration-demo">
-                    <h4>Add to your Claude Code config:</h4>
+                    <h4>One command to set up:</h4>
                     <div class="code-block">
-                        <pre><code>{
-  "mcpServers": {
-    "uroboro": {
-      "command": "uroboro",
-      "args": ["mcp"]
-    }
-  }
-}</code></pre>
+                        <pre><code>claude mcp add uroboro --scope user -- uroboro mcp</code></pre>
                     </div>
                     <p class="demo-note">Then in <code>~/.claude/CLAUDE.md</code>, tell Claude to use the tools automatically.</p>
                 </div>
@@ -286,7 +330,7 @@
     <!-- Bottom Tickertape -->
     <div class="tickertape tickertape-bottom" aria-hidden="true" role="presentation">
         <div class="tickertape-content">
-            capture recall search
+            capture recall visualize
         </div>
     </div>
 

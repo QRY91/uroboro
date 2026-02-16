@@ -3238,6 +3238,73 @@ button:focus,
     margin: 0;
 }
 
+/* Visualization Section */
+.visualize {
+    background: rgba(42, 31, 61, 0.4);
+    backdrop-filter: blur(5px);
+}
+
+.viz-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xl);
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.viz-card {
+    background: var(--bg-primary);
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+}
+
+.viz-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.viz-icon {
+    font-size: 1.5rem;
+    color: var(--accent);
+}
+
+.viz-header h3 {
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.viz-card .code-block {
+    margin-bottom: var(--space-md);
+}
+
+.viz-card p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.viz-extras {
+    text-align: center;
+    margin-top: var(--space-xl);
+    color: var(--text-secondary);
+}
+
+.viz-extras strong {
+    color: var(--accent);
+}
+
+.viz-extras code {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    background: var(--bg-tertiary);
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius);
+    font-size: 0.9em;
+}
+
 /* Claude Code Integration Section */
 .claude-integration {
     background: rgba(30, 27, 46, 0.6);
@@ -3301,6 +3368,11 @@ button:focus,
 /* Responsive for new sections */
 @media (max-width: 768px) {
     .workflow-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+    }
+
+    .viz-grid {
         grid-template-columns: 1fr;
         gap: var(--space-lg);
     }

@@ -21,11 +21,15 @@ uro d "JWT over sessions — stateless, scales horizontally"  # decision
 uro b "waiting on backend API"                               # blocker
 uro q "token revocation strategy?"                           # question
 
+# Retroactive capture (backdate entries)
+uro capture "Shipped v2 auth" --time "2024-01-15 14:30"
+
 # Search past captures
 uro search "auth" --project myapp --days 30
 
 # See recent context (decisions, blockers, commits)
 uro recap --days 7
+uro recap --days 7 --branch feature/auth --brief
 
 # Interactive timeline (TUI)
 uro timeline
