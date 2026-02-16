@@ -134,6 +134,7 @@ func (s *Service) capturesToEvents(captures []database.Capture) []TimelineEvent 
 			Timestamp:  c.Timestamp,
 			Content:    c.Content,
 			Project:    c.Project,
+			Branch:     c.Branch,
 			Tags:       tags,
 			EventType:  s.determineEventType(c.Content, c.Tags),
 			Importance: s.calcImportance(c.Content, c.Tags),
@@ -238,6 +239,10 @@ func (s *Service) determineEventType(content, tags string) string {
 		return EventTypeBugfix
 	case strings.Contains(lt, "feature") || strings.Contains(lc, "implemented"):
 		return EventTypeFeature
+	case strings.Contains(lt, "blocker"):
+		return EventTypeBlocker
+	case strings.Contains(lt, "question"):
+		return EventTypeQuestion
 	default:
 		return EventTypeCapture
 	}

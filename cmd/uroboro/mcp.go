@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	urocontext "github.com/QRY91/uroboro/internal/context"
 	"github.com/QRY91/uroboro/internal/database"
 )
 
@@ -146,7 +147,8 @@ func getMCPTools() []map[string]interface{} {
 			"inputSchema": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
-					"days": map[string]interface{}{"type": "integer", "description": "Days to look back (default: 7)"},
+					"days":   map[string]interface{}{"type": "integer", "description": "Days to look back (default: 7)"},
+					"branch": map[string]string{"type": "string", "description": "Filter by git branch"},
 				},
 			},
 		},
@@ -156,8 +158,9 @@ func getMCPTools() []map[string]interface{} {
 			"inputSchema": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
-					"query": map[string]string{"type": "string", "description": "Search keywords"},
-					"days":  map[string]interface{}{"type": "integer", "description": "Days to search (default: 30)"},
+					"query":  map[string]string{"type": "string", "description": "Search keywords"},
+					"days":   map[string]interface{}{"type": "integer", "description": "Days to search (default: 30)"},
+					"branch": map[string]string{"type": "string", "description": "Filter by git branch"},
 				},
 				"required": []string{"query"},
 			},
@@ -248,7 +251,8 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 
 	case "uro_recap":
 		var args struct {
-			Days int `json:"days"`
+			Days   int    `json:"days"`
+			Branch string `json:"branch"`
 		}
 		json.Unmarshal(params.Arguments, &args)
 
@@ -256,12 +260,13 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			args.Days = 7
 		}
 
-		resultText, err = mcpRecap(args.Days)
+		resultText, err = mcpRecap(args.Days, args.Branch)
 
 	case "uro_search":
 		var args struct {
-			Query string `json:"query"`
-			Days  int    `json:"days"`
+			Query  string `json:"query"`
+			Days   int    `json:"days"`
+			Branch string `json:"branch"`
 		}
 		json.Unmarshal(params.Arguments, &args)
 
@@ -269,7 +274,7 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			args.Days = 30
 		}
 
-		resultText, err = mcpSearch(args.Query, args.Days)
+		resultText, err = mcpSearch(args.Query, args.Days, args.Branch)
 
 	default:
 		return MCPResponse{
@@ -305,7 +310,9 @@ func mcpCapture(content string, tags []string, timestampStr string) error {
 	}
 	defer db.Close()
 
+	detector := urocontext.NewProjectDetector()
 	project := detectProject()
+	branch := detector.DetectBranch()
 	tagsStr := strings.Join(tags, ",")
 
 	var ts *time.Time
@@ -317,7 +324,7 @@ func mcpCapture(content string, tags []string, timestampStr string) error {
 		ts = &parsed
 	}
 
-	_, err = db.InsertCapture(content, project, tagsStr, ts)
+	_, err = db.InsertCapture(content, project, tagsStr, branch, ts)
 	return err
 }
 
@@ -337,7 +344,7 @@ func mcpParseTimestamp(s string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("could not parse '%s'", s)
 }
 
-func mcpRecap(days int) (string, error) {
+func mcpRecap(days int, branch string) (string, error) {
 	db, err := database.NewDB(getDBPath())
 	if err != nil {
 		return "", err
@@ -350,6 +357,7 @@ func mcpRecap(days int) (string, error) {
 	captures, err := db.QueryCaptures(database.CaptureQuery{
 		Days:    days,
 		Project: project,
+		Branch:  branch,
 		Limit:   50,
 	})
 	if err != nil {
@@ -419,7 +427,7 @@ func mcpRecap(days int) (string, error) {
 	return sb.String(), nil
 }
 
-func mcpSearch(query string, days int) (string, error) {
+func mcpSearch(query string, days int, branch string) (string, error) {
 	db, err := database.NewDB(getDBPath())
 	if err != nil {
 		return "", err
@@ -429,6 +437,7 @@ func mcpSearch(query string, days int) (string, error) {
 	captures, err := db.QueryCaptures(database.CaptureQuery{
 		Keyword: query,
 		Days:    days,
+		Branch:  branch,
 		Limit:   20,
 	})
 	if err != nil {
@@ -445,9 +454,14 @@ func mcpSearch(query string, days int) (string, error) {
 		if proj == "" {
 			proj = "-"
 		}
-		sb.WriteString(fmt.Sprintf("%s  [%s]  %s\n",
+		branchInfo := ""
+		if c.Branch != "" {
+			branchInfo = " @" + c.Branch
+		}
+		sb.WriteString(fmt.Sprintf("%s  [%s%s]  %s\n",
 			c.Timestamp.Format("2006-01-02 15:04"),
 			proj,
+			branchInfo,
 			c.Content,
 		))
 	}
@@ -456,19 +470,10 @@ func mcpSearch(query string, days int) (string, error) {
 }
 
 func detectProject() string {
-	// Try git remote
-	out, err := exec.Command("git", "remote", "get-url", "origin").Output()
-	if err == nil {
-		url := strings.TrimSpace(string(out))
-		// Extract repo name from URL
-		parts := strings.Split(url, "/")
-		if len(parts) > 0 {
-			name := parts[len(parts)-1]
-			name = strings.TrimSuffix(name, ".git")
-			if name != "" {
-				return name
-			}
-		}
+	// Use shared project detection logic (guards against $HOME dotfiles repos)
+	detector := urocontext.NewProjectDetector()
+	if project := detector.DetectProject(); project != "" {
+		return project
 	}
 
 	// Fall back to directory name

@@ -48,6 +48,7 @@ func handleRecap(args []string) {
 	captures, err := db.QueryCaptures(database.CaptureQuery{
 		Days:    *days,
 		Project: proj,
+		Branch:  *branch,
 		Limit:   100,
 	})
 	if err != nil {

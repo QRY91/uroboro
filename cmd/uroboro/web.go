@@ -42,10 +42,10 @@ header h1::before{content:"";width:12px;height:12px;background:var(--accent);bor
 .event{display:grid;grid-template-columns:50px 120px 40px 1fr;gap:var(--space-sm);align-items:center;padding:var(--space-sm) var(--space-md);border-left:3px solid var(--border);background:transparent;border-radius:0 var(--radius) var(--radius) 0;cursor:pointer;transition:all 0.15s ease;font-family:var(--font-mono);font-size:0.875rem}
 .event:hover{background:var(--bg-tertiary)}
 .event time{color:var(--text-dim);font-size:0.8rem}
-.event .project{font-weight:600;font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.event .project{font-weight:600;font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.event .project:hover{text-decoration:underline}
 .event .type-icon{font-size:0.75rem;font-weight:500;text-align:center}
 .event .content{color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.type-git{color:var(--text-dim)}.type-milestone{color:var(--project-yellow)}.type-learning{color:var(--project-lightblue)}.type-decision{color:var(--project-pink)}.type-bugfix{color:var(--project-red)}.type-feature{color:var(--project-teal)}.type-capture{color:var(--text-dim)}
+.type-git{color:var(--text-dim)}.type-milestone{color:var(--project-yellow)}.type-learning{color:var(--project-lightblue)}.type-decision{color:var(--project-pink)}.type-bugfix{color:var(--project-red)}.type-feature{color:var(--project-teal)}.type-capture{color:var(--text-dim)}.type-blocker{color:var(--project-red)}.type-question{color:var(--project-yellow)}
 .empty-state{text-align:center;padding:var(--space-xl);color:var(--text-muted);font-family:var(--font-mono)}
 /* Horizontal Timeline View */
 .h-timeline{position:relative;overflow-x:auto;overflow-y:hidden;padding:var(--space-md) 0}
@@ -61,7 +61,7 @@ header h1::before{content:"";width:12px;height:12px;background:var(--accent);bor
 .h-timeline-event:hover{transform:translateY(-50%) scale(1.5);z-index:20}
 .h-timeline-event::before{content:attr(data-time);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);white-space:nowrap;opacity:0;transition:opacity 0.15s}
 .h-timeline-event:hover::before{opacity:1}
-.h-timeline-event.type-commit{background:var(--text-dim)}.h-timeline-event.type-milestone{background:var(--project-yellow)}.h-timeline-event.type-learning{background:var(--project-lightblue)}.h-timeline-event.type-decision{background:var(--project-pink)}.h-timeline-event.type-bugfix{background:var(--project-red)}.h-timeline-event.type-feature{background:var(--project-teal)}.h-timeline-event.type-capture{background:var(--text-muted)}
+.h-timeline-event.type-commit{background:var(--text-dim)}.h-timeline-event.type-milestone{background:var(--project-yellow)}.h-timeline-event.type-learning{background:var(--project-lightblue)}.h-timeline-event.type-decision{background:var(--project-pink)}.h-timeline-event.type-bugfix{background:var(--project-red)}.h-timeline-event.type-feature{background:var(--project-teal)}.h-timeline-event.type-capture{background:var(--text-muted)}.h-timeline-event.type-blocker{background:var(--project-red)}.h-timeline-event.type-question{background:var(--project-yellow)}
 .h-timeline-now{position:absolute;top:30px;bottom:0;width:2px;background:var(--accent);z-index:15}
 .h-timeline-now::before{content:'now';position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:0.65rem;color:var(--accent)}
 .h-timeline-gap{position:absolute;top:0;height:100%;background:repeating-linear-gradient(90deg,transparent,transparent 4px,var(--border) 4px,var(--border) 8px);opacity:0.5}
@@ -76,6 +76,31 @@ header h1::before{content:"";width:12px;height:12px;background:var(--accent);bor
 .modal-content .content-block{margin-top:var(--space-md);padding:var(--space-md);background:var(--bg-tertiary);border-radius:var(--radius);white-space:pre-wrap;line-height:1.6}
 .modal-content button{margin-top:var(--space-lg);padding:var(--space-sm) var(--space-md);background:var(--accent);border:none;border-radius:var(--radius);color:white;font-family:var(--font-mono);font-size:0.875rem;cursor:pointer;transition:opacity 0.15s ease}
 .modal-content button:hover{opacity:0.9}
+/* Vertical Timeline (Project Detail) */
+.v-timeline{max-width:700px;margin:0 auto;padding:var(--space-md) 0}
+.v-timeline-stats{font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);display:flex;gap:var(--space-sm);margin-bottom:var(--space-lg);padding-bottom:var(--space-sm);border-bottom:1px dashed var(--border)}
+.v-timeline-line{position:relative;padding-left:28px}
+.v-timeline-line::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.v-timeline-node{position:relative;margin-bottom:var(--space-lg)}
+.v-timeline-dot{position:absolute;left:-24px;top:4px;width:14px;height:14px;border-radius:50%;border:2px solid var(--bg-secondary);z-index:1}
+.v-timeline-dot.type-commit{background:var(--text-dim)}
+.v-timeline-dot.type-milestone{background:var(--project-yellow)}
+.v-timeline-dot.type-learning{background:var(--project-lightblue)}
+.v-timeline-dot.type-decision{background:var(--project-pink)}
+.v-timeline-dot.type-bugfix{background:var(--project-red)}
+.v-timeline-dot.type-feature{background:var(--project-teal)}
+.v-timeline-dot.type-capture{background:var(--text-muted)}
+.v-timeline-dot.type-blocker{background:var(--project-red)}
+.v-timeline-dot.type-question{background:var(--project-yellow)}
+.v-timeline-card{background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-md);cursor:pointer;transition:all 0.15s ease}
+.v-timeline-card:hover{border-color:var(--accent);background:var(--bg-primary)}
+.v-timeline-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-sm)}
+.v-timeline-meta time{font-family:var(--font-mono);font-size:0.75rem;color:var(--text-dim)}
+.v-timeline-type{font-family:var(--font-mono);font-size:0.7rem;font-weight:600;padding:1px 6px;border-radius:3px;background:var(--bg-secondary)}
+.v-timeline-content{font-family:var(--font-mono);font-size:0.875rem;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.v-timeline-tags{display:flex;flex-wrap:wrap;gap:var(--space-xs);margin-top:var(--space-sm)}
+.v-timeline-tag{font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);background:var(--bg-secondary);padding:1px 6px;border-radius:3px;border:1px solid var(--border)}
+.v-timeline-hash{font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);margin-top:var(--space-xs)}
 @media(max-width:640px){.event{grid-template-columns:45px 1fr;gap:var(--space-xs)}.event .project,.event .type-icon{display:none}.filters{flex-direction:column}.filters select,.filters input[type="search"]{width:100%}.view-toggle{display:none}}`
 
 var htmlTemplate = `<!DOCTYPE html>
@@ -88,15 +113,19 @@ var htmlTemplate = `<!DOCTYPE html>
   <style>{{.CSS}}</style>
 </head>
 <body>
-  <div class="container" :class="{ 'list-view': viewMode === 'list' }" x-data="timeline()" x-init="init()">
+  <div class="container" :class="{ 'list-view': viewMode === 'list' || viewMode === 'project' }" x-data="timeline()" x-init="init()">
     <header>
-      <h1>uroboro</h1>
+      <h1>
+        <span x-show="viewMode !== 'project'">uroboro</span>
+        <span x-show="viewMode === 'project'" x-text="selectedProject"></span>
+      </h1>
+      <button x-show="viewMode === 'project'" @click="backToMain()" style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-secondary);font-family:var(--font-mono);font-size:0.875rem;padding:var(--space-xs) var(--space-sm);cursor:pointer">&larr; Back</button>
       <div class="stats">
         <span x-text="filteredEvents.length + ' events'"></span>
         <span x-text="data.projects?.length + ' projects'"></span>
       </div>
     </header>
-    <div class="filters">
+    <div class="filters" x-show="viewMode !== 'project'">
       <select x-model="projectFilter">
         <option value="">All Projects</option>
         <template x-for="p in data.projects" :key="p.name">
@@ -128,7 +157,7 @@ var htmlTemplate = `<!DOCTYPE html>
               <template x-for="event in group" :key="event.timestamp + event.content">
                 <div class="event" :style="'border-left-color: ' + getProjectColor(event.project)" @click="selectedEvent = event">
                   <time x-text="formatTime(event.timestamp)"></time>
-                  <span class="project" :style="'color: ' + getProjectColor(event.project)" x-text="event.project || '-'"></span>
+                  <span class="project" :style="'color: ' + getProjectColor(event.project)" x-text="event.project || '-'" @click.stop="event.project && showProject(event.project)"></span>
                   <span class="type-icon" :class="'type-' + event.eventType" x-text="getTypeIcon(event.eventType)"></span>
                   <span class="content" x-text="event.content"></span>
                 </div>
@@ -142,7 +171,7 @@ var htmlTemplate = `<!DOCTYPE html>
           <template x-for="event in filteredEvents" :key="event.timestamp + event.content">
             <div class="event" :style="'border-left-color: ' + getProjectColor(event.project)" @click="selectedEvent = event">
               <time x-text="formatTime(event.timestamp)"></time>
-              <span class="project" :style="'color: ' + getProjectColor(event.project)" x-text="event.project || '-'"></span>
+              <span class="project" :style="'color: ' + getProjectColor(event.project)" x-text="event.project || '-'" @click.stop="event.project && showProject(event.project)"></span>
               <span class="type-icon" :class="'type-' + event.eventType" x-text="getTypeIcon(event.eventType)"></span>
               <span class="content" x-text="event.content"></span>
             </div>
@@ -171,7 +200,7 @@ var htmlTemplate = `<!DOCTYPE html>
           </template>
           <template x-for="lane in projectLanes" :key="lane.name">
             <div class="h-timeline-lane">
-              <div class="h-timeline-lane-label" :style="'color: ' + getProjectColor(lane.name)" x-text="lane.name || 'No Project'"></div>
+              <div class="h-timeline-lane-label" :style="'color: ' + getProjectColor(lane.name)" x-text="lane.name || 'No Project'" @click="lane.name && showProject(lane.name)" style="cursor:pointer"></div>
               <div class="h-timeline-lane-events">
                 <template x-for="event in getLaneEvents(lane.name)" :key="event.timestamp + event.content">
                   <div class="h-timeline-event"
@@ -187,6 +216,35 @@ var htmlTemplate = `<!DOCTYPE html>
         <div class="h-timeline-now" :style="'left: ' + (compactMode ? getCompactPosition(Date.now()) : nowPosition) + 'px'" x-show="compactMode ? getCompactPosition(Date.now()) > 100 : nowPosition > 100"></div>
       </div>
     </div>
+    <!-- Project Detail: Vertical Timeline -->
+    <div class="v-timeline" x-show="viewMode === 'project'">
+      <div class="v-timeline-stats" x-show="selectedProjectSummary">
+        <span x-text="projectEvents.length + ' events'"></span>
+        <span>&middot;</span>
+        <span x-text="selectedProjectSummary ? 'since ' + formatDateTime(selectedProjectSummary.startDate) : ''"></span>
+      </div>
+      <div class="empty-state" x-show="projectEvents.length === 0">No events for this project.</div>
+      <div class="v-timeline-line">
+        <template x-for="(event, idx) in projectEvents" :key="event.timestamp + event.content">
+          <div class="v-timeline-node" @click="selectedEvent = event">
+            <div class="v-timeline-dot" :class="'type-' + event.eventType"></div>
+            <div class="v-timeline-card">
+              <div class="v-timeline-meta">
+                <time x-text="formatDateTime(event.timestamp)"></time>
+                <span class="v-timeline-type" :class="'type-' + event.eventType" x-text="getTypeIcon(event.eventType)"></span>
+              </div>
+              <div class="v-timeline-content" x-text="event.content"></div>
+              <div class="v-timeline-tags" x-show="event.tags && event.tags.length">
+                <template x-for="tag in (event.tags || [])" :key="tag">
+                  <span class="v-timeline-tag" x-text="tag"></span>
+                </template>
+              </div>
+              <div class="v-timeline-hash" x-show="event.gitHash" x-text="event.gitHash ? event.gitHash.slice(0, 8) : ''"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
     <div class="modal-backdrop" x-show="selectedEvent" x-transition.opacity @click.self="selectedEvent = null" @keydown.escape.window="selectedEvent = null">
       <div class="modal-content" x-show="selectedEvent" x-transition.scale.90>
         <h3>Event Details</h3>
@@ -194,6 +252,8 @@ var htmlTemplate = `<!DOCTYPE html>
           <dt>Time</dt><dd x-text="selectedEvent ? formatDateTime(selectedEvent.timestamp) : ''"></dd>
           <dt>Project</dt><dd :style="'color: ' + getProjectColor(selectedEvent?.project)" x-text="selectedEvent?.project || '-'"></dd>
           <dt>Type</dt><dd x-text="selectedEvent?.eventType"></dd>
+          <template x-if="selectedEvent?.branch"><dt>Branch</dt></template>
+          <template x-if="selectedEvent?.branch"><dd x-text="selectedEvent?.branch"></dd></template>
           <template x-if="selectedEvent?.tags?.length"><dt>Tags</dt></template>
           <template x-if="selectedEvent?.tags?.length"><dd x-text="selectedEvent?.tags?.join(', ')"></dd></template>
           <template x-if="selectedEvent?.gitHash"><dt>Commit</dt></template>
@@ -211,8 +271,9 @@ var htmlTemplate = `<!DOCTYPE html>
         data: window.JOURNEY_DATA || { events: [], projects: [], stats: {}, milestones: [] },
         projectFilter: '', typeFilter: '', searchQuery: '', groupByDay: true, selectedEvent: null,
         viewMode: 'timeline',
+        selectedProject: null,
         compactMode: false,
-        eventTypes: ['capture', 'commit', 'milestone', 'learning', 'decision', 'bugfix', 'feature'],
+        eventTypes: ['capture', 'commit', 'milestone', 'learning', 'decision', 'bugfix', 'feature', 'blocker', 'question'],
         projectColors: {},
         colorPalette: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'],
         timeRange: { start: null, end: null },
@@ -317,8 +378,9 @@ var htmlTemplate = `<!DOCTYPE html>
               const q = this.searchQuery.toLowerCase();
               const inContent = (e.content || '').toLowerCase().includes(q);
               const inProject = (e.project || '').toLowerCase().includes(q);
+              const inBranch = (e.branch || '').toLowerCase().includes(q);
               const inTags = (e.tags || []).some(t => t.toLowerCase().includes(q));
-              if (!inContent && !inProject && !inTags) return false;
+              if (!inContent && !inProject && !inBranch && !inTags) return false;
             }
             return true;
           });
@@ -336,6 +398,16 @@ var htmlTemplate = `<!DOCTYPE html>
           const projects = new Set();
           this.filteredEvents.forEach(e => projects.add(e.project || ''));
           return Array.from(projects).map(name => ({ name }));
+        },
+        get projectEvents() {
+          if (!this.selectedProject || !this.data.events) return [];
+          return this.data.events
+            .filter(e => e.project === this.selectedProject)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        },
+        get selectedProjectSummary() {
+          if (!this.selectedProject || !this.data.projects) return null;
+          return this.data.projects.find(p => p.name === this.selectedProject) || null;
         },
         get timelineWidth() {
           if (!this.timeRange.start || !this.timeRange.end) return 1000;
@@ -376,7 +448,9 @@ var htmlTemplate = `<!DOCTYPE html>
         formatTime(ts) { return new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }); },
         formatDateTime(ts) { return new Date(ts).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }); },
         getProjectColor(project) { return this.projectColors[project] || '#626262'; },
-        getTypeIcon(type) { const icons = { commit: 'git', milestone: '***', learning: 'lrn', decision: 'dec', bugfix: 'fix', feature: 'fea' }; return icons[type] || 'cap'; }
+        getTypeIcon(type) { const icons = { commit: 'git', milestone: '***', learning: 'lrn', decision: 'dec', bugfix: 'fix', feature: 'fea', blocker: 'blk', question: '?' }; return icons[type] || 'cap'; },
+        showProject(name) { this.selectedProject = name; this.viewMode = 'project'; },
+        backToMain() { this.viewMode = 'timeline'; this.selectedProject = null; }
       };
     }
   </script>

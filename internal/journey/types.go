@@ -6,6 +6,7 @@ type TimelineEvent struct {
 	Timestamp  time.Time `json:"timestamp"`
 	Content    string    `json:"content"`
 	Project    string    `json:"project"`
+	Branch     string    `json:"branch,omitempty"`
 	Tags       []string  `json:"tags"`
 	EventType  string    `json:"eventType"`
 	Importance int       `json:"importance"`
@@ -62,6 +63,8 @@ const (
 	EventTypeDecision  = "decision"
 	EventTypeBugfix    = "bugfix"
 	EventTypeFeature   = "feature"
+	EventTypeBlocker   = "blocker"
+	EventTypeQuestion  = "question"
 )
 
 const (

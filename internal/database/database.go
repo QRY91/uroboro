@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/QRY91/uroboro/internal/common"
@@ -21,6 +22,7 @@ type Capture struct {
 	Content   string
 	Project   string
 	Tags      string
+	Branch    string
 }
 
 func NewDB(dbPath string) (*DB, error) {
@@ -70,7 +72,8 @@ func (db *DB) migrate() error {
 			timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			content TEXT NOT NULL,
 			project TEXT,
-			tags TEXT
+			tags TEXT,
+			branch TEXT
 		);
 		CREATE INDEX idx_captures_timestamp ON captures(timestamp);
 		CREATE INDEX idx_captures_project ON captures(project);
@@ -78,39 +81,66 @@ func (db *DB) migrate() error {
 		if _, err := db.db.Exec(schema); err != nil {
 			return fmt.Errorf("create schema: %w", err)
 		}
+	} else {
+		// Migrate: add branch column if missing
+		var hasBranch bool
+		rows, err := db.db.Query(`PRAGMA table_info(captures)`)
+		if err != nil {
+			return fmt.Errorf("check columns: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var cid int
+			var name, typ string
+			var notnull int
+			var dflt *string
+			var pk int
+			if err := rows.Scan(&cid, &name, &typ, &notnull, &dflt, &pk); err != nil {
+				return err
+			}
+			if name == "branch" {
+				hasBranch = true
+			}
+		}
+		if !hasBranch {
+			if _, err := db.db.Exec(`ALTER TABLE captures ADD COLUMN branch TEXT`); err != nil {
+				return fmt.Errorf("add branch column: %w", err)
+			}
+		}
 	}
 
 	return nil
 }
 
-func (db *DB) InsertCapture(content, project, tags string, timestamp *time.Time) (*Capture, error) {
+func (db *DB) InsertCapture(content, project, tags, branch string, timestamp *time.Time) (*Capture, error) {
 	ts := time.Now()
 	if timestamp != nil {
 		ts = *timestamp
 	}
 	result, err := db.db.Exec(
-		`INSERT INTO captures (content, project, tags, timestamp) VALUES (?, ?, ?, ?)`,
-		content, project, tags, ts,
+		`INSERT INTO captures (content, project, tags, branch, timestamp) VALUES (?, ?, ?, ?, ?)`,
+		content, project, tags, branch, ts,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	id, _ := result.LastInsertId()
-	return &Capture{ID: id, Timestamp: ts, Content: content, Project: project, Tags: tags}, nil
+	return &Capture{ID: id, Timestamp: ts, Content: content, Project: project, Tags: tags, Branch: branch}, nil
 }
 
 // QueryCaptures is a flexible query builder for captures
 type CaptureQuery struct {
 	Days    int
 	Project string
+	Branch  string
 	Limit   int
 	Since   *time.Time
 	Keyword string // Text search in content (case-insensitive LIKE)
 }
 
 func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
-	query := `SELECT id, timestamp, content, COALESCE(project, ''), COALESCE(tags, '') FROM captures WHERE 1=1`
+	query := `SELECT id, timestamp, content, COALESCE(project, ''), COALESCE(tags, ''), COALESCE(branch, '') FROM captures WHERE 1=1`
 	var args []interface{}
 
 	if q.Days > 0 {
@@ -125,9 +155,16 @@ func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
 		query += ` AND project = ?`
 		args = append(args, q.Project)
 	}
+	if q.Branch != "" {
+		query += ` AND branch = ?`
+		args = append(args, q.Branch)
+	}
 	if q.Keyword != "" {
-		query += ` AND content LIKE ?`
-		args = append(args, "%"+q.Keyword+"%")
+		words := strings.Fields(q.Keyword)
+		for _, word := range words {
+			query += ` AND content LIKE ?`
+			args = append(args, "%"+word+"%")
+		}
 	}
 
 	query += ` ORDER BY timestamp DESC`
@@ -146,7 +183,7 @@ func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
 	var captures []Capture
 	for rows.Next() {
 		var c Capture
-		if err := rows.Scan(&c.ID, &c.Timestamp, &c.Content, &c.Project, &c.Tags); err != nil {
+		if err := rows.Scan(&c.ID, &c.Timestamp, &c.Content, &c.Project, &c.Tags, &c.Branch); err != nil {
 			return nil, err
 		}
 		captures = append(captures, c)

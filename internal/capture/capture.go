@@ -32,14 +32,18 @@ func (s *Service) Close() error {
 }
 
 func (s *Service) Capture(content, project, tags string, timestamp *time.Time) error {
+	detector := context.NewProjectDetector()
+
 	// Auto-detect project if not provided
 	if project == "" {
-		detector := context.NewProjectDetector()
 		if detected := detector.DetectProject(); detected != "" {
 			project = detected
 			fmt.Printf("🔍 Auto-detected project: %s\n", project)
 		}
 	}
+
+	// Auto-detect branch
+	branch := detector.DetectBranch()
 
 	// Auto-enhance tags
 	analyzer := tagging.NewTagAnalyzer()
@@ -53,7 +57,7 @@ func (s *Service) Capture(content, project, tags string, timestamp *time.Time) e
 
 	// Store to database if available, otherwise file
 	if s.db != nil {
-		capture, err := s.db.InsertCapture(content, project, tags, timestamp)
+		capture, err := s.db.InsertCapture(content, project, tags, branch, timestamp)
 		if err != nil {
 			return err
 		}

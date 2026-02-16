@@ -35,6 +35,12 @@ func (pd *ProjectDetector) DetectProject() string {
 
 // detectFromGit tries to get project name from git repository
 func (pd *ProjectDetector) detectFromGit() string {
+	// Guard: check that the git repo root isn't $HOME (e.g. dotfiles repo)
+	// to avoid tagging non-project directories with the dotfiles project name
+	if !pd.isLocalGitRepo() {
+		return ""
+	}
+
 	// Get git remote origin URL
 	cmd := exec.Command("git", "remote", "get-url", "origin")
 	output, err := cmd.Output()
@@ -200,11 +206,47 @@ func (pd *ProjectDetector) extractFromCargoToml(dir string) string {
 	return ""
 }
 
+// isLocalGitRepo checks if the current directory belongs to a git repo
+// whose root is NOT $HOME. This prevents dotfiles repos installed at $HOME
+// from being detected as the project when running from arbitrary directories.
+func (pd *ProjectDetector) isLocalGitRepo() bool {
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+
+	toplevel := strings.TrimSpace(string(out))
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return toplevel != ""
+	}
+
+	// Reject if the repo root is the home directory (likely a dotfiles repo)
+	return toplevel != homeDir
+}
+
+// DetectBranch returns the current git branch name, or empty string
+func (pd *ProjectDetector) DetectBranch() string {
+	if !pd.isLocalGitRepo() {
+		return ""
+	}
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	branch := strings.TrimSpace(string(out))
+	if branch == "HEAD" {
+		return "" // detached HEAD, not useful
+	}
+	return branch
+}
+
 // IsGitRepository checks if current directory is a git repository
+// that isn't just a dotfiles repo at $HOME
 func (pd *ProjectDetector) IsGitRepository() bool {
-	cmd := exec.Command("git", "rev-parse", "--git-dir")
-	err := cmd.Run()
-	return err == nil
+	return pd.isLocalGitRepo()
 }
 
 // GetWorkingDirectory returns the current working directory name
