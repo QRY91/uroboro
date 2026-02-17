@@ -49,6 +49,10 @@ func main() {
 		handleStatus(os.Args[2:])
 	case "report", "-r":
 		handleReport(os.Args[2:])
+	case "distill":
+		handleDistill(os.Args[2:])
+	case "prompt-profile":
+		handlePromptProfile(os.Args[2:])
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		printUsage()
@@ -306,6 +310,8 @@ Commands:
   graph                View auto-scaled overview graph (fits screen)
   status               Show recent activity
   report               Generate time report for billing
+  distill              Extract style signal data from git + uroboro
+  prompt-profile       Analyze Claude Code prompting patterns
   mcp                  Start MCP server (for Claude Code)
 
 Aliases:
@@ -354,6 +360,23 @@ Report options:
   --format FORMAT      plain, markdown, csv (default: plain)
   --output FILE        Write to file instead of stdout
   --gap MINUTES        Session gap threshold (default: 30)
+
+Prompt profile options:
+  --project NAME       Filter by project name
+  --days N             Only recent sessions (last N days)
+  --stats              Print statistics summary (default)
+  --extract            Output JSONL extract of user prompts
+  --out FILE           Output file (default: stdout)
+  --claude-dir PATH    Claude Code projects dir (default: ~/.claude/projects)
+
+Distill options:
+  --source SOURCE      git, uro, or all (default: all)
+  --repo PATH          Git repository path (default: current directory)
+  --out FILE           Output file (default: stdout)
+  --project NAME       Filter uroboro captures by project
+  --days N             Limit to last N days
+  --since DATE         Limit to after date (2006-01-02)
+  --correlate          Join git↔uro captures by ±30min window
 
 Examples:
   uro d "JWT over sessions - stateless scaling"

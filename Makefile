@@ -154,5 +154,13 @@ git-hooks: ## Install git hooks for automated testing
 	@chmod +x .git/hooks/pre-commit
 	@echo "✅ Pre-commit hook installed"
 
+# Style distillation
+style-distill: build ## Extract style signals from git + uroboro across repos
+	@echo "Extracting style signals..."
+	./scripts/distill-multi.sh --days 180 --correlate \
+		--out ~/.local/share/uroboro/style-data/ \
+		$(STYLE_REPOS)
+	@echo "Run a Claude Code session with scripts/style-analysis-prompt.md to analyze"
+
 # Default target when no target specified
 .DEFAULT_GOAL := help
