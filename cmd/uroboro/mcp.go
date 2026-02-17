@@ -12,6 +12,8 @@ import (
 
 	urocontext "github.com/QRY91/uroboro/internal/context"
 	"github.com/QRY91/uroboro/internal/database"
+	"github.com/QRY91/uroboro/internal/distill"
+	"github.com/QRY91/uroboro/internal/promptprofile"
 )
 
 // MCP Protocol types
@@ -165,6 +167,33 @@ func getMCPTools() []map[string]interface{} {
 				"required": []string{"query"},
 			},
 		},
+		{
+			"name":        "uro_distill",
+			"description": "Extract style signal data from git commits and uroboro captures. Writes JSONL to file and returns file path with summary counts.",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"source":    map[string]string{"type": "string", "description": "What to extract: git, uro, or all (default: all)"},
+					"repo":      map[string]string{"type": "string", "description": "Path to git repository (default: current directory)"},
+					"project":   map[string]string{"type": "string", "description": "Filter uroboro captures by project"},
+					"days":      map[string]interface{}{"type": "integer", "description": "Limit to last N days"},
+					"since":     map[string]string{"type": "string", "description": "Limit to after date (YYYY-MM-DD)"},
+					"correlate": map[string]interface{}{"type": "boolean", "description": "Join git↔uro captures by ±30min window"},
+				},
+			},
+		},
+		{
+			"name":        "uro_prompt_profile",
+			"description": "Analyze Claude Code prompting patterns. Returns statistics summary or writes JSONL extract to file.",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"project": map[string]string{"type": "string", "description": "Filter by project name"},
+					"days":    map[string]interface{}{"type": "integer", "description": "Only include sessions modified within last N days"},
+					"extract": map[string]interface{}{"type": "boolean", "description": "Output JSONL extract to file instead of stats (returns file path)"},
+				},
+			},
+		},
 	}
 }
 
@@ -275,6 +304,29 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 		}
 
 		resultText, err = mcpSearch(args.Query, args.Days, args.Branch)
+
+	case "uro_distill":
+		var args struct {
+			Source    string `json:"source"`
+			Repo     string `json:"repo"`
+			Project  string `json:"project"`
+			Days     int    `json:"days"`
+			Since    string `json:"since"`
+			Correlate bool  `json:"correlate"`
+		}
+		json.Unmarshal(params.Arguments, &args)
+
+		resultText, err = mcpDistill(args.Source, args.Repo, args.Project, args.Days, args.Since, args.Correlate)
+
+	case "uro_prompt_profile":
+		var args struct {
+			Project string `json:"project"`
+			Days    int    `json:"days"`
+			Extract bool   `json:"extract"`
+		}
+		json.Unmarshal(params.Arguments, &args)
+
+		resultText, err = mcpPromptProfile(args.Project, args.Days, args.Extract)
 
 	default:
 		return MCPResponse{
@@ -483,6 +535,161 @@ func detectProject() string {
 	}
 
 	return ""
+}
+
+func mcpDistill(source, repo, project string, days int, since string, correlate bool) (string, error) {
+	if source == "" {
+		source = "all"
+	}
+	if repo == "" {
+		repo = "."
+	}
+
+	repoPath, err := filepath.Abs(repo)
+	if err != nil {
+		return "", fmt.Errorf("resolve repo path: %w", err)
+	}
+
+	// Parse time filters
+	var sinceTime *time.Time
+	if since != "" {
+		t, err := mcpParseTimestamp(since)
+		if err != nil {
+			return "", fmt.Errorf("invalid since: %w", err)
+		}
+		sinceTime = &t
+	}
+	if days > 0 && sinceTime == nil {
+		t := time.Now().AddDate(0, 0, -days)
+		sinceTime = &t
+	}
+
+	// Extract
+	var gitExtracts []distill.GitExtract
+	var uroExtracts []distill.UroExtract
+
+	if source == "git" || source == "all" {
+		ext := distill.NewGitExtractor(repoPath, sinceTime)
+		gitExtracts, err = ext.Extract()
+		if err != nil {
+			return "", fmt.Errorf("git extraction: %w", err)
+		}
+	}
+
+	if source == "uro" || source == "all" {
+		db, err := database.NewDB(getDBPath())
+		if err != nil {
+			return "", fmt.Errorf("open db: %w", err)
+		}
+		defer db.Close()
+		ext := distill.NewUroExtractor(db, project, days, sinceTime)
+		uroExtracts, err = ext.Extract()
+		if err != nil {
+			return "", fmt.Errorf("uro extraction: %w", err)
+		}
+	}
+
+	if correlate && source == "all" {
+		distill.Correlate(gitExtracts, uroExtracts)
+	}
+
+	// Write to file
+	homeDir, _ := os.UserHomeDir()
+	outDir := filepath.Join(homeDir, ".local", "share", "uroboro", "style-data")
+	if err := os.MkdirAll(outDir, 0755); err != nil {
+		return "", fmt.Errorf("create output dir: %w", err)
+	}
+
+	outPath := filepath.Join(outDir, fmt.Sprintf("distill-%s.jsonl", time.Now().Format("2006-01-02-150405")))
+	f, err := os.Create(outPath)
+	if err != nil {
+		return "", fmt.Errorf("create output file: %w", err)
+	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	for _, g := range gitExtracts {
+		enc.Encode(g)
+	}
+	for _, u := range uroExtracts {
+		enc.Encode(u)
+	}
+
+	// Build summary
+	correlated := 0
+	if correlate {
+		for _, u := range uroExtracts {
+			if u.CorrelatedGitHash != "" {
+				correlated++
+			}
+		}
+	}
+
+	summary := fmt.Sprintf("Distill complete: %d git + %d uro records\nOutput: %s", len(gitExtracts), len(uroExtracts), outPath)
+	if correlate {
+		summary += fmt.Sprintf("\nCorrelated: %d", correlated)
+	}
+	return summary, nil
+}
+
+func mcpPromptProfile(project string, days int, extract bool) (string, error) {
+	projects, err := promptprofile.DiscoverProjects("")
+	if err != nil {
+		return "", fmt.Errorf("discover projects: %w", err)
+	}
+
+	// Filter by project name
+	if project != "" {
+		lower := strings.ToLower(project)
+		var filtered []promptprofile.ProjectInfo
+		for _, p := range projects {
+			if strings.ToLower(p.ProjectName) == lower {
+				filtered = append(filtered, p)
+			}
+		}
+		projects = filtered
+	}
+
+	if len(projects) == 0 {
+		return "No matching projects found.", nil
+	}
+
+	// Extract prompts
+	var allPrompts []promptprofile.UserPrompt
+	for _, p := range projects {
+		prompts, err := promptprofile.ExtractFromProject(p, days)
+		if err != nil {
+			continue
+		}
+		allPrompts = append(allPrompts, prompts...)
+	}
+
+	if extract {
+		// Write JSONL to file
+		homeDir, _ := os.UserHomeDir()
+		outDir := filepath.Join(homeDir, ".local", "share", "uroboro", "style-data")
+		if err := os.MkdirAll(outDir, 0755); err != nil {
+			return "", fmt.Errorf("create output dir: %w", err)
+		}
+
+		outPath := filepath.Join(outDir, fmt.Sprintf("prompts-%s.jsonl", time.Now().Format("2006-01-02-150405")))
+		f, err := os.Create(outPath)
+		if err != nil {
+			return "", fmt.Errorf("create output file: %w", err)
+		}
+		defer f.Close()
+
+		enc := json.NewEncoder(f)
+		for _, p := range allPrompts {
+			enc.Encode(p)
+		}
+
+		return fmt.Sprintf("Extracted %d prompts from %d projects\nOutput: %s", len(allPrompts), len(projects), outPath), nil
+	}
+
+	// Default: return stats summary
+	stats := promptprofile.Analyze(allPrompts)
+	return promptprofile.FormatStats(stats), nil
 }
 
 func getRecentCommits(days int) []string {

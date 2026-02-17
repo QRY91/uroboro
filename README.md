@@ -45,6 +45,13 @@ uro status
 
 # Time reports for billing
 uro report --days 7 --format markdown
+
+# Extract style signals from git + uroboro captures (JSONL)
+uro distill --days 180 --correlate --out style-data.jsonl
+
+# Analyze Claude Code prompting patterns
+uro prompt-profile --days 30
+uro prompt-profile --extract --out prompts.jsonl
 ```
 
 ## Visualization
@@ -84,6 +91,29 @@ No manual capture needed. Run `uro recap` to see what happened.
 | `uro_capture` | General capture |
 | `uro_recap` | Get recent context |
 | `uro_search` | Search past captures |
+| `uro_distill` | Extract style signals to JSONL file |
+| `uro_prompt_profile` | Analyze prompting patterns |
+
+## Style Distillation
+
+Extract personal coding style from your actual work history — git commits and uroboro captures — to generate evidence-backed style guides.
+
+```bash
+# Extract style signals from one repo
+uro distill --days 180 --correlate --out style.jsonl
+
+# Multi-repo extraction
+./scripts/distill-multi.sh --days 180 --correlate \
+  --out ~/.local/share/uroboro/style-data/ \
+  ~/projects/repo1 ~/projects/repo2
+
+# Analyze prompting patterns from Claude Code sessions
+uro prompt-profile --days 30
+```
+
+The `distill` command extracts style-relevant git commits (refactors, cleanups, structural changes) and uroboro decision captures as JSONL. Use `--correlate` to link commits with captures that occurred within 30 minutes of each other.
+
+Use `scripts/style-analysis-prompt.md` as a Claude Code prompt to analyze the JSONL and produce a personalized style guide, system prompt fragment, and machine-readable rules.
 
 ## Philosophy
 
