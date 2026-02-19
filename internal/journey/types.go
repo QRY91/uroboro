@@ -53,6 +53,12 @@ type Options struct {
 	DateRange *DateRange
 	Projects  []string
 	Port      int
+	Repos     []RepoConfig // Additional git repos to include
+}
+
+type RepoConfig struct {
+	Path string // Filesystem path to repo
+	Name string // Display name (defaults to directory basename)
 }
 
 const (

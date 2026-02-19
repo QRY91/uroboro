@@ -27,8 +27,22 @@ func (s *Service) GenerateJourney(opts Options) (*JourneyData, error) {
 	}
 
 	events := s.capturesToEvents(captures)
-	commitEvents := s.commitsToEvents(s.getGitCommits(dateRange))
-	allEvents := append(events, commitEvents...)
+
+	// Collect git commits from CWD and any additional repos
+	var allCommitEvents []TimelineEvent
+	cwdCommits := s.getGitCommits(dateRange, "")
+	allCommitEvents = append(allCommitEvents, s.commitsToEvents(cwdCommits, "git")...)
+	for _, repo := range opts.Repos {
+		repoCommits := s.getGitCommits(dateRange, repo.Path)
+		name := repo.Name
+		if name == "" {
+			// Use directory basename
+			parts := strings.Split(strings.TrimRight(repo.Path, "/"), "/")
+			name = parts[len(parts)-1]
+		}
+		allCommitEvents = append(allCommitEvents, s.commitsToEvents(repoCommits, name)...)
+	}
+	allEvents := append(events, allCommitEvents...)
 
 	sort.Slice(allEvents, func(i, j int) bool {
 		return allEvents[i].Timestamp.After(allEvents[j].Timestamp)
@@ -92,11 +106,19 @@ func (s *Service) getCapturesInRange(dr DateRange, projects []string) ([]databas
 	return result, nil
 }
 
-func (s *Service) getGitCommits(dr DateRange) []GitCommit {
-	cmd := exec.Command("git", "log",
-		"--pretty=format:%H|%s|%at|%an",
-		fmt.Sprintf("--since=%s", dr.Start.Format("2006-01-02")),
-		fmt.Sprintf("--until=%s", dr.End.Format("2006-01-02")))
+func (s *Service) getGitCommits(dr DateRange, repoPath string) []GitCommit {
+	var cmd *exec.Cmd
+	if repoPath != "" {
+		cmd = exec.Command("git", "-C", repoPath, "log",
+			"--pretty=format:%H|%s|%at|%an",
+			fmt.Sprintf("--since=%s", dr.Start.Format("2006-01-02")),
+			fmt.Sprintf("--until=%s", dr.End.Format("2006-01-02")))
+	} else {
+		cmd = exec.Command("git", "log",
+			"--pretty=format:%H|%s|%at|%an",
+			fmt.Sprintf("--since=%s", dr.Start.Format("2006-01-02")),
+			fmt.Sprintf("--until=%s", dr.End.Format("2006-01-02")))
+	}
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -143,13 +165,13 @@ func (s *Service) capturesToEvents(captures []database.Capture) []TimelineEvent 
 	return events
 }
 
-func (s *Service) commitsToEvents(commits []GitCommit) []TimelineEvent {
+func (s *Service) commitsToEvents(commits []GitCommit, projectName string) []TimelineEvent {
 	var events []TimelineEvent
 	for _, c := range commits {
 		events = append(events, TimelineEvent{
 			Timestamp:  c.Timestamp,
 			Content:    c.Message,
-			Project:    "git",
+			Project:    projectName,
 			Tags:       []string{"git", "commit"},
 			EventType:  EventTypeCommit,
 			Importance: s.calcCommitImportance(c.Message),

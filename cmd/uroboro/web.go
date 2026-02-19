@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/QRY91/uroboro/internal/database"
@@ -101,7 +102,140 @@ header h1::before{content:"";width:12px;height:12px;background:var(--accent);bor
 .v-timeline-tags{display:flex;flex-wrap:wrap;gap:var(--space-xs);margin-top:var(--space-sm)}
 .v-timeline-tag{font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);background:var(--bg-secondary);padding:1px 6px;border-radius:3px;border:1px solid var(--border)}
 .v-timeline-hash{font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);margin-top:var(--space-xs)}
-@media(max-width:640px){.event{grid-template-columns:45px 1fr;gap:var(--space-xs)}.event .project,.event .type-icon{display:none}.filters{flex-direction:column}.filters select,.filters input[type="search"]{width:100%}.view-toggle{display:none}}`
+@media(max-width:640px){.event{grid-template-columns:45px 1fr;gap:var(--space-xs)}.event .project,.event .type-icon{display:none}.filters{flex-direction:column}.filters select,.filters input[type="search"]{width:100%}.view-toggle{display:none}}
+/* Summary Pane (slide-out) */
+.summary-pane{position:fixed;top:0;right:-400px;width:380px;height:100vh;background:var(--bg-secondary);border-left:1px solid var(--border);padding:var(--space-lg);overflow-y:auto;z-index:90;transition:right 0.25s ease;box-shadow:-4px 0 20px rgba(0,0,0,0.3)}
+.summary-pane.open{right:0}
+.summary-pane h2{font-family:var(--font-mono);font-size:0.9rem;font-weight:600;color:var(--text-primary);margin-bottom:var(--space-md);padding-bottom:var(--space-sm);border-bottom:1px solid var(--border)}
+.summary-pane h3{font-family:var(--font-mono);font-size:0.75rem;font-weight:600;color:var(--text-muted);margin-top:var(--space-lg);margin-bottom:var(--space-sm);text-transform:uppercase;letter-spacing:0.05em}
+.summary-pane .close-btn{position:absolute;top:var(--space-md);right:var(--space-md);background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;font-family:var(--font-mono)}
+.summary-pane .close-btn:hover{color:var(--text-primary)}
+.type-breakdown{display:flex;flex-direction:column;gap:var(--space-xs)}
+.type-row{display:flex;align-items:center;gap:var(--space-sm);font-family:var(--font-mono);font-size:0.8rem}
+.type-row .type-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.type-row .type-name{color:var(--text-secondary);flex:1}
+.type-row .type-count{color:var(--text-primary);font-weight:600}
+.project-list{display:flex;flex-direction:column;gap:var(--space-xs)}
+.project-row{display:flex;align-items:center;gap:var(--space-sm);font-family:var(--font-mono);font-size:0.8rem;cursor:pointer;padding:2px 0;border-radius:var(--radius)}
+.project-row:hover{background:var(--bg-tertiary)}
+.project-row .project-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.project-row .project-name{color:var(--text-secondary);flex:1}
+.project-row .project-count{color:var(--text-muted)}
+.milestone-list-pane{display:flex;flex-direction:column;gap:var(--space-sm)}
+.milestone-item{font-family:var(--font-mono);font-size:0.8rem;color:var(--text-secondary);padding:var(--space-sm);background:var(--bg-tertiary);border-radius:var(--radius);border-left:3px solid var(--project-yellow);cursor:pointer}
+.milestone-item:hover{background:var(--bg-primary)}
+.milestone-item time{display:block;font-size:0.7rem;color:var(--text-dim);margin-bottom:2px}
+/* Activity heatmap */
+.heatmap{display:flex;gap:2px;flex-wrap:wrap;margin-top:var(--space-sm)}
+.heatmap-cell{width:14px;height:14px;border-radius:2px;background:var(--bg-tertiary)}
+.heatmap-cell.l1{background:rgba(125,86,244,0.25)}
+.heatmap-cell.l2{background:rgba(125,86,244,0.45)}
+.heatmap-cell.l3{background:rgba(125,86,244,0.65)}
+.heatmap-cell.l4{background:rgba(125,86,244,0.85)}
+.heatmap-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);margin-top:var(--space-xs)}
+/* Present mode summary pane */
+.present-mode .summary-pane{width:420px}
+.present-mode .summary-pane h2{font-size:1.1rem}
+.present-mode .summary-pane h3{font-size:0.85rem}
+.present-mode .type-row,.present-mode .project-row,.present-mode .milestone-item{font-size:0.95rem}
+/* Narrative Pane */
+.narrative-pane{display:none;margin-bottom:var(--space-lg);padding:var(--space-lg);background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-lg);position:relative}
+.narrative-pane.open{display:block}
+.narrative-pane .narrative-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-md)}
+.narrative-pane h3{font-family:var(--font-mono);font-size:0.85rem;font-weight:600;color:var(--text-primary);margin:0}
+.narrative-pane .narrative-actions{display:flex;gap:var(--space-xs)}
+.narrative-pane .narrative-actions button{padding:var(--space-xs) var(--space-sm);background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;cursor:pointer}
+.narrative-pane .narrative-actions button:hover{color:var(--text-primary);border-color:var(--text-muted)}
+.narrative-pane .narrative-actions button.copied{color:var(--project-teal);border-color:var(--project-teal)}
+.narrative-text{font-family:var(--font-mono);font-size:0.85rem;color:var(--text-secondary);line-height:1.8;white-space:pre-wrap}
+.narrative-text .narrative-section{margin-top:var(--space-md)}
+.narrative-text .narrative-section-title{color:var(--text-muted);font-weight:600;font-size:0.8rem}
+.narrative-text .narrative-decisions{margin-top:var(--space-sm);padding-left:var(--space-md)}
+.narrative-text .narrative-decisions li{margin-bottom:var(--space-xs);color:var(--text-secondary)}
+.present-mode .narrative-pane{padding:var(--space-xl)}
+.present-mode .narrative-pane h3{font-size:1rem}
+.present-mode .narrative-text{font-size:1rem;line-height:1.9}
+/* Diff mode */
+.diff-mode .event.before-since{opacity:0.35}
+.diff-mode .event.before-since:hover{opacity:0.6}
+.diff-mode .event.after-since{border-left-width:4px}
+.diff-mode .day-header.has-new::after{content:" (new)";color:var(--project-teal);font-weight:400}
+.diff-marker{display:none;padding:var(--space-sm) var(--space-md);margin-bottom:var(--space-md);background:rgba(78,205,196,0.1);border:1px solid var(--project-teal);border-radius:var(--radius);font-family:var(--font-mono);font-size:0.8rem;color:var(--project-teal);text-align:center}
+.diff-mode .diff-marker{display:flex;justify-content:space-between;align-items:center}
+.diff-marker .diff-stats{color:var(--text-muted)}
+.present-mode .diff-marker{font-size:0.95rem;padding:var(--space-md) var(--space-lg)}
+/* Annotations */
+.event.annotated{position:relative}
+.event.annotated::after{content:"*";position:absolute;right:var(--space-sm);top:50%;transform:translateY(-50%);color:var(--project-teal);font-weight:700;font-size:1rem}
+.present-mode .event.annotated::after{font-size:1.2rem}
+.annotation-input{width:100%;margin-top:var(--space-md);padding:var(--space-sm);background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:var(--font-mono);font-size:0.85rem;resize:vertical;min-height:60px}
+.annotation-input:focus{outline:none;border-color:var(--accent)}
+.annotation-input::placeholder{color:var(--text-dim)}
+.annotation-saved{font-family:var(--font-mono);font-size:0.75rem;color:var(--project-teal);margin-top:var(--space-xs)}
+/* Export button */
+.export-btn{padding:2px 10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;cursor:pointer;transition:all 0.15s}
+.export-btn:hover{color:var(--text-primary);border-color:var(--text-muted)}
+.present-mode .export-btn{font-size:0.85rem;padding:4px 12px}
+/* Loading overlay */
+.loading-overlay{position:fixed;top:0;left:0;right:0;height:3px;background:transparent;z-index:200;pointer-events:none}
+.loading-overlay.active{background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:loading-slide 1s ease-in-out infinite}
+@keyframes loading-slide{0%{background-position:-200% 0}100%{background-position:200% 0}}
+/* Keyboard hints */
+.kbd-hints{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:var(--space-md);padding:var(--space-sm) var(--space-md);background:var(--bg-dark);border-top:1px solid var(--border);font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);z-index:80;opacity:0;transition:opacity 0.2s}
+.present-mode .kbd-hints{opacity:1}
+.kbd-hints kbd{padding:1px 5px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:3px;color:var(--text-muted);font-size:0.65rem}
+/* Print styles */
+@media print{body{background:white!important;color:#222!important}.filters,.preset-bar,.kbd-hints,.summary-pane,.modal-backdrop{display:none!important}header{border-bottom:1px solid #ccc}.summary-bar{display:flex!important;background:#f5f5f5!important;border:1px solid #ccc!important;color:#222!important}.summary-bar .summary-value{color:#000!important}.event{border-left-color:#ccc!important;color:#222!important}.event .content{color:#444!important}.day-header{color:#666!important}.narrative-pane.open{display:block!important;background:#f5f5f5!important;border:1px solid #ccc!important;color:#222!important}}
+/* Preset Bar */
+.preset-bar{display:flex;gap:var(--space-xs);margin-bottom:var(--space-md);align-items:center;flex-wrap:wrap}
+.preset-btn{padding:var(--space-xs) var(--space-md);background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-family:var(--font-mono);font-size:0.8rem;cursor:pointer;transition:all 0.15s ease}
+.preset-btn:hover{color:var(--text-primary);border-color:var(--text-muted)}
+.preset-btn.active{background:var(--accent);border-color:var(--accent);color:white}
+.preset-range{font-family:var(--font-mono);font-size:0.75rem;color:var(--text-dim);margin-left:var(--space-sm)}
+.present-mode .preset-bar{margin-bottom:var(--space-lg)}
+.present-mode .preset-btn{font-size:0.95rem;padding:var(--space-sm) var(--space-lg)}
+.present-mode .preset-range{font-size:0.85rem}
+/* Present Mode */
+.present-mode{--text-primary:#f0e8fc;--text-secondary:#ddd0ee;--text-muted:#c4b5d9}
+.present-mode .container{max-width:1100px}
+.present-mode .container.list-view{max-width:1100px}
+.present-mode header h1{font-size:2rem}
+.present-mode .stats{font-size:1.1rem}
+.present-mode .filters{display:none}
+.present-mode .filters.show{display:flex}
+.present-mode .event{font-size:1.05rem;padding:var(--space-md) var(--space-lg);grid-template-columns:60px 140px 45px 1fr}
+.present-mode .event time{font-size:0.95rem}
+.present-mode .event .project{font-size:0.95rem}
+.present-mode .event .type-icon{font-size:0.9rem}
+.present-mode .day-header{font-size:0.95rem;margin-top:var(--space-lg);padding:var(--space-sm) 0}
+.present-mode .modal-content{max-width:750px;font-size:1rem}
+.present-mode .modal-content dl{font-size:1rem}
+.present-mode .empty-state{font-size:1.1rem}
+/* Present mode: highlight milestones and decisions */
+.present-mode .event.event-milestone{background:rgba(254,202,87,0.08);border-left-color:var(--project-yellow)!important}
+.present-mode .event.event-decision{background:rgba(255,159,243,0.08);border-left-color:var(--project-pink)!important}
+.present-mode .event.event-milestone .content,.present-mode .event.event-decision .content{color:var(--text-primary);font-weight:500}
+/* Summary bar */
+.summary-bar{display:none;gap:var(--space-lg);padding:var(--space-md) var(--space-lg);margin-bottom:var(--space-lg);background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-lg);font-family:var(--font-mono);font-size:0.85rem;color:var(--text-secondary);flex-wrap:wrap;align-items:center}
+.present-mode .summary-bar{display:flex;font-size:1rem}
+.summary-bar .summary-item{display:flex;align-items:center;gap:var(--space-xs)}
+.summary-bar .summary-value{color:var(--text-primary);font-weight:600}
+.summary-bar .summary-label{color:var(--text-muted)}
+.summary-bar .summary-divider{width:1px;height:1.2em;background:var(--border)}
+.summary-bar .milestone-list{display:flex;flex-wrap:wrap;gap:var(--space-xs);margin-left:var(--space-sm)}
+.summary-bar .milestone-chip{padding:1px 8px;background:rgba(254,202,87,0.15);color:var(--project-yellow);border-radius:3px;font-size:0.8rem;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.present-mode .summary-bar .milestone-chip{font-size:0.9rem}
+/* Keyboard nav: focused event */
+.event.focused{background:var(--bg-tertiary);outline:2px solid var(--accent);outline-offset:-2px}
+.present-mode .event.focused{outline-width:3px}
+/* Present mode: vertical timeline */
+.present-mode .v-timeline-content{font-size:1rem}
+.present-mode .v-timeline-card{padding:var(--space-lg)}
+.present-mode .v-timeline-meta time{font-size:0.85rem}
+.present-mode .v-timeline-type{font-size:0.8rem}
+/* Present mode: horizontal timeline */
+.present-mode .h-timeline-lane-label{font-size:0.85rem;width:120px;min-width:120px}
+.present-mode .h-timeline-event{width:16px;height:16px}`
 
 var htmlTemplate = `<!DOCTYPE html>
 <html lang="en">
@@ -112,8 +246,19 @@ var htmlTemplate = `<!DOCTYPE html>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>{{.CSS}}</style>
 </head>
-<body>
-  <div class="container" :class="{ 'list-view': viewMode === 'list' || viewMode === 'project' }" x-data="timeline()" x-init="init()">
+<body :class="{ 'present-mode': presentMode }" x-data="timeline()" x-init="init()" @keydown.window="handleKey($event)">
+  <div class="loading-overlay" :class="{ active: loading }"></div>
+  <div class="kbd-hints">
+    <span><kbd>j</kbd><kbd>k</kbd> navigate</span>
+    <span><kbd>1</kbd><kbd>2</kbd> views</span>
+    <span><kbd>p</kbd> present</span>
+    <span><kbd>f</kbd> filters</span>
+    <span><kbd>n</kbd> summary</span>
+    <span><kbd>N</kbd> narrative</span>
+    <span><kbd>g</kbd> group</span>
+    <span><kbd>/</kbd> search</span>
+  </div>
+  <div class="container" :class="{ 'list-view': viewMode === 'list' || viewMode === 'project', 'diff-mode': diffMode }">
     <header>
       <h1>
         <span x-show="viewMode !== 'project'">uroboro</span>
@@ -123,9 +268,52 @@ var htmlTemplate = `<!DOCTYPE html>
       <div class="stats">
         <span x-text="filteredEvents.length + ' events'"></span>
         <span x-text="data.projects?.length + ' projects'"></span>
+        <button @click="downloadHTML()" class="export-btn" title="Export as HTML">Export</button>
       </div>
     </header>
-    <div class="filters" x-show="viewMode !== 'project'">
+    <!-- Summary Bar -->
+    <div class="summary-bar">
+      <div class="summary-item"><span class="summary-value" x-text="data.stats?.totalEvents || 0"></span><span class="summary-label">events</span></div>
+      <div class="summary-divider"></div>
+      <div class="summary-item"><span class="summary-value" x-text="data.projects?.length || 0"></span><span class="summary-label">projects</span></div>
+      <div class="summary-divider"></div>
+      <div class="summary-item"><span class="summary-value" x-text="summary.commitCount"></span><span class="summary-label">commits</span></div>
+      <div class="summary-divider"></div>
+      <div class="summary-item"><span class="summary-value" x-text="summary.decisionCount"></span><span class="summary-label">decisions</span></div>
+      <div class="summary-divider"></div>
+      <div class="summary-item"><span class="summary-value" x-text="data.milestones?.length || 0"></span><span class="summary-label">milestones</span></div>
+      <template x-if="data.milestones?.length > 0">
+        <div class="milestone-list">
+          <template x-for="m in data.milestones.slice(0, 3)" :key="m.timestamp + m.content">
+            <span class="milestone-chip" x-text="m.content"></span>
+          </template>
+        </div>
+      </template>
+    </div>
+    <!-- Date Presets -->
+    <div class="preset-bar" x-show="viewMode !== 'project'">
+      <template x-for="preset in datePresets" :key="preset.label">
+        <button class="preset-btn" :class="{ active: activePreset === preset.label }" @click="loadPreset(preset)" x-text="preset.label"></button>
+      </template>
+      <span class="preset-range" x-show="activePreset" x-text="presetRangeLabel"></span>
+    </div>
+    <!-- Diff Marker -->
+    <div class="diff-marker">
+      <span>Showing changes since <strong x-text="formatDateTime(new Date(sinceDate).toISOString())"></strong></span>
+      <span class="diff-stats" x-text="filteredEvents.filter(e => new Date(e.timestamp).getTime() >= sinceDate).length + ' new events'"></span>
+    </div>
+    <!-- Narrative -->
+    <div class="narrative-pane" :class="{ open: showNarrative }" x-show="viewMode !== 'project'">
+      <div class="narrative-header">
+        <h3>Narrative</h3>
+        <div class="narrative-actions">
+          <button @click="copyNarrative()" :class="{ copied: narrativeCopied }" x-text="narrativeCopied ? 'Copied' : 'Copy Markdown'"></button>
+          <button @click="showNarrative = false">&times;</button>
+        </div>
+      </div>
+      <div class="narrative-text" x-html="narrativeHTML"></div>
+    </div>
+    <div class="filters" :class="{ show: showFilters }" x-show="viewMode !== 'project' && (!presentMode || showFilters)">
       <select x-model="projectFilter">
         <option value="">All Projects</option>
         <template x-for="p in data.projects" :key="p.name">
@@ -154,8 +342,8 @@ var htmlTemplate = `<!DOCTYPE html>
           <template x-for="(group, date) in groupedEvents" :key="date">
             <div class="day-group">
               <h2 class="day-header" x-text="date"></h2>
-              <template x-for="event in group" :key="event.timestamp + event.content">
-                <div class="event" :style="'border-left-color: ' + getProjectColor(event.project)" @click="selectedEvent = event">
+              <template x-for="(event, idx) in group" :key="event.timestamp + event.content">
+                <div class="event" :class="eventClasses(event, getGlobalIdx(event))" :style="'border-left-color: ' + getProjectColor(event.project)" @click="selectedEvent = event" :data-idx="getGlobalIdx(event)">
                   <time x-text="formatTime(event.timestamp)"></time>
                   <span class="project" :style="'color: ' + getProjectColor(event.project)" x-text="event.project || '-'" @click.stop="event.project && showProject(event.project)"></span>
                   <span class="type-icon" :class="'type-' + event.eventType" x-text="getTypeIcon(event.eventType)"></span>
@@ -168,8 +356,8 @@ var htmlTemplate = `<!DOCTYPE html>
       </template>
       <template x-if="!groupByDay && viewMode === 'list'">
         <div>
-          <template x-for="event in filteredEvents" :key="event.timestamp + event.content">
-            <div class="event" :style="'border-left-color: ' + getProjectColor(event.project)" @click="selectedEvent = event">
+          <template x-for="(event, idx) in filteredEvents" :key="event.timestamp + event.content">
+            <div class="event" :class="eventClasses(event, idx)" :style="'border-left-color: ' + getProjectColor(event.project)" @click="selectedEvent = event" :data-idx="idx">
               <time x-text="formatTime(event.timestamp)"></time>
               <span class="project" :style="'color: ' + getProjectColor(event.project)" x-text="event.project || '-'" @click.stop="event.project && showProject(event.project)"></span>
               <span class="type-icon" :class="'type-' + event.eventType" x-text="getTypeIcon(event.eventType)"></span>
@@ -245,6 +433,51 @@ var htmlTemplate = `<!DOCTYPE html>
         </template>
       </div>
     </div>
+    <!-- Summary Pane -->
+    <div class="summary-pane" :class="{ open: showSummaryPane }">
+      <button class="close-btn" @click="showSummaryPane = false">&times;</button>
+      <h2>Summary</h2>
+      <h3>Events by Type</h3>
+      <div class="type-breakdown">
+        <template x-for="t in typeCounts" :key="t.type">
+          <div class="type-row" x-show="t.count > 0">
+            <span class="type-dot" :style="'background:' + t.color"></span>
+            <span class="type-name" x-text="t.type"></span>
+            <span class="type-count" x-text="t.count"></span>
+          </div>
+        </template>
+      </div>
+      <h3>Projects</h3>
+      <div class="project-list">
+        <template x-for="p in data.projects || []" :key="p.name">
+          <div class="project-row" @click="showProject(p.name); showSummaryPane = false">
+            <span class="project-dot" :style="'background:' + getProjectColor(p.name)"></span>
+            <span class="project-name" x-text="p.name"></span>
+            <span class="project-count" x-text="p.eventCount"></span>
+          </div>
+        </template>
+      </div>
+      <h3>Milestones</h3>
+      <div class="milestone-list-pane">
+        <template x-for="m in (data.milestones || [])" :key="m.timestamp + m.content">
+          <div class="milestone-item" @click="selectedEvent = m; showSummaryPane = false">
+            <time x-text="formatDateTime(m.timestamp)"></time>
+            <span x-text="m.content"></span>
+          </div>
+        </template>
+        <div x-show="!data.milestones?.length" style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-dim)">No milestones in this period.</div>
+      </div>
+      <h3>Activity</h3>
+      <div class="heatmap">
+        <template x-for="cell in heatmapCells" :key="cell.date">
+          <div class="heatmap-cell" :class="cell.level" :title="cell.date + ': ' + cell.count + ' events'"></div>
+        </template>
+      </div>
+      <div class="heatmap-labels">
+        <span x-text="heatmapCells.length > 0 ? heatmapCells[0].date : ''"></span>
+        <span x-text="heatmapCells.length > 0 ? heatmapCells[heatmapCells.length - 1].date : ''"></span>
+      </div>
+    </div>
     <div class="modal-backdrop" x-show="selectedEvent" x-transition.opacity @click.self="selectedEvent = null" @keydown.escape.window="selectedEvent = null">
       <div class="modal-content" x-show="selectedEvent" x-transition.scale.90>
         <h3>Event Details</h3>
@@ -260,17 +493,38 @@ var htmlTemplate = `<!DOCTYPE html>
           <template x-if="selectedEvent?.gitHash"><dd x-text="selectedEvent?.gitHash?.slice(0, 8)"></dd></template>
         </dl>
         <div class="content-block" x-text="selectedEvent?.content"></div>
+        <textarea class="annotation-input" placeholder="Add a meeting note..." :value="selectedEvent ? (annotations[eventKey(selectedEvent)] || '') : ''" @input="if (selectedEvent) { if ($event.target.value) annotations[eventKey(selectedEvent)] = $event.target.value; else delete annotations[eventKey(selectedEvent)]; }"></textarea>
+        <div class="annotation-saved" x-show="selectedEvent && annotations[eventKey(selectedEvent)]">Annotation saved (session only)</div>
         <button @click="selectedEvent = null">Close</button>
       </div>
     </div>
   </div>
   <script>
     window.JOURNEY_DATA = {{.DataJSON}};
+    window.PRESENT_MODE = {{.PresentMode}};
+    window.SINCE_DATE = '{{.SinceDate}}';
     function timeline() {
       return {
         data: window.JOURNEY_DATA || { events: [], projects: [], stats: {}, milestones: [] },
+        presentMode: window.PRESENT_MODE || false,
+        showFilters: false,
+        focusedIdx: -1,
+        activePreset: null,
+        loading: false,
+        showSummaryPane: false,
+        showNarrative: false,
+        narrativeCopied: false,
+        diffMode: !!window.SINCE_DATE,
+        sinceDate: window.SINCE_DATE ? new Date(window.SINCE_DATE).getTime() : 0,
+        annotations: {},
+        datePresets: [
+          { label: 'Today', days: 1 },
+          { label: 'This Week', days: 7 },
+          { label: '2 Weeks', days: 14 },
+          { label: '30 Days', days: 30 },
+        ],
         projectFilter: '', typeFilter: '', searchQuery: '', groupByDay: true, selectedEvent: null,
-        viewMode: 'timeline',
+        viewMode: 'list',
         selectedProject: null,
         compactMode: false,
         eventTypes: ['capture', 'commit', 'milestone', 'learning', 'decision', 'bugfix', 'feature', 'blocker', 'question'],
@@ -449,8 +703,235 @@ var htmlTemplate = `<!DOCTYPE html>
         formatDateTime(ts) { return new Date(ts).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }); },
         getProjectColor(project) { return this.projectColors[project] || '#626262'; },
         getTypeIcon(type) { const icons = { commit: 'git', milestone: '***', learning: 'lrn', decision: 'dec', bugfix: 'fix', feature: 'fea', blocker: 'blk', question: '?' }; return icons[type] || 'cap'; },
+        get summary() {
+          const events = this.data.events || [];
+          return {
+            commitCount: events.filter(e => e.eventType === 'commit').length,
+            decisionCount: events.filter(e => e.eventType === 'decision').length,
+            featureCount: events.filter(e => e.eventType === 'feature').length,
+            bugfixCount: events.filter(e => e.eventType === 'bugfix').length,
+          };
+        },
+        get typeCounts() {
+          const events = this.data.events || [];
+          const typeColors = {
+            commit: '#626262', capture: '#a78bbd', decision: '#FF9FF3',
+            milestone: '#FECA57', feature: '#4ECDC4', bugfix: '#FF6B6B',
+            learning: '#54A0FF', blocker: '#FF6B6B', question: '#FECA57'
+          };
+          return this.eventTypes.map(t => ({
+            type: t,
+            count: events.filter(e => e.eventType === t).length,
+            color: typeColors[t] || '#626262'
+          }));
+        },
+        get heatmapCells() {
+          const events = this.data.events || [];
+          if (events.length === 0) return [];
+          const dayCounts = {};
+          events.forEach(e => {
+            const d = new Date(e.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            dayCounts[d] = (dayCounts[d] || 0) + 1;
+          });
+          const start = this.data.timeline?.startTime ? new Date(this.data.timeline.startTime) : new Date();
+          const end = this.data.timeline?.endTime ? new Date(this.data.timeline.endTime) : new Date();
+          const cells = [];
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const count = dayCounts[label] || 0;
+            let level = '';
+            if (count >= 20) level = 'l4';
+            else if (count >= 10) level = 'l3';
+            else if (count >= 4) level = 'l2';
+            else if (count >= 1) level = 'l1';
+            cells.push({ date: label, count, level });
+          }
+          return cells;
+        },
+        get narrativeMarkdown() {
+          const events = this.data.events || [];
+          const projects = this.data.projects || [];
+          const milestones = this.data.milestones || [];
+          if (events.length === 0) return 'No events in this period.';
+
+          const days = this.activePreset || 'the selected period';
+          const topProjects = projects.slice(0, 3).map(p => p.name);
+          const decisions = events.filter(e => e.eventType === 'decision');
+          const commits = events.filter(e => e.eventType === 'commit');
+          const features = events.filter(e => e.eventType === 'feature');
+          const bugfixes = events.filter(e => e.eventType === 'bugfix');
+
+          let md = '';
+          // Opening line
+          if (topProjects.length === 1) {
+            md += 'Focused on **' + topProjects[0] + '**. ';
+          } else if (topProjects.length > 1) {
+            md += 'Worked across **' + topProjects.join('**, **') + '**. ';
+          }
+          md += events.length + ' events';
+          if (commits.length > 0) md += ', ' + commits.length + ' commits';
+          if (projects.length > 0) md += ' across ' + projects.length + ' projects';
+          md += '.';
+
+          // Features and fixes
+          if (features.length > 0 || bugfixes.length > 0) {
+            md += '\n\n';
+            if (features.length > 0) md += features.length + ' feature' + (features.length > 1 ? 's' : '');
+            if (features.length > 0 && bugfixes.length > 0) md += ', ';
+            if (bugfixes.length > 0) md += bugfixes.length + ' fix' + (bugfixes.length > 1 ? 'es' : '');
+            md += '.';
+          }
+
+          // Milestones
+          if (milestones.length > 0) {
+            md += '\n\n**Milestones:**\n';
+            milestones.slice(0, 5).forEach(m => {
+              md += '- ' + m.content + '\n';
+            });
+          }
+
+          // Key decisions
+          if (decisions.length > 0) {
+            md += '\n**Key decisions:**\n';
+            decisions.slice(0, 5).forEach(d => {
+              md += '- ' + d.content + '\n';
+            });
+          }
+
+          // Annotations
+          const annotationKeys = Object.keys(this.annotations);
+          if (annotationKeys.length > 0) {
+            md += '\n**Meeting notes:**\n';
+            annotationKeys.forEach(key => {
+              const note = this.annotations[key];
+              const eventContent = key.split('|')[1] || 'event';
+              md += '- ' + eventContent + ': *' + note + '*\n';
+            });
+          }
+
+          return md.trim();
+        },
+        get narrativeHTML() {
+          // Simple markdown-to-html: bold, newlines, list items
+          return this.narrativeMarkdown
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+            .replace(/\n\n/g, '<br><br>')
+            .replace(/\n/g, '<br>');
+        },
+        downloadHTML() {
+          const css = document.querySelector('style').textContent;
+          const dataJSON = JSON.stringify(this.data);
+          const scriptContent = document.querySelector('script:last-of-type').textContent
+            .replace(/window\.JOURNEY_DATA\s*=\s*[^;]+;/, 'window.JOURNEY_DATA = ' + dataJSON + ';')
+            .replace(/window\.PRESENT_MODE\s*=\s*[^;]+;/, 'window.PRESENT_MODE = ' + this.presentMode + ';');
+          const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>uroboro timeline</title><script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"><\/script><style>' + css + '</style></head><body :class="{ \'present-mode\': presentMode }" x-data="timeline()" x-init="init()" @keydown.window="handleKey($event)"><div class="loading-overlay" :class="{ active: loading }"></div><div class="kbd-hints"><span><kbd>j</kbd><kbd>k</kbd> navigate</span><span><kbd>1</kbd><kbd>2</kbd> views</span><span><kbd>p</kbd> present</span><span><kbd>f</kbd> filters</span><span><kbd>n</kbd> summary</span><span><kbd>N</kbd> narrative</span><span><kbd>g</kbd> group</span><span><kbd>/</kbd> search</span></div>' + document.querySelector('.container').outerHTML.replace(/@click="downloadHTML\(\)"/g, 'style="display:none"') + '<script>' + scriptContent + '<\/script></body></html>';
+          const blob = new Blob([html], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'uroboro-timeline-' + new Date().toISOString().slice(0, 10) + '.html';
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        async copyNarrative() {
+          try {
+            await navigator.clipboard.writeText(this.narrativeMarkdown);
+            this.narrativeCopied = true;
+            setTimeout(() => { this.narrativeCopied = false; }, 2000);
+          } catch (e) {
+            console.error('Copy failed:', e);
+          }
+        },
+        eventKey(event) {
+          return (event.timestamp || '') + '|' + (event.content || '').slice(0, 50);
+        },
+        eventClasses(event, idx) {
+          let cls = 'event-' + event.eventType;
+          if (idx >= 0 && this.focusedIdx === idx) cls += ' focused';
+          if (this.diffMode && this.sinceDate) {
+            cls += new Date(event.timestamp).getTime() >= this.sinceDate ? ' after-since' : ' before-since';
+          }
+          if (this.annotations[this.eventKey(event)]) cls += ' annotated';
+          return cls;
+        },
+        getGlobalIdx(event) {
+          return this.filteredEvents.indexOf(event);
+        },
+        handleKey(e) {
+          if (this.selectedEvent) return; // modal open, let Esc handle it
+          if (e.key === 'Escape' && this.showSummaryPane) { this.showSummaryPane = false; return; }
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+          switch(e.key) {
+            case 'j': case 'ArrowDown':
+              e.preventDefault();
+              if (this.viewMode === 'list') {
+                this.focusedIdx = Math.min(this.focusedIdx + 1, this.filteredEvents.length - 1);
+                this.scrollToFocused();
+              }
+              break;
+            case 'k': case 'ArrowUp':
+              e.preventDefault();
+              if (this.viewMode === 'list') {
+                this.focusedIdx = Math.max(this.focusedIdx - 1, 0);
+                this.scrollToFocused();
+              }
+              break;
+            case 'Enter':
+              if (this.focusedIdx >= 0 && this.focusedIdx < this.filteredEvents.length) {
+                this.selectedEvent = this.filteredEvents[this.focusedIdx];
+              }
+              break;
+            case '1': this.viewMode = 'list'; break;
+            case '2': this.viewMode = 'timeline'; break;
+            case '3': if (this.selectedProject) this.viewMode = 'project'; break;
+            case 'p': this.presentMode = !this.presentMode; break;
+            case 'f': this.showFilters = !this.showFilters; break;
+            case '/':
+              e.preventDefault();
+              this.showFilters = true;
+              this.$nextTick(() => {
+                const input = document.querySelector('.filters input[type="search"]');
+                if (input) input.focus();
+              });
+              break;
+            case 'g': this.groupByDay = !this.groupByDay; break;
+            case 'n': this.showSummaryPane = !this.showSummaryPane; break;
+            case 'N': this.showNarrative = !this.showNarrative; break;
+            case 'd': if (this.sinceDate) this.diffMode = !this.diffMode; break;
+          }
+        },
+        get presetRangeLabel() {
+          if (!this.data.timeline?.startTime || !this.data.timeline?.endTime) return '';
+          const s = new Date(this.data.timeline.startTime);
+          const e = new Date(this.data.timeline.endTime);
+          const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          return fmt(s) + ' — ' + fmt(e);
+        },
+        async loadPreset(preset) {
+          if (this.loading) return;
+          this.activePreset = preset.label;
+          this.loading = true;
+          try {
+            const resp = await fetch('/api/journey?days=' + preset.days);
+            const newData = await resp.json();
+            this.data = newData;
+            this.focusedIdx = -1;
+            this.computeTimeRange();
+          } catch (e) {
+            console.error('Failed to load preset:', e);
+          }
+          this.loading = false;
+        },
+        scrollToFocused() {
+          this.$nextTick(() => {
+            const el = document.querySelector('.event.focused');
+            if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          });
+        },
         showProject(name) { this.selectedProject = name; this.viewMode = 'project'; },
-        backToMain() { this.viewMode = 'timeline'; this.selectedProject = null; }
+        backToMain() { this.viewMode = 'list'; this.selectedProject = null; }
       };
     }
   </script>
@@ -462,6 +943,10 @@ func handleWeb(args []string) {
 	days := fs.Int("days", 7, "Days to show")
 	port := fs.Int("port", 8080, "HTTP port")
 	project := fs.String("project", "", "Filter by project")
+	present := fs.Bool("present", false, "Present mode (large text, minimal chrome)")
+	export := fs.String("export", "", "Export static HTML to file and exit")
+	since := fs.String("since", "", "Diff mode: dim events before this date (YYYY-MM-DD or YYYY-MM-DDTHH:MM)")
+	repos := fs.String("repos", "", "Additional git repos (comma-separated paths, optional :name suffix)")
 	fs.Parse(args)
 
 	db, err := database.NewDB(getDBPath())
@@ -476,7 +961,43 @@ func handleWeb(args []string) {
 		projects = strings.Split(*project, ",")
 	}
 
+	var repoConfigs []journey.RepoConfig
+	if *repos != "" {
+		for _, r := range strings.Split(*repos, ",") {
+			r = strings.TrimSpace(r)
+			if r == "" {
+				continue
+			}
+			parts := strings.SplitN(r, ":", 2)
+			rc := journey.RepoConfig{Path: parts[0]}
+			if len(parts) == 2 {
+				rc.Name = parts[1]
+			}
+			repoConfigs = append(repoConfigs, rc)
+		}
+	}
+
 	svc := journey.NewService(db)
+
+	// Static HTML export mode
+	if *export != "" {
+		data, err := svc.GenerateJourney(journey.Options{Days: *days, Projects: projects, Repos: repoConfigs})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Journey error: %v\n", err)
+			os.Exit(1)
+		}
+		html, err := GenerateStandaloneHTML(data)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Template error: %v\n", err)
+			os.Exit(1)
+		}
+		if err := os.WriteFile(*export, []byte(html), 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "Write error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Exported to %s\n", *export)
+		return
+	}
 
 	// Serve timeline page
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -485,7 +1006,7 @@ func handleWeb(args []string) {
 			return
 		}
 
-		data, err := svc.GenerateJourney(journey.Options{Days: *days, Projects: projects})
+		data, err := svc.GenerateJourney(journey.Options{Days: *days, Projects: projects, Repos: repoConfigs})
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -501,14 +1022,22 @@ func handleWeb(args []string) {
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		tmpl.Execute(w, map[string]interface{}{
-			"CSS":      template.CSS(timelineCSS),
-			"DataJSON": template.JS(string(jsonBytes)),
+			"CSS":         template.CSS(timelineCSS),
+			"DataJSON":    template.JS(string(jsonBytes)),
+			"PresentMode": *present,
+			"SinceDate":   *since,
 		})
 	})
 
-	// API endpoint for live refresh
+	// API endpoint for live refresh (accepts ?days=N override)
 	http.HandleFunc("/api/journey", func(w http.ResponseWriter, r *http.Request) {
-		data, err := svc.GenerateJourney(journey.Options{Days: *days, Projects: projects})
+		reqDays := *days
+		if d := r.URL.Query().Get("days"); d != "" {
+			if parsed, err := strconv.Atoi(d); err == nil && parsed > 0 {
+				reqDays = parsed
+			}
+		}
+		data, err := svc.GenerateJourney(journey.Options{Days: reqDays, Projects: projects, Repos: repoConfigs})
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -547,8 +1076,10 @@ func GenerateStandaloneHTML(data *journey.JourneyData) (string, error) {
 
 	var buf strings.Builder
 	err = tmpl.Execute(&buf, map[string]interface{}{
-		"CSS":      template.CSS(timelineCSS),
-		"DataJSON": template.JS(string(jsonBytes)),
+		"CSS":         template.CSS(timelineCSS),
+		"DataJSON":    template.JS(string(jsonBytes)),
+		"PresentMode": false,
+		"SinceDate":   "",
 	})
 	if err != nil {
 		return "", err
