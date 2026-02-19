@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "uroboro": {
+      "command": "/home/qry/projects/uroboro/uroboro",
+      "args": ["mcp"]
+    }
+  }
+}

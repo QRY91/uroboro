@@ -53,6 +53,10 @@ func main() {
 		handleDistill(os.Args[2:])
 	case "prompt-profile":
 		handlePromptProfile(os.Args[2:])
+	case "hooks":
+		handleHooks(os.Args[2:])
+	case "init":
+		handleInit(os.Args[2:])
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		printUsage()
@@ -312,6 +316,8 @@ Commands:
   report               Generate time report for billing
   distill              Extract style signal data from git + uroboro
   prompt-profile       Analyze Claude Code prompting patterns
+  hooks                Install/uninstall enforcement hooks for Claude Code
+  init                 Create .claude/uroboro.tags for current project
   mcp                  Start MCP server (for Claude Code)
 
 Aliases:
@@ -378,6 +384,16 @@ Distill options:
   --since DATE         Limit to after date (2006-01-02)
   --correlate          Join git↔uro captures by ±30min window
 
+Hooks options:
+  install              Install enforcement hooks into ~/.claude/
+  uninstall            Remove enforcement hooks
+  status               Check installation status
+
+Init options:
+  --tags LIST          Comma-separated project tags to pre-populate
+  --format FORMAT      Capture format hint (default: concise)
+  --force              Overwrite existing .claude/uroboro.tags
+
 Examples:
   uro d "JWT over sessions - stateless scaling"
   uro b "waiting on backend API"
@@ -387,7 +403,13 @@ Examples:
   uro timeline --days 14
   uro web --port 3000
   uro graph --days 60
-  uro timeline --export-html --days 30`)
+  uro timeline --export-html --days 30
+
+Setup:
+  uroboro hooks install                          Install enforcement hooks
+  uroboro hooks status                           Check hook status
+  uroboro init                                   Create capture conventions for current project
+  uroboro init --tags "frontend,perf,a11y"       Pre-populate with custom tags`)
 }
 
 func getDBPath() string {

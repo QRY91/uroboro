@@ -1,0 +1,20 @@
+# .claude/uroboro.tags
+# Project-specific uroboro capture convention
+
+project: uroboro
+
+tags:
+  dogfood       — uroboro building/improving itself
+  enforcement   — capture compliance, hook system, audit mechanisms
+  mcp           — MCP server tools, protocol, integration
+  cli           — CLI commands, shell interface
+  distill       — style distillation, prompt profiling
+  presentation  — landing page, docs, public-facing material
+
+capture-triggers:
+  - Self-referential moments where uroboro captures its own development (tag: dogfood)
+  - Decisions about how to enforce capture compliance (tag: enforcement)
+  - MCP tool design choices (tag: mcp)
+  - The tool documenting its own limitations or gaps (tag: dogfood)
+
+format: concise, technical — these captures inform future development
