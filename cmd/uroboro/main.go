@@ -104,14 +104,17 @@ func handleCapture(args []string) {
 
 func handleSearch(args []string) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "Usage: uroboro search \"keyword\" [--project NAME] [--days N] [--limit N]")
+		fmt.Fprintln(os.Stderr, "Usage: uroboro search \"keyword\" [--project NAME] [--days N] [--since DATE] [--until DATE] [--tags TAGS] [--limit N]")
 		os.Exit(1)
 	}
 
 	fs := flag.NewFlagSet("search", flag.ExitOnError)
 	project := fs.String("project", "", "Filter by project")
 	days := fs.Int("days", 0, "Limit to last N days")
-	limit := fs.Int("limit", 20, "Maximum results")
+	since := fs.String("since", "", "Start date (YYYY-MM-DD)")
+	until := fs.String("until", "", "End date (YYYY-MM-DD)")
+	tags := fs.String("tags", "", "Comma-separated tag filter")
+	limit := fs.Int("limit", 50, "Maximum results")
 	fs.Parse(args[1:])
 
 	keyword := args[0]
@@ -123,12 +126,38 @@ func handleSearch(args []string) {
 	}
 	defer db.Close()
 
-	captures, err := db.QueryCaptures(database.CaptureQuery{
+	q := database.CaptureQuery{
 		Keyword: keyword,
 		Project: *project,
 		Days:    *days,
 		Limit:   *limit,
-	})
+	}
+
+	if *since != "" {
+		t, err := time.ParseInLocation("2006-01-02", *since, time.Local)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid --since date: %v\n", err)
+			os.Exit(1)
+		}
+		q.Since = &t
+	}
+	if *until != "" {
+		t, err := time.ParseInLocation("2006-01-02", *until, time.Local)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid --until date: %v\n", err)
+			os.Exit(1)
+		}
+		q.Until = &t
+	}
+	if *tags != "" {
+		for _, tag := range strings.Split(*tags, ",") {
+			if t := strings.TrimSpace(tag); t != "" {
+				q.Tags = append(q.Tags, t)
+			}
+		}
+	}
+
+	captures, err := db.QueryCaptures(q)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Search error: %v\n", err)
 		os.Exit(1)
@@ -144,9 +173,14 @@ func handleSearch(args []string) {
 		if proj == "" {
 			proj = "-"
 		}
-		fmt.Printf("%s  [%s]  %s\n",
+		tagsInfo := ""
+		if c.Tags != "" {
+			tagsInfo = "  {" + c.Tags + "}"
+		}
+		fmt.Printf("%s  [%s]%s  %s\n",
 			c.Timestamp.Format("2006-01-02 15:04"),
 			proj,
+			tagsInfo,
 			c.Content,
 		)
 	}

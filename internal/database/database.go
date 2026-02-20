@@ -136,7 +136,9 @@ type CaptureQuery struct {
 	Branch  string
 	Limit   int
 	Since   *time.Time
+	Until   *time.Time
 	Keyword string // Text search in content (case-insensitive LIKE)
+	Tags    []string // Match captures having ANY of these tags (LIKE-based)
 }
 
 func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
@@ -159,12 +161,24 @@ func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
 		query += ` AND branch = ?`
 		args = append(args, q.Branch)
 	}
+	if q.Until != nil {
+		query += ` AND timestamp <= ?`
+		args = append(args, q.Until.Format("2006-01-02 15:04:05"))
+	}
 	if q.Keyword != "" {
 		words := strings.Fields(q.Keyword)
 		for _, word := range words {
 			query += ` AND content LIKE ?`
 			args = append(args, "%"+word+"%")
 		}
+	}
+	if len(q.Tags) > 0 {
+		tagClauses := make([]string, len(q.Tags))
+		for i, tag := range q.Tags {
+			tagClauses[i] = "tags LIKE ?"
+			args = append(args, "%"+strings.TrimSpace(tag)+"%")
+		}
+		query += ` AND (` + strings.Join(tagClauses, " OR ") + `)`
 	}
 
 	query += ` ORDER BY timestamp DESC`

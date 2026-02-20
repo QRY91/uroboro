@@ -149,8 +149,11 @@ func getMCPTools() []map[string]interface{} {
 			"inputSchema": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
-					"days":   map[string]interface{}{"type": "integer", "description": "Days to look back (default: 7)"},
-					"branch": map[string]string{"type": "string", "description": "Filter by git branch"},
+					"days":    map[string]interface{}{"type": "integer", "description": "Days to look back (default: 7)"},
+					"since":   map[string]string{"type": "string", "description": "Start date (YYYY-MM-DD or ISO timestamp)"},
+					"until":   map[string]string{"type": "string", "description": "End date (YYYY-MM-DD or ISO timestamp)"},
+					"project": map[string]string{"type": "string", "description": "Filter by project name (overrides auto-detection)"},
+					"branch":  map[string]string{"type": "string", "description": "Filter by git branch"},
 				},
 			},
 		},
@@ -160,11 +163,32 @@ func getMCPTools() []map[string]interface{} {
 			"inputSchema": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
-					"query":  map[string]string{"type": "string", "description": "Search keywords"},
-					"days":   map[string]interface{}{"type": "integer", "description": "Days to search (default: 30)"},
-					"branch": map[string]string{"type": "string", "description": "Filter by git branch"},
+					"query":   map[string]string{"type": "string", "description": "Search keywords"},
+					"days":    map[string]interface{}{"type": "integer", "description": "Days to search (default: 0 = all time)"},
+					"since":   map[string]string{"type": "string", "description": "Start date (YYYY-MM-DD or ISO timestamp)"},
+					"until":   map[string]string{"type": "string", "description": "End date (YYYY-MM-DD or ISO timestamp)"},
+					"tags":    map[string]string{"type": "string", "description": "Comma-separated tag filter (matches any)"},
+					"project": map[string]string{"type": "string", "description": "Filter by project name"},
+					"branch":  map[string]string{"type": "string", "description": "Filter by git branch"},
+					"limit":   map[string]interface{}{"type": "integer", "description": "Max results (default: 50, max: 200)"},
 				},
-				"required": []string{"query"},
+			},
+		},
+		{
+			"name":        "uro_stats",
+			"description": "Aggregate statistics about captures. Modes: 'tags' (tag usage and first/last seen), 'activity' (capture frequency over time), 'projects' (per-project breakdown).",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"mode":     map[string]string{"type": "string", "description": "One of: tags, activity, projects"},
+					"since":    map[string]string{"type": "string", "description": "Start date (YYYY-MM-DD or ISO timestamp)"},
+					"until":    map[string]string{"type": "string", "description": "End date (YYYY-MM-DD or ISO timestamp)"},
+					"days":     map[string]interface{}{"type": "integer", "description": "Days to look back (default: 0 = all time)"},
+					"project":  map[string]string{"type": "string", "description": "Filter by project"},
+					"branch":   map[string]string{"type": "string", "description": "Filter by git branch"},
+					"interval": map[string]string{"type": "string", "description": "For activity mode: day, week, or month (default: week)"},
+				},
+				"required": []string{"mode"},
 			},
 		},
 		{
@@ -280,30 +304,44 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 
 	case "uro_recap":
 		var args struct {
-			Days   int    `json:"days"`
-			Branch string `json:"branch"`
+			Days    int    `json:"days"`
+			Since   string `json:"since"`
+			Until   string `json:"until"`
+			Project string `json:"project"`
+			Branch  string `json:"branch"`
 		}
 		json.Unmarshal(params.Arguments, &args)
 
-		if args.Days == 0 {
-			args.Days = 7
-		}
-
-		resultText, err = mcpRecap(args.Days, args.Branch)
+		resultText, err = mcpRecapV2(args.Days, args.Since, args.Until, args.Project, args.Branch)
 
 	case "uro_search":
 		var args struct {
-			Query  string `json:"query"`
-			Days   int    `json:"days"`
-			Branch string `json:"branch"`
+			Query   string `json:"query"`
+			Days    int    `json:"days"`
+			Since   string `json:"since"`
+			Until   string `json:"until"`
+			Tags    string `json:"tags"`
+			Project string `json:"project"`
+			Branch  string `json:"branch"`
+			Limit   int    `json:"limit"`
 		}
 		json.Unmarshal(params.Arguments, &args)
 
-		if args.Days == 0 {
-			args.Days = 30
-		}
+		resultText, err = mcpSearchV2(args)
 
-		resultText, err = mcpSearch(args.Query, args.Days, args.Branch)
+	case "uro_stats":
+		var args struct {
+			Mode     string `json:"mode"`
+			Since    string `json:"since"`
+			Until    string `json:"until"`
+			Days     int    `json:"days"`
+			Project  string `json:"project"`
+			Branch   string `json:"branch"`
+			Interval string `json:"interval"`
+		}
+		json.Unmarshal(params.Arguments, &args)
+
+		resultText, err = mcpStats(args.Mode, args.Since, args.Until, args.Days, args.Project, args.Branch, args.Interval)
 
 	case "uro_distill":
 		var args struct {
@@ -396,28 +434,56 @@ func mcpParseTimestamp(s string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("could not parse '%s'", s)
 }
 
-func mcpRecap(days int, branch string) (string, error) {
+func mcpRecapV2(days int, sinceStr, untilStr, project, branch string) (string, error) {
 	db, err := database.NewDB(getDBPath())
 	if err != nil {
 		return "", err
 	}
 	defer db.Close()
 
-	project := detectProject()
+	if project == "" {
+		project = detectProject()
+	}
 
-	// Get captures
-	captures, err := db.QueryCaptures(database.CaptureQuery{
-		Days:    days,
+	q := database.CaptureQuery{
 		Project: project,
 		Branch:  branch,
 		Limit:   50,
-	})
+	}
+
+	// Date range: since/until override days
+	var gitSince, gitUntil string
+	if sinceStr != "" {
+		t, err := mcpParseTimestamp(sinceStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid since: %w", err)
+		}
+		q.Since = &t
+		gitSince = t.Format("2006-01-02")
+	} else {
+		if days == 0 {
+			days = 7
+		}
+		q.Days = days
+		gitSince = time.Now().AddDate(0, 0, -days).Format("2006-01-02")
+	}
+	if untilStr != "" {
+		t, err := mcpParseTimestamp(untilStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid until: %w", err)
+		}
+		q.Until = &t
+		gitUntil = t.Format("2006-01-02")
+	}
+
+	// Get captures
+	captures, err := db.QueryCaptures(q)
 	if err != nil {
 		return "", err
 	}
 
 	// Get git commits
-	commits := getRecentCommits(days)
+	commits := getCommitsBetween(gitSince, gitUntil, 30)
 
 	// Build output
 	var sb strings.Builder
@@ -479,19 +545,66 @@ func mcpRecap(days int, branch string) (string, error) {
 	return sb.String(), nil
 }
 
-func mcpSearch(query string, days int, branch string) (string, error) {
+type mcpSearchArgs struct {
+	Query   string `json:"query"`
+	Days    int    `json:"days"`
+	Since   string `json:"since"`
+	Until   string `json:"until"`
+	Tags    string `json:"tags"`
+	Project string `json:"project"`
+	Branch  string `json:"branch"`
+	Limit   int    `json:"limit"`
+}
+
+func mcpSearchV2(args mcpSearchArgs) (string, error) {
 	db, err := database.NewDB(getDBPath())
 	if err != nil {
 		return "", err
 	}
 	defer db.Close()
 
-	captures, err := db.QueryCaptures(database.CaptureQuery{
-		Keyword: query,
-		Days:    days,
-		Branch:  branch,
-		Limit:   20,
-	})
+	q := database.CaptureQuery{
+		Keyword: args.Query,
+		Days:    args.Days,
+		Branch:  args.Branch,
+		Project: args.Project,
+	}
+
+	// Parse since/until
+	if args.Since != "" {
+		t, err := mcpParseTimestamp(args.Since)
+		if err != nil {
+			return "", fmt.Errorf("invalid since: %w", err)
+		}
+		q.Since = &t
+	}
+	if args.Until != "" {
+		t, err := mcpParseTimestamp(args.Until)
+		if err != nil {
+			return "", fmt.Errorf("invalid until: %w", err)
+		}
+		q.Until = &t
+	}
+
+	// Parse tags
+	if args.Tags != "" {
+		for _, t := range strings.Split(args.Tags, ",") {
+			if tag := strings.TrimSpace(t); tag != "" {
+				q.Tags = append(q.Tags, tag)
+			}
+		}
+	}
+
+	// Limit: default 50, cap 200
+	q.Limit = args.Limit
+	if q.Limit <= 0 {
+		q.Limit = 50
+	}
+	if q.Limit > 200 {
+		q.Limit = 200
+	}
+
+	captures, err := db.QueryCaptures(q)
 	if err != nil {
 		return "", err
 	}
@@ -510,15 +623,321 @@ func mcpSearch(query string, days int, branch string) (string, error) {
 		if c.Branch != "" {
 			branchInfo = " @" + c.Branch
 		}
-		sb.WriteString(fmt.Sprintf("%s  [%s%s]  %s\n",
+		tagsInfo := ""
+		if c.Tags != "" {
+			tagsInfo = "  {" + c.Tags + "}"
+		}
+		sb.WriteString(fmt.Sprintf("%s  [%s%s]%s  %s\n",
 			c.Timestamp.Format("2006-01-02 15:04"),
 			proj,
 			branchInfo,
+			tagsInfo,
 			c.Content,
 		))
 	}
 
 	return sb.String(), nil
+}
+
+func mcpStats(mode, sinceStr, untilStr string, days int, project, branch, interval string) (string, error) {
+	db, err := database.NewDB(getDBPath())
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+
+	q := database.CaptureQuery{
+		Days:    days,
+		Project: project,
+		Branch:  branch,
+		Limit:   5000,
+	}
+	if sinceStr != "" {
+		t, err := mcpParseTimestamp(sinceStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid since: %w", err)
+		}
+		q.Since = &t
+	}
+	if untilStr != "" {
+		t, err := mcpParseTimestamp(untilStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid until: %w", err)
+		}
+		q.Until = &t
+	}
+
+	captures, err := db.QueryCaptures(q)
+	if err != nil {
+		return "", err
+	}
+
+	if len(captures) == 0 {
+		return "No captures found.", nil
+	}
+
+	switch mode {
+	case "tags":
+		return statsTags(captures), nil
+	case "activity":
+		if interval == "" {
+			interval = "week"
+		}
+		return statsActivity(captures, interval), nil
+	case "projects":
+		return statsProjects(captures), nil
+	default:
+		return "", fmt.Errorf("unknown mode: %s (use tags, activity, or projects)", mode)
+	}
+}
+
+type tagStats struct {
+	count     int
+	firstSeen time.Time
+	lastSeen  time.Time
+}
+
+func statsTags(captures []database.Capture) string {
+	stats := make(map[string]*tagStats)
+
+	for _, c := range captures {
+		if c.Tags == "" {
+			continue
+		}
+		for _, tag := range strings.Split(c.Tags, ",") {
+			tag = strings.TrimSpace(tag)
+			if tag == "" {
+				continue
+			}
+			s, ok := stats[tag]
+			if !ok {
+				stats[tag] = &tagStats{count: 1, firstSeen: c.Timestamp, lastSeen: c.Timestamp}
+			} else {
+				s.count++
+				if c.Timestamp.Before(s.firstSeen) {
+					s.firstSeen = c.Timestamp
+				}
+				if c.Timestamp.After(s.lastSeen) {
+					s.lastSeen = c.Timestamp
+				}
+			}
+		}
+	}
+
+	// Sort by count descending
+	type tagEntry struct {
+		tag   string
+		stats *tagStats
+	}
+	var entries []tagEntry
+	for tag, s := range stats {
+		entries = append(entries, tagEntry{tag, s})
+	}
+	for i := 0; i < len(entries); i++ {
+		for j := i + 1; j < len(entries); j++ {
+			if entries[j].stats.count > entries[i].stats.count {
+				entries[i], entries[j] = entries[j], entries[i]
+			}
+		}
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("Tag usage (%d captures):\n\n", len(captures)))
+	for _, e := range entries {
+		sb.WriteString(fmt.Sprintf("  %-20s %4d  first: %s  last: %s\n",
+			e.tag, e.stats.count,
+			e.stats.firstSeen.Format("2006-01-02"),
+			e.stats.lastSeen.Format("2006-01-02"),
+		))
+	}
+	sb.WriteString(fmt.Sprintf("\nTotal: %d distinct tags\n", len(entries)))
+	return sb.String()
+}
+
+func statsActivity(captures []database.Capture, interval string) string {
+	type bucket struct {
+		label     string
+		decisions int
+		blockers  int
+		questions int
+		other     int
+	}
+
+	buckets := make(map[string]*bucket)
+	var bucketKeys []string
+
+	for _, c := range captures {
+		var key, label string
+		switch interval {
+		case "day":
+			key = c.Timestamp.Format("2006-01-02")
+			label = key
+		case "month":
+			key = c.Timestamp.Format("2006-01")
+			label = key
+		default: // week
+			y, w := c.Timestamp.ISOWeek()
+			key = fmt.Sprintf("%d-W%02d", y, w)
+			// Find Monday of this week for label
+			mon := isoWeekStart(y, w)
+			sun := mon.AddDate(0, 0, 6)
+			label = fmt.Sprintf("%s  %s - %s", key, mon.Format("Jan 2"), sun.Format("Jan 2"))
+		}
+
+		b, ok := buckets[key]
+		if !ok {
+			b = &bucket{label: label}
+			buckets[key] = b
+			bucketKeys = append(bucketKeys, key)
+		}
+
+		// Classify
+		classified := false
+		for _, tag := range strings.Split(c.Tags, ",") {
+			switch strings.TrimSpace(tag) {
+			case "decision":
+				b.decisions++
+				classified = true
+			case "blocker":
+				b.blockers++
+				classified = true
+			case "question":
+				b.questions++
+				classified = true
+			}
+		}
+		if !classified {
+			b.other++
+		}
+	}
+
+	// Sort keys chronologically (they're already sortable strings)
+	for i := 0; i < len(bucketKeys); i++ {
+		for j := i + 1; j < len(bucketKeys); j++ {
+			if bucketKeys[j] < bucketKeys[i] {
+				bucketKeys[i], bucketKeys[j] = bucketKeys[j], bucketKeys[i]
+			}
+		}
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("Activity (%s, %d captures):\n\n", interval, len(captures)))
+	for _, key := range bucketKeys {
+		b := buckets[key]
+		total := b.decisions + b.blockers + b.questions + b.other
+		var parts []string
+		if b.decisions > 0 {
+			parts = append(parts, fmt.Sprintf("%d decision", b.decisions))
+		}
+		if b.blockers > 0 {
+			parts = append(parts, fmt.Sprintf("%d blocker", b.blockers))
+		}
+		if b.questions > 0 {
+			parts = append(parts, fmt.Sprintf("%d question", b.questions))
+		}
+		if b.other > 0 {
+			parts = append(parts, fmt.Sprintf("%d other", b.other))
+		}
+		detail := ""
+		if len(parts) > 0 {
+			detail = "  (" + strings.Join(parts, ", ") + ")"
+		}
+		sb.WriteString(fmt.Sprintf("  %-30s  %3d captures%s\n", b.label, total, detail))
+	}
+	return sb.String()
+}
+
+// isoWeekStart returns the Monday of the given ISO week.
+func isoWeekStart(year, week int) time.Time {
+	// Jan 4 is always in ISO week 1
+	jan4 := time.Date(year, 1, 4, 0, 0, 0, 0, time.Local)
+	// Find Monday of week 1
+	weekday := jan4.Weekday()
+	if weekday == 0 {
+		weekday = 7
+	}
+	week1Monday := jan4.AddDate(0, 0, -int(weekday-1))
+	return week1Monday.AddDate(0, 0, (week-1)*7)
+}
+
+func statsProjects(captures []database.Capture) string {
+	type projStats struct {
+		count     int
+		firstSeen time.Time
+		lastSeen  time.Time
+		decisions int
+		blockers  int
+	}
+	stats := make(map[string]*projStats)
+
+	for _, c := range captures {
+		proj := c.Project
+		if proj == "" {
+			proj = "(none)"
+		}
+		s, ok := stats[proj]
+		if !ok {
+			stats[proj] = &projStats{count: 1, firstSeen: c.Timestamp, lastSeen: c.Timestamp}
+			s = stats[proj]
+		} else {
+			s.count++
+			if c.Timestamp.Before(s.firstSeen) {
+				s.firstSeen = c.Timestamp
+			}
+			if c.Timestamp.After(s.lastSeen) {
+				s.lastSeen = c.Timestamp
+			}
+		}
+		for _, tag := range strings.Split(c.Tags, ",") {
+			switch strings.TrimSpace(tag) {
+			case "decision":
+				s.decisions++
+			case "blocker":
+				s.blockers++
+			}
+		}
+	}
+
+	// Sort by count descending
+	type projEntry struct {
+		name  string
+		stats *projStats
+	}
+	var entries []projEntry
+	for name, s := range stats {
+		entries = append(entries, projEntry{name, s})
+	}
+	for i := 0; i < len(entries); i++ {
+		for j := i + 1; j < len(entries); j++ {
+			if entries[j].stats.count > entries[i].stats.count {
+				entries[i], entries[j] = entries[j], entries[i]
+			}
+		}
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("Projects (%d captures):\n\n", len(captures)))
+	for _, e := range entries {
+		var detail string
+		var parts []string
+		if e.stats.decisions > 0 {
+			parts = append(parts, fmt.Sprintf("%d decisions", e.stats.decisions))
+		}
+		if e.stats.blockers > 0 {
+			parts = append(parts, fmt.Sprintf("%d blockers", e.stats.blockers))
+		}
+		if len(parts) > 0 {
+			detail = "  (" + strings.Join(parts, ", ") + ")"
+		}
+		sb.WriteString(fmt.Sprintf("  %-20s %4d captures  first: %s  last: %s%s\n",
+			e.name, e.stats.count,
+			e.stats.firstSeen.Format("2006-01-02"),
+			e.stats.lastSeen.Format("2006-01-02"),
+			detail,
+		))
+	}
+	sb.WriteString(fmt.Sprintf("\nTotal: %d projects\n", len(entries)))
+	return sb.String()
 }
 
 func detectProject() string {
@@ -692,14 +1111,17 @@ func mcpPromptProfile(project string, days int, extract bool) (string, error) {
 	return promptprofile.FormatStats(stats), nil
 }
 
-func getRecentCommits(days int) []string {
-	since := time.Now().AddDate(0, 0, -days).Format("2006-01-02")
-	out, err := exec.Command("git", "log",
-		"--since="+since,
-		"--format=%s",
-		"--no-merges",
-		"-n", "10",
-	).Output()
+func getCommitsBetween(since, until string, limit int) []string {
+	args := []string{"log", "--format=%s", "--no-merges"}
+	if since != "" {
+		args = append(args, "--since="+since)
+	}
+	if until != "" {
+		args = append(args, "--until="+until)
+	}
+	args = append(args, "-n", fmt.Sprintf("%d", limit))
+
+	out, err := exec.Command("git", args...).Output()
 	if err != nil {
 		return nil
 	}
