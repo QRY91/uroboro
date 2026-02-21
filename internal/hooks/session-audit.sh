@@ -9,6 +9,9 @@ INPUT=$(cat)
 STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // "false"')
 TRANSCRIPT=$(echo "$INPUT" | jq -r '.transcript_path')
 
+# Expand ~ to $HOME (bash doesn't expand tilde in variables)
+TRANSCRIPT="${TRANSCRIPT/#\~/$HOME}"
+
 # If we already blocked once this turn, don't block again (prevent loops)
 if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
   exit 0

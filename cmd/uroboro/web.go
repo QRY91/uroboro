@@ -235,7 +235,45 @@ header h1::before{content:"";width:12px;height:12px;background:var(--accent);bor
 .present-mode .v-timeline-type{font-size:0.8rem}
 /* Present mode: horizontal timeline */
 .present-mode .h-timeline-lane-label{font-size:0.85rem;width:120px;min-width:120px}
-.present-mode .h-timeline-event{width:16px;height:16px}`
+.present-mode .h-timeline-event{width:16px;height:16px}
+/* Replay View */
+.replay-controls{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:var(--space-md);padding:var(--space-md);background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:var(--space-lg);font-family:var(--font-mono);font-size:0.85rem;flex-wrap:wrap;backdrop-filter:blur(8px);background:rgba(58,45,74,0.95)}
+.replay-controls button{padding:var(--space-xs) var(--space-md);background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-secondary);font-family:var(--font-mono);font-size:0.85rem;cursor:pointer;transition:all 0.15s;min-width:36px}
+.replay-controls button:hover{color:var(--text-primary);border-color:var(--text-muted)}
+.replay-controls button.playing{background:var(--accent);border-color:var(--accent);color:white}
+.replay-controls .replay-progress{flex:1;min-width:120px}
+.replay-controls input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer}
+.replay-controls .replay-step-label{color:var(--text-muted);font-size:0.8rem;white-space:nowrap}
+.replay-controls select{padding:var(--space-xs) var(--space-sm);background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:var(--font-mono);font-size:0.8rem}
+.replay-stage{max-width:750px;margin:0 auto;padding:var(--space-md) 0}
+.replay-scene{margin-bottom:var(--space-xl)}
+.replay-scene-header{font-family:var(--font-mono);font-size:1.3rem;font-weight:600;color:var(--project-yellow);padding:var(--space-lg) 0 var(--space-md) 0;border-bottom:1px dashed var(--border);margin-bottom:var(--space-lg);opacity:0;transform:translateY(8px);transition:all 0.5s ease}
+.replay-scene-header.visible{opacity:1;transform:translateY(0)}
+.replay-scene-narration{font-family:var(--font-mono);font-style:italic;font-size:0.9rem;color:var(--text-muted);padding:var(--space-sm) 0 var(--space-md) var(--space-md);border-left:2px solid var(--border);opacity:0;transition:opacity 0.6s ease}
+.replay-scene-narration.visible{opacity:1}
+.replay-transition{font-family:var(--font-mono);font-style:italic;font-size:0.85rem;color:var(--text-dim);padding:var(--space-sm) 0 var(--space-sm) var(--space-lg);opacity:0;transition:opacity 0.5s ease}
+.replay-transition.visible{opacity:1}
+.replay-event-card{position:relative;margin-bottom:var(--space-md);padding:var(--space-md);padding-left:calc(var(--space-lg) + 16px);background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-lg);opacity:0;transform:translateY(12px);transition:all 0.5s ease}
+.replay-event-card.visible{opacity:1;transform:translateY(0)}
+.replay-event-card.past{opacity:0.5}
+.replay-event-card.current{border-color:var(--accent);box-shadow:0 0 12px rgba(125,86,244,0.15)}
+.replay-event-dot{position:absolute;left:var(--space-md);top:var(--space-md);width:12px;height:12px;border-radius:50%;border:2px solid var(--bg-secondary)}
+.replay-event-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-xs)}
+.replay-event-meta time{font-family:var(--font-mono);font-size:0.75rem;color:var(--text-dim)}
+.replay-event-type{font-family:var(--font-mono);font-size:0.7rem;font-weight:600;padding:1px 6px;border-radius:3px;background:var(--bg-secondary)}
+.replay-event-content{font-family:var(--font-mono);font-size:0.875rem;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.replay-event-footer{display:flex;gap:var(--space-sm);margin-top:var(--space-sm);flex-wrap:wrap}
+.replay-event-tag{font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);background:var(--bg-secondary);padding:1px 6px;border-radius:3px;border:1px solid var(--border)}
+.replay-event-hash{font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim)}
+.replay-end{text-align:center;padding:var(--space-xl);font-family:var(--font-mono);color:var(--text-muted);font-style:italic;opacity:0;transition:opacity 0.8s ease}
+.replay-end.visible{opacity:1}
+.present-mode .replay-scene-header{font-size:1.6rem}
+.present-mode .replay-scene-narration{font-size:1.05rem}
+.present-mode .replay-transition{font-size:1rem}
+.present-mode .replay-event-card{padding:var(--space-lg);padding-left:calc(var(--space-xl) + 16px)}
+.present-mode .replay-event-content{font-size:1rem}
+.present-mode .replay-controls{font-size:1rem}
+.present-mode .replay-controls button{font-size:1rem;padding:var(--space-sm) var(--space-lg)}`
 
 var htmlTemplate = `<!DOCTYPE html>
 <html lang="en">
@@ -257,6 +295,7 @@ var htmlTemplate = `<!DOCTYPE html>
     <span><kbd>N</kbd> narrative</span>
     <span><kbd>g</kbd> group</span>
     <span><kbd>/</kbd> search</span>
+    <span><kbd>r</kbd> replay</span>
   </div>
   <div class="container" :class="{ 'list-view': viewMode === 'list' || viewMode === 'project', 'diff-mode': diffMode }">
     <header>
@@ -433,6 +472,54 @@ var htmlTemplate = `<!DOCTYPE html>
         </template>
       </div>
     </div>
+    <!-- Replay View -->
+    <div x-show="viewMode === 'replay'">
+      <div class="replay-controls">
+        <button @click="replayStepBack()" title="Step back">&larr;</button>
+        <button @click="replayToggle()" :class="{ playing: replayPlaying }" x-text="replayPlaying ? '||' : '&#9654;'" :title="replayPlaying ? 'Pause' : 'Play'"></button>
+        <button @click="replayStepForward()" title="Step forward">&rarr;</button>
+        <span class="replay-step-label" x-text="replayStep + ' / ' + replayTotalSteps"></span>
+        <div class="replay-progress">
+          <input type="range" min="0" :max="replayTotalSteps" x-model.number="replayStep" @input="replayPause()">
+        </div>
+        <select x-model.number="replaySpeed" @change="if (replayPlaying) { replayPause(); replayPlay(); }">
+          <option value="3000">0.5x</option>
+          <option value="1500">1x</option>
+          <option value="800">2x</option>
+          <option value="400">4x</option>
+        </select>
+        <button @click="replayReset()">Reset</button>
+      </div>
+      <div class="replay-stage">
+        <template x-for="(scene, si) in replayScenes" :key="'scene-' + si">
+          <div class="replay-scene" x-show="scene.stepStart <= replayStep">
+            <div class="replay-scene-header" :class="{ visible: scene.stepStart <= replayStep }" x-text="scene.date"></div>
+            <div class="replay-scene-narration" :class="{ visible: scene.stepStart <= replayStep }" x-show="scene.narration" x-text="scene.narration"></div>
+            <template x-for="(ev, ei) in scene.events" :key="'ev-' + si + '-' + ei">
+              <div>
+                <div class="replay-transition" :class="{ visible: ev.stepIdx <= replayStep }" x-show="ev.transition" x-text="ev.transition"></div>
+                <div class="replay-event-card" :class="{ visible: ev.stepIdx <= replayStep, past: ev.stepIdx < replayStep - 1, current: ev.stepIdx === replayStep }" @click="selectedEvent = ev.event">
+                  <div class="replay-event-dot" :class="'type-' + ev.event.eventType" :style="'background:' + getProjectColor(ev.event.project)"></div>
+                  <div class="replay-event-meta">
+                    <time x-text="formatDateTime(ev.event.timestamp)"></time>
+                    <span class="replay-event-type" :class="'type-' + ev.event.eventType" x-text="getTypeIcon(ev.event.eventType)"></span>
+                  </div>
+                  <div class="replay-event-content" x-text="ev.event.content"></div>
+                  <div class="replay-event-footer">
+                    <span class="replay-event-tag" x-show="ev.event.project" :style="'color:' + getProjectColor(ev.event.project)" x-text="ev.event.project"></span>
+                    <template x-for="tag in (ev.event.tags || []).filter(t => t !== 'git' && t !== 'commit')" :key="tag">
+                      <span class="replay-event-tag" x-text="tag"></span>
+                    </template>
+                    <span class="replay-event-hash" x-show="ev.event.gitHash" x-text="ev.event.gitHash ? ev.event.gitHash.slice(0, 8) : ''"></span>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+        <div class="replay-end" :class="{ visible: replayStep >= replayTotalSteps }" x-show="replayStep >= replayTotalSteps">fin.</div>
+      </div>
+    </div>
     <!-- Summary Pane -->
     <div class="summary-pane" :class="{ open: showSummaryPane }">
       <button class="close-btn" @click="showSummaryPane = false">&times;</button>
@@ -503,6 +590,7 @@ var htmlTemplate = `<!DOCTYPE html>
     window.JOURNEY_DATA = {{.DataJSON}};
     window.PRESENT_MODE = {{.PresentMode}};
     window.SINCE_DATE = '{{.SinceDate}}';
+    window.REPLAY_MODE = {{.ReplayMode}};
     function timeline() {
       return {
         data: window.JOURNEY_DATA || { events: [], projects: [], stats: {}, milestones: [] },
@@ -523,8 +611,12 @@ var htmlTemplate = `<!DOCTYPE html>
           { label: '2 Weeks', days: 14 },
           { label: '30 Days', days: 30 },
         ],
+        replayStep: 0,
+        replayPlaying: false,
+        replaySpeed: 1500,
+        replayTimer: null,
         projectFilter: '', typeFilter: '', searchQuery: '', groupByDay: true, selectedEvent: null,
-        viewMode: 'list',
+        viewMode: window.REPLAY_MODE ? 'replay' : 'list',
         selectedProject: null,
         compactMode: false,
         eventTypes: ['capture', 'commit', 'milestone', 'learning', 'decision', 'bugfix', 'feature', 'blocker', 'question'],
@@ -861,8 +953,18 @@ var htmlTemplate = `<!DOCTYPE html>
         },
         handleKey(e) {
           if (this.selectedEvent) return; // modal open, let Esc handle it
+          if (e.key === 'Escape' && this.viewMode === 'replay') { this.replayPause(); this.viewMode = 'list'; return; }
           if (e.key === 'Escape' && this.showSummaryPane) { this.showSummaryPane = false; return; }
           if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+          if (this.viewMode === 'replay') {
+            switch(e.key) {
+              case ' ': e.preventDefault(); this.replayToggle(); break;
+              case 'ArrowRight': case 'l': e.preventDefault(); this.replayStepForward(); break;
+              case 'ArrowLeft': case 'h': e.preventDefault(); this.replayStepBack(); break;
+              case 'r': this.replayPause(); this.viewMode = 'list'; break;
+            }
+            return;
+          }
           switch(e.key) {
             case 'j': case 'ArrowDown':
               e.preventDefault();
@@ -900,6 +1002,7 @@ var htmlTemplate = `<!DOCTYPE html>
             case 'n': this.showSummaryPane = !this.showSummaryPane; break;
             case 'N': this.showNarrative = !this.showNarrative; break;
             case 'd': if (this.sinceDate) this.diffMode = !this.diffMode; break;
+            case 'r': this.viewMode = 'replay'; this.replayStep = 0; break;
           }
         },
         get presetRangeLabel() {
@@ -924,6 +1027,148 @@ var htmlTemplate = `<!DOCTYPE html>
           }
           this.loading = false;
         },
+        // Replay: computed properties
+        get replayEvents() {
+          if (!this.data.events) return [];
+          return [...this.data.events].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        },
+        get replayScenes() {
+          const events = this.replayEvents;
+          if (events.length === 0) return [];
+          const GAP = 4 * 60 * 60 * 1000; // 4 hours = new scene
+          const scenes = [];
+          let stepCounter = 0;
+          let prevSceneEvent = null;
+
+          for (let i = 0; i < events.length; i++) {
+            const ev = events[i];
+            const ts = new Date(ev.timestamp).getTime();
+            const lastScene = scenes[scenes.length - 1];
+            const needsNew = !lastScene || (ts - lastScene.lastTs > GAP);
+
+            if (needsNew) {
+              const narration = this._sceneNarration(ev, prevSceneEvent, lastScene);
+              const date = new Date(ev.timestamp).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+              scenes.push({ date, narration, events: [], stepStart: stepCounter, lastTs: ts });
+              stepCounter++; // scene header is a step
+            }
+
+            const scene = scenes[scenes.length - 1];
+            const prevEvent = scene.events.length > 0 ? scene.events[scene.events.length - 1].event : (scenes.length > 1 ? scenes[scenes.length - 2].events.slice(-1)[0]?.event : null);
+            const transition = this._eventTransition(prevEvent, ev);
+            scene.events.push({ event: ev, transition, stepIdx: stepCounter });
+            scene.lastTs = ts;
+            stepCounter++;
+            prevSceneEvent = ev;
+          }
+          return scenes;
+        },
+        get replayTotalSteps() {
+          const scenes = this.replayScenes;
+          if (scenes.length === 0) return 0;
+          const last = scenes[scenes.length - 1];
+          if (last.events.length === 0) return last.stepStart;
+          return last.events[last.events.length - 1].stepIdx;
+        },
+        _sceneNarration(firstEvent, prevSceneLastEvent, prevScene) {
+          if (!prevScene) {
+            const typeNames = { decision: 'a decision', question: 'a question', blocker: 'an obstacle', commit: 'code', feature: 'a feature', bugfix: 'a fix', milestone: 'a milestone', capture: 'a thought', learning: 'a discovery' };
+            return 'It started with ' + (typeNames[firstEvent.eventType] || 'a thought') + '.';
+          }
+          if (prevSceneLastEvent) {
+            const gap = new Date(firstEvent.timestamp).getTime() - new Date(prevSceneLastEvent.timestamp).getTime();
+            const dur = this._humanDuration(gap);
+            if (dur) return 'After ' + dur + ' of silence\u2026';
+          }
+          return 'A new chapter.';
+        },
+        _eventTransition(prev, curr) {
+          if (!prev) return null;
+          const gap = new Date(curr.timestamp).getTime() - new Date(prev.timestamp).getTime();
+          const pt = prev.eventType, ct = curr.eventType;
+
+          // Type-based transitions
+          if (pt === 'question' && ct === 'decision') return 'An answer took shape.';
+          if (pt === 'decision' && ct === 'commit') {
+            const d = this._humanDuration(gap);
+            return d ? 'Code followed ' + d + ' later.' : 'Code followed.';
+          }
+          if (ct === 'blocker') return 'Then things hit a wall.';
+          if (pt === 'blocker' && ct !== 'blocker') return 'Back in motion.';
+          if (ct === 'milestone') return 'A milestone.';
+          if (pt === 'question' && ct === 'commit') return 'Straight to code.';
+          if (pt === 'commit' && ct === 'decision') return 'A pause to reconsider.';
+          if (pt === 'decision' && ct === 'decision') return 'Another choice.';
+          if (pt === 'commit' && ct === 'blocker') return 'Progress met resistance.';
+
+          // Gap-based transitions
+          if (gap > 2 * 60 * 60 * 1000) {
+            const d = this._humanDuration(gap);
+            return d + ' passed.';
+          }
+
+          // Consecutive commits — no transition needed
+          if (pt === 'commit' && ct === 'commit' && gap < 30 * 60 * 1000) return null;
+
+          return null;
+        },
+        _humanDuration(ms) {
+          const mins = Math.floor(ms / 60000);
+          if (mins < 2) return null;
+          if (mins < 60) return mins + ' minutes';
+          const hours = Math.floor(mins / 60);
+          if (hours < 24) return hours + ' hour' + (hours > 1 ? 's' : '');
+          const days = Math.floor(hours / 24);
+          return days + ' day' + (days > 1 ? 's' : '');
+        },
+        // Replay: controls
+        replayToggle() {
+          if (this.replayPlaying) { this.replayPause(); } else { this.replayPlay(); }
+        },
+        replayPlay() {
+          if (this.replayStep >= this.replayTotalSteps) this.replayStep = 0;
+          this.replayPlaying = true;
+          this.replayTimer = setInterval(() => {
+            if (this.replayStep >= this.replayTotalSteps) {
+              this.replayPause();
+              return;
+            }
+            this.replayStep++;
+            this._replayScrollToCurrent();
+          }, this.replaySpeed);
+        },
+        replayPause() {
+          this.replayPlaying = false;
+          if (this.replayTimer) { clearInterval(this.replayTimer); this.replayTimer = null; }
+        },
+        replayStepForward() {
+          this.replayPause();
+          if (this.replayStep < this.replayTotalSteps) {
+            this.replayStep++;
+            this._replayScrollToCurrent();
+          }
+        },
+        replayStepBack() {
+          this.replayPause();
+          if (this.replayStep > 0) {
+            this.replayStep--;
+            this._replayScrollToCurrent();
+          }
+        },
+        replayReset() {
+          this.replayPause();
+          this.replayStep = 0;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+        _replayScrollToCurrent() {
+          this.$nextTick(() => {
+            const el = document.querySelector('.replay-event-card.current');
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+            if (!inView) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          });
+        },
         scrollToFocused() {
           this.$nextTick(() => {
             const el = document.querySelector('.event.focused');
@@ -947,6 +1192,7 @@ func handleWeb(args []string) {
 	export := fs.String("export", "", "Export static HTML to file and exit")
 	since := fs.String("since", "", "Diff mode: dim events before this date (YYYY-MM-DD or YYYY-MM-DDTHH:MM)")
 	repos := fs.String("repos", "", "Additional git repos (comma-separated paths, optional :name suffix)")
+	replay := fs.Bool("replay", false, "Start in replay mode")
 	fs.Parse(args)
 
 	db, err := database.NewDB(getDBPath())
@@ -1026,6 +1272,7 @@ func handleWeb(args []string) {
 			"DataJSON":    template.JS(string(jsonBytes)),
 			"PresentMode": *present,
 			"SinceDate":   *since,
+			"ReplayMode":  *replay,
 		})
 	})
 
@@ -1080,6 +1327,7 @@ func GenerateStandaloneHTML(data *journey.JourneyData) (string, error) {
 		"DataJSON":    template.JS(string(jsonBytes)),
 		"PresentMode": false,
 		"SinceDate":   "",
+		"ReplayMode":  false,
 	})
 	if err != nil {
 		return "", err
