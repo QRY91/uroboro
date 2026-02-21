@@ -218,6 +218,19 @@ func getMCPTools() []map[string]interface{} {
 				},
 			},
 		},
+		{
+			"name":        "uro_enforcement",
+			"description": "Configure uroboro enforcement hooks (pre-compact checkpoint, post-tool-use nudge). These hooks inject capture reminders during active work. Both are opt-in since they add tokens to context.",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"action":    map[string]string{"type": "string", "description": "Action: status, enable, disable, configure"},
+					"hook":      map[string]string{"type": "string", "description": "Hook name: pre_compact, post_tool_nudge (required for enable/disable/configure)"},
+					"threshold": map[string]interface{}{"type": "integer", "description": "For post_tool_nudge: number of Edit/Write/Bash calls between nudges (default: 15)"},
+				},
+				"required": []string{"action"},
+			},
+		},
 	}
 }
 
@@ -365,6 +378,16 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 		json.Unmarshal(params.Arguments, &args)
 
 		resultText, err = mcpPromptProfile(args.Project, args.Days, args.Extract)
+
+	case "uro_enforcement":
+		var args struct {
+			Action    string `json:"action"`
+			Hook      string `json:"hook"`
+			Threshold int    `json:"threshold"`
+		}
+		json.Unmarshal(params.Arguments, &args)
+
+		resultText, err = mcpEnforcement(args.Action, args.Hook, args.Threshold)
 
 	default:
 		return MCPResponse{
@@ -1109,6 +1132,83 @@ func mcpPromptProfile(project string, days int, extract bool) (string, error) {
 	// Default: return stats summary
 	stats := promptprofile.Analyze(allPrompts)
 	return promptprofile.FormatStats(stats), nil
+}
+
+func mcpEnforcement(action, hook string, threshold int) (string, error) {
+	cfg := loadEnforcementConfig()
+
+	switch action {
+	case "status":
+		preStatus := "disabled"
+		if cfg.PreCompact.Enabled {
+			preStatus = "enabled"
+		}
+		postStatus := "disabled"
+		if cfg.PostToolNudge.Enabled {
+			postStatus = fmt.Sprintf("enabled (threshold: %d)", cfg.PostToolNudge.Threshold)
+		}
+		return fmt.Sprintf("Enforcement hooks:\n  pre_compact:     %s\n  post_tool_nudge: %s\n\nConfig: %s",
+			preStatus, postStatus, getEnforcementConfigPath()), nil
+
+	case "enable":
+		if hook == "" {
+			return "", fmt.Errorf("hook name required (pre_compact or post_tool_nudge)")
+		}
+		switch hook {
+		case "pre_compact":
+			cfg.PreCompact.Enabled = true
+		case "post_tool_nudge":
+			cfg.PostToolNudge.Enabled = true
+			if threshold > 0 {
+				cfg.PostToolNudge.Threshold = threshold
+			}
+		default:
+			return "", fmt.Errorf("unknown hook: %s (use pre_compact or post_tool_nudge)", hook)
+		}
+		if err := saveEnforcementConfig(cfg); err != nil {
+			return "", fmt.Errorf("save config: %w", err)
+		}
+		return fmt.Sprintf("Enabled %s", hook), nil
+
+	case "disable":
+		if hook == "" {
+			return "", fmt.Errorf("hook name required (pre_compact or post_tool_nudge)")
+		}
+		switch hook {
+		case "pre_compact":
+			cfg.PreCompact.Enabled = false
+		case "post_tool_nudge":
+			cfg.PostToolNudge.Enabled = false
+		default:
+			return "", fmt.Errorf("unknown hook: %s (use pre_compact or post_tool_nudge)", hook)
+		}
+		if err := saveEnforcementConfig(cfg); err != nil {
+			return "", fmt.Errorf("save config: %w", err)
+		}
+		return fmt.Sprintf("Disabled %s", hook), nil
+
+	case "configure":
+		if hook == "" {
+			return "", fmt.Errorf("hook name required")
+		}
+		switch hook {
+		case "post_tool_nudge":
+			if threshold > 0 {
+				cfg.PostToolNudge.Threshold = threshold
+			} else {
+				return "", fmt.Errorf("threshold required for post_tool_nudge (e.g., 10, 15, 20)")
+			}
+		default:
+			return "", fmt.Errorf("no configurable options for %s", hook)
+		}
+		if err := saveEnforcementConfig(cfg); err != nil {
+			return "", fmt.Errorf("save config: %w", err)
+		}
+		return fmt.Sprintf("Updated %s: threshold=%d", hook, cfg.PostToolNudge.Threshold), nil
+
+	default:
+		return "", fmt.Errorf("unknown action: %s (use status, enable, disable, configure)", action)
+	}
 }
 
 func getCommitsBetween(since, until string, limit int) []string {
