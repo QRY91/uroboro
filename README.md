@@ -8,7 +8,7 @@
 go install github.com/QRY91/uroboro/cmd/...@latest
 ```
 
-This installs both `uroboro` and `uro` (shorter alias).
+This installs both `uroboro` (full) and `uro` (shorter alias with core commands).
 
 ## Commands
 
@@ -54,6 +54,50 @@ uro prompt-profile --days 30
 uro prompt-profile --extract --out prompts.jsonl
 ```
 
+## Backup
+
+```bash
+# Create a backup
+uroboro backup
+
+# List existing backups
+uroboro backup --list
+
+# Custom destination, keep last 5
+uroboro backup --dest /mnt/backup/uroboro --keep 5
+```
+
+Backups use SQLite's `VACUUM INTO` for a clean, consistent copy. Set up a systemd timer for automatic daily backups:
+
+```bash
+# ~/.config/systemd/user/uroboro-backup.service
+[Unit]
+Description=Uroboro database backup
+
+[Service]
+Type=oneshot
+ExecStart=uroboro backup --keep 10
+```
+
+```bash
+# ~/.config/systemd/user/uroboro-backup.timer
+[Unit]
+Description=Daily uroboro backup
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+```bash
+systemctl --user enable --now uroboro-backup.timer
+```
+
+`Persistent=true` ensures missed backups run on next boot.
+
 ## Visualization
 
 **Timeline** (`uro timeline`) — Terminal UI for browsing events with filters.
@@ -91,6 +135,7 @@ No manual capture needed. Run `uro recap` to see what happened.
 | `uro_capture` | General capture |
 | `uro_recap` | Get recent context |
 | `uro_search` | Search past captures |
+| `uro_stats` | Aggregate statistics (tags, activity, projects) |
 | `uro_distill` | Extract style signals to JSONL file |
 | `uro_prompt_profile` | Analyze prompting patterns |
 

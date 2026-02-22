@@ -53,6 +53,8 @@ func main() {
 		handleDistill(os.Args[2:])
 	case "prompt-profile":
 		handlePromptProfile(os.Args[2:])
+	case "backup":
+		handleBackup(os.Args[2:])
 	case "hooks":
 		handleHooks(os.Args[2:])
 	case "init":
@@ -333,6 +335,156 @@ func handleReport(args []string) {
 	}
 }
 
+func handleBackup(args []string) {
+	fs := flag.NewFlagSet("backup", flag.ExitOnError)
+	dest := fs.String("dest", "", "Destination directory (default: ~/.local/share/uroboro/backups)")
+	keep := fs.Int("keep", 10, "Number of backups to keep (0 = keep all)")
+	list := fs.Bool("list", false, "List existing backups")
+	fs.Parse(args)
+
+	backupDir := *dest
+	if backupDir == "" {
+		backupDir = common.GetBackupDir()
+	}
+
+	if *list {
+		listBackups(backupDir)
+		return
+	}
+
+	dbPath := getDBPath()
+
+	if err := os.MkdirAll(backupDir, 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "Create backup dir: %v\n", err)
+		os.Exit(1)
+	}
+
+	timestamp := time.Now().Format("20060102-150405")
+	backupName := fmt.Sprintf("uroboro-backup-%s.sqlite", timestamp)
+	backupPath := filepath.Join(backupDir, backupName)
+
+	// Use VACUUM INTO for a clean, consistent backup
+	db, err := database.NewDB(dbPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Database error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := db.VacuumInto(backupPath); err != nil {
+		db.Close()
+		fmt.Fprintf(os.Stderr, "Backup failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Verify backup by counting captures
+	count, err := db.CaptureCount()
+	db.Close()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not verify source count: %v\n", err)
+	}
+
+	backupDB, err := database.NewDB(backupPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not verify backup: %v\n", err)
+	} else {
+		backupCount, err := backupDB.CaptureCount()
+		backupDB.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not count backup captures: %v\n", err)
+		} else if backupCount != count {
+			fmt.Fprintf(os.Stderr, "Warning: backup has %d captures, source has %d\n", backupCount, count)
+		}
+	}
+
+	info, _ := os.Stat(backupPath)
+	size := "unknown"
+	if info != nil {
+		size = formatSize(info.Size())
+	}
+
+	fmt.Printf("Backup created: %s (%s, %d captures)\n", backupPath, size, count)
+
+	// Rotate old backups
+	if *keep > 0 {
+		rotateBackups(backupDir, *keep)
+	}
+}
+
+func listBackups(dir string) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("No backups found.")
+			return
+		}
+		fmt.Fprintf(os.Stderr, "Read backup dir: %v\n", err)
+		os.Exit(1)
+	}
+
+	var backups []os.DirEntry
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "uroboro-backup-") && strings.HasSuffix(e.Name(), ".sqlite") {
+			backups = append(backups, e)
+		}
+	}
+
+	if len(backups) == 0 {
+		fmt.Println("No backups found.")
+		return
+	}
+
+	fmt.Printf("Backups in %s:\n", dir)
+	for _, b := range backups {
+		info, _ := b.Info()
+		size := "?"
+		if info != nil {
+			size = formatSize(info.Size())
+		}
+		fmt.Printf("  %s  %s\n", b.Name(), size)
+	}
+	fmt.Printf("\n%d backup(s)\n", len(backups))
+}
+
+func rotateBackups(dir string, keep int) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+
+	var backups []os.DirEntry
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "uroboro-backup-") && strings.HasSuffix(e.Name(), ".sqlite") {
+			backups = append(backups, e)
+		}
+	}
+
+	if len(backups) <= keep {
+		return
+	}
+
+	// DirEntry is sorted by name, and our timestamp format sorts chronologically
+	toRemove := backups[:len(backups)-keep]
+	for _, b := range toRemove {
+		path := filepath.Join(dir, b.Name())
+		if err := os.Remove(path); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not remove old backup %s: %v\n", b.Name(), err)
+		} else {
+			fmt.Printf("Rotated: %s\n", b.Name())
+		}
+	}
+}
+
+func formatSize(bytes int64) string {
+	switch {
+	case bytes >= 1<<20:
+		return fmt.Sprintf("%.1f MB", float64(bytes)/float64(1<<20))
+	case bytes >= 1<<10:
+		return fmt.Sprintf("%.1f KB", float64(bytes)/float64(1<<10))
+	default:
+		return fmt.Sprintf("%d B", bytes)
+	}
+}
+
 func printUsage() {
 	fmt.Println(`uroboro - Track what you did and when
 
@@ -348,6 +500,7 @@ Commands:
   graph                View auto-scaled overview graph (fits screen)
   status               Show recent activity
   report               Generate time report for billing
+  backup               Back up the capture database
   distill              Extract style signal data from git + uroboro
   prompt-profile       Analyze Claude Code prompting patterns
   hooks                Install/uninstall enforcement hooks for Claude Code
@@ -417,6 +570,11 @@ Distill options:
   --days N             Limit to last N days
   --since DATE         Limit to after date (2006-01-02)
   --correlate          Join git↔uro captures by ±30min window
+
+Backup options:
+  --dest DIR           Destination directory (default: ~/.local/share/uroboro/backups)
+  --keep N             Number of backups to keep, 0 = all (default: 10)
+  --list               List existing backups
 
 Hooks options:
   install              Install enforcement hooks into ~/.claude/

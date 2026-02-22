@@ -55,6 +55,19 @@ func (db *DB) Close() error {
 	return db.db.Close()
 }
 
+// VacuumInto creates a clean, defragmented backup of the database at destPath.
+func (db *DB) VacuumInto(destPath string) error {
+	_, err := db.db.Exec(`VACUUM INTO ?`, destPath)
+	return err
+}
+
+// CaptureCount returns the total number of captures in the database.
+func (db *DB) CaptureCount() (int64, error) {
+	var count int64
+	err := db.db.QueryRow(`SELECT COUNT(*) FROM captures`).Scan(&count)
+	return count, err
+}
+
 func (db *DB) migrate() error {
 	var exists bool
 	err := db.db.QueryRow(`

@@ -54,6 +54,26 @@ func GetConfigDir() string {
 	return filepath.Join(homeDir, ".config", "uroboro")
 }
 
+// GetBackupDir returns the default backup directory
+// Linux/macOS: ~/.local/share/uroboro/backups
+// Windows: %APPDATA%/uroboro/backups
+func GetBackupDir() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join(".", "uroboro", "backups")
+	}
+
+	if runtime.GOOS == "windows" {
+		appData := os.Getenv("APPDATA")
+		if appData != "" {
+			return filepath.Join(appData, "uroboro", "backups")
+		}
+		return filepath.Join(homeDir, "AppData", "Roaming", "uroboro", "backups")
+	}
+
+	return filepath.Join(homeDir, ".local", "share", "uroboro", "backups")
+}
+
 // GetDefaultDBPath returns the default database path
 // Linux/macOS: ~/.local/share/uroboro/uroboro.sqlite
 // Windows: %APPDATA%/uroboro/uroboro.sqlite
