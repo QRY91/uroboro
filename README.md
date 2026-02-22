@@ -102,7 +102,7 @@ systemctl --user enable --now uroboro-backup.timer
 
 **Timeline** (`uro timeline`) — Terminal UI for browsing events with filters.
 
-**Web** (`uro web`) — Scrollable browser timeline with compact mode that collapses rest periods.
+**Web** (`uro web`) — Browser timeline with list, horizontal, and project views. Compact mode, presentation mode, diff mode, narrative pane, keyboard navigation (`j`/`k`, `1`/`2`/`3` views, `p` present, `n` summary, `N` narrative), and standalone HTML export.
 
 **Graph** (`uro graph`) — Canvas scatter plot showing all activity at a glance. Projects on Y-axis, time on X-axis. Scales to thousands of days.
 
@@ -114,7 +114,11 @@ Uroboro includes an MCP server for automatic context capture with Claude Code.
 
 ```bash
 claude mcp add uroboro --scope user -- uroboro mcp
+uroboro hooks install
+uroboro init
 ```
+
+Add the MCP server, install enforcement hooks, and create per-project capture conventions (`.claude/uroboro.tags`). Then in `~/.claude/CLAUDE.md`, tell Claude to use the tools automatically.
 
 ### How It Works
 
@@ -123,7 +127,7 @@ Once configured, Claude automatically captures:
 - **Blockers** when work is stuck on dependencies
 - **Questions** when deferring open issues
 
-No manual capture needed. Run `uro recap` to see what happened.
+Enforcement hooks audit capture compliance at session end and nudge during long sessions. Run `uro recap` to see what happened.
 
 ### Available MCP Tools
 
@@ -138,6 +142,7 @@ No manual capture needed. Run `uro recap` to see what happened.
 | `uro_stats` | Aggregate statistics (tags, activity, projects) |
 | `uro_distill` | Extract style signals to JSONL file |
 | `uro_prompt_profile` | Analyze prompting patterns |
+| `uro_enforcement` | Configure capture compliance hooks |
 
 ## Style Distillation
 
