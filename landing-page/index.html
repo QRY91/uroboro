@@ -200,7 +200,7 @@
                     <div class="code-block">
                         <code>$ uro d "JWT over sessions — stateless"</code>
                     </div>
-                    <p>Decisions, blockers, questions. 5 seconds.</p>
+                    <p>Decisions, blockers, questions. 5 seconds. Backdate with <code>--time</code>.</p>
                 </div>
 
                 <div class="workflow-step" role="listitem">
@@ -216,9 +216,9 @@
                     <div class="step-icon" aria-hidden="true">3</div>
                     <h3>Search</h3>
                     <div class="code-block">
-                        <code>$ uro search "auth"</code>
+                        <code>$ uro search "auth" --days 30</code>
                     </div>
-                    <p>Find past decisions by keyword.</p>
+                    <p>Filter by keyword, project, tags, branch, or date range.</p>
                 </div>
             </div>
         </div>
@@ -252,7 +252,7 @@
                     <div class="code-block">
                         <code>$ uro web --port 8080</code>
                     </div>
-                    <p>Scrollable browser timeline with compact mode that collapses rest periods. List and horizontal views.</p>
+                    <p>Browser timeline with list, horizontal, and project views. Compact mode, presentation mode, diff mode, narrative pane, keyboard navigation, and standalone HTML export.</p>
                 </div>
 
                 <div class="viz-card" role="listitem">
@@ -268,7 +268,7 @@
             </div>
 
             <div class="viz-extras">
-                <p>Export to <strong>JSON</strong>, <strong>HTML</strong>, <strong>Markdown</strong>, or <strong>CSV</strong>. Generate time reports for billing with <code>uro report</code>.</p>
+                <p>Export to <strong>JSON</strong>, <strong>HTML</strong>, <strong>Markdown</strong>, or <strong>CSV</strong>. Generate time reports for billing with <code>uro report</code>. Back up your data with <code>uroboro backup</code>.</p>
             </div>
         </div>
     </section>
@@ -283,26 +283,29 @@
 
             <div class="integration-content">
                 <div class="integration-description">
-                    <p>When you use Claude Code with the uroboro MCP server, decisions get captured automatically as you work.</p>
+                    <p>Claude Code captures decisions as you work via MCP. Enforcement hooks audit capture compliance and nudge during long sessions. Per-project <code>.claude/uroboro.tags</code> files define tagging conventions.</p>
                     <ul class="integration-features">
-                        <li><strong>uro_decision</strong> — Captured when Claude makes architectural choices</li>
-                        <li><strong>uro_blocker</strong> — Logged when work is blocked on external factors</li>
-                        <li><strong>uro_question</strong> — Saved when open questions are deferred</li>
+                        <li><strong>uro_decision</strong> — Record architectural choices with reasoning and alternatives</li>
+                        <li><strong>uro_blocker</strong> — Log blockers with what you're waiting on</li>
+                        <li><strong>uro_question</strong> — Save open questions for later</li>
                         <li><strong>uro_capture</strong> — General context capture with tags</li>
-                        <li><strong>uro_recap</strong> — Claude checks context at session start</li>
-                        <li><strong>uro_search</strong> — Search past captures by keyword</li>
-                        <li><strong>uro_stats</strong> — Aggregate statistics across tags, activity, projects</li>
-                        <li><strong>uro_distill</strong> — Extract style signals from git and captures</li>
+                        <li><strong>uro_recap</strong> — Load recent decisions, blockers, commits at session start</li>
+                        <li><strong>uro_search</strong> — Search captures by keyword, project, tags, date range</li>
+                        <li><strong>uro_stats</strong> — Aggregate statistics by tags, activity, or projects</li>
+                        <li><strong>uro_distill</strong> — Extract style signals from git commits and captures</li>
                         <li><strong>uro_prompt_profile</strong> — Analyze Claude Code prompting patterns</li>
+                        <li><strong>uro_enforcement</strong> — Configure capture compliance hooks</li>
                     </ul>
                 </div>
 
                 <div class="integration-demo">
-                    <h4>One command to set up:</h4>
+                    <h4>Setup:</h4>
                     <div class="code-block">
-                        <pre><code>claude mcp add uroboro --scope user -- uroboro mcp</code></pre>
+                        <pre><code>claude mcp add uroboro --scope user -- uroboro mcp
+uroboro hooks install
+uroboro init</code></pre>
                     </div>
-                    <p class="demo-note">Then in <code>~/.claude/CLAUDE.md</code>, tell Claude to use the tools automatically.</p>
+                    <p class="demo-note">Add the MCP server, install enforcement hooks, and create per-project capture conventions. Then in <code>~/.claude/CLAUDE.md</code>, tell Claude to use the tools automatically.</p>
                 </div>
             </div>
         </div>
