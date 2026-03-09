@@ -516,7 +516,7 @@ Aliases:
   uro -r               report
 
 Capture options:
-  --project NAME       Project name (auto-detected if in git repo)
+  --project NAME       Project name (auto-detected from git, project files, or dir name)
   --tags LIST          Comma-separated tags
   --time TIME          Timestamp for retroactive logging (default: now)
                        Formats: '2024-01-15 14:30', '2024-01-15T14:30:00', '2024-01-15'
@@ -577,8 +577,8 @@ Backup options:
   --list               List existing backups
 
 Hooks options:
-  install              Install enforcement hooks into ~/.claude/
-  uninstall            Remove enforcement hooks
+  install              Install hooks + register MCP server globally
+  uninstall            Remove hooks and MCP server registration
   status               Check installation status
 
 Init options:

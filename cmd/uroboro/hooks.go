@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -113,6 +114,10 @@ func getSettingsPath() string {
 	return filepath.Join(getClaudeDir(), "settings.json")
 }
 
+func getMcpJsonPath() string {
+	return filepath.Join(getClaudeDir(), ".mcp.json")
+}
+
 func installHooks() {
 	hooksDir := getHooksDir()
 	settingsPath := getSettingsPath()
@@ -159,7 +164,10 @@ func installHooks() {
 	writeSettings(settingsPath, settings)
 	fmt.Printf("patched %s\n", settingsPath)
 
-	// 3. Write default enforcement config (if not exists)
+	// 3. Register MCP server globally
+	installMCPServer()
+
+	// 4. Write default enforcement config (if not exists)
 	cfgPath := getEnforcementConfigPath()
 	if !fileExists(cfgPath) {
 		cfg := defaultEnforcementConfig()
@@ -171,6 +179,7 @@ func installHooks() {
 	}
 
 	fmt.Println("\nuroboro hooks installed.")
+	fmt.Println("  MCP server registered globally — uro tools available in all directories.")
 	fmt.Println("  pre-compact and post-tool-nudge are opt-in (disabled by default).")
 	fmt.Println("  Enable via MCP: uro_enforcement(action: \"enable\", hook: \"pre_compact\")")
 }
@@ -213,6 +222,10 @@ func uninstallHooks() {
 		os.Exit(1)
 	}
 	fmt.Printf("removed %s\n", hooksDir)
+
+	// 3. Remove MCP server registration
+	uninstallMCPServer()
+
 	fmt.Println("\nuroboro hooks uninstalled.")
 }
 
@@ -284,7 +297,19 @@ func hooksStatus() {
 		fmt.Printf("\n  post-tool-nudge threshold: every %d tool calls\n", cfg.PostToolNudge.Threshold)
 	}
 
-	if allInstalled {
+	// MCP server status
+	mcpPath := getMcpJsonPath()
+	mcpRegistered := false
+	if mcpData, err := os.ReadFile(mcpPath); err == nil {
+		mcpRegistered = strings.Contains(string(mcpData), "\"uroboro\"")
+	}
+	mcpStatus := "not registered"
+	if mcpRegistered {
+		mcpStatus = "registered"
+	}
+	fmt.Printf("  %-20s %s\n", "mcp-server:", mcpStatus)
+
+	if allInstalled && mcpRegistered {
 		fmt.Println("\nAll hooks installed and registered.")
 	} else {
 		anyInstalled := false
@@ -294,7 +319,7 @@ func hooksStatus() {
 				break
 			}
 		}
-		if anyInstalled {
+		if anyInstalled || mcpRegistered {
 			fmt.Println("\nPartially installed. Run: uroboro hooks install")
 		} else {
 			fmt.Println("\nNot installed. Run: uroboro hooks install")
@@ -469,4 +494,64 @@ func hookCommandExists(hooksMap map[string]interface{}, event, command string) b
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+// --- MCP server registration ---
+
+// resolveBinaryPath returns the absolute path to the uroboro binary.
+// Prefers the currently running executable, falls back to PATH lookup.
+func resolveBinaryPath() string {
+	if exe, err := os.Executable(); err == nil {
+		if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+			return resolved
+		}
+		return exe
+	}
+	if path, err := exec.LookPath("uroboro"); err == nil {
+		if abs, err := filepath.Abs(path); err == nil {
+			return abs
+		}
+		return path
+	}
+	return "uroboro"
+}
+
+// installMCPServer registers uroboro in ~/.claude/.mcp.json for global availability.
+func installMCPServer() {
+	mcpPath := getMcpJsonPath()
+	mcpConfig := loadSettings(mcpPath)
+
+	servers := getOrCreateMap(mcpConfig, "mcpServers")
+
+	binaryPath := resolveBinaryPath()
+
+	servers["uroboro"] = map[string]interface{}{
+		"command": binaryPath,
+		"args":    []interface{}{"mcp"},
+	}
+
+	writeSettings(mcpPath, mcpConfig)
+	fmt.Printf("registered MCP server in %s (binary: %s)\n", mcpPath, binaryPath)
+}
+
+// uninstallMCPServer removes uroboro from ~/.claude/.mcp.json.
+func uninstallMCPServer() {
+	mcpPath := getMcpJsonPath()
+	if !fileExists(mcpPath) {
+		return
+	}
+
+	mcpConfig := loadSettings(mcpPath)
+	if servers, ok := mcpConfig["mcpServers"].(map[string]interface{}); ok {
+		delete(servers, "uroboro")
+		// If no servers left, remove the file
+		if len(servers) == 0 {
+			os.Remove(mcpPath)
+			fmt.Printf("removed %s (no servers left)\n", mcpPath)
+			return
+		}
+	}
+
+	writeSettings(mcpPath, mcpConfig)
+	fmt.Printf("removed uroboro from %s\n", mcpPath)
 }
