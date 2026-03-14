@@ -41,3 +41,10 @@ output/
 brainstorm-pit/
 *PROCEDURE.md
 DUMP_HERE/
+
+# Env files (API keys)
+.env
+tests/promptfoo/.env
+
+# Python venvs
+.venv-*/

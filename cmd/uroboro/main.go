@@ -13,6 +13,7 @@ import (
 	"github.com/QRY91/uroboro/internal/common"
 	"github.com/QRY91/uroboro/internal/database"
 	"github.com/QRY91/uroboro/internal/journey"
+	"github.com/QRY91/uroboro/internal/openviking"
 	"github.com/QRY91/uroboro/internal/report"
 	"github.com/QRY91/uroboro/internal/status"
 	"github.com/QRY91/uroboro/internal/tui"
@@ -55,6 +56,8 @@ func main() {
 		handlePromptProfile(os.Args[2:])
 	case "backup":
 		handleBackup(os.Args[2:])
+	case "sync":
+		handleSync(os.Args[2:])
 	case "hooks":
 		handleHooks(os.Args[2:])
 	case "init":
@@ -407,6 +410,143 @@ func handleBackup(args []string) {
 	// Rotate old backups
 	if *keep > 0 {
 		rotateBackups(backupDir, *keep)
+	}
+}
+
+func handleSync(args []string) {
+	fs := flag.NewFlagSet("sync", flag.ExitOnError)
+	days := fs.Int("days", 7, "Days to look back")
+	project := fs.String("project", "", "Filter by project")
+	since := fs.String("since", "", "Start date (YYYY-MM-DD)")
+	limit := fs.Int("limit", 500, "Max captures to sync")
+	batchSize := fs.Int("batch-size", 10, "Captures per OpenViking session")
+	server := fs.String("server", "http://127.0.0.1:1933", "OpenViking server URL")
+	direct := fs.Bool("direct", false, "Write files + embeddings directly (no VLM, fast)")
+	dryRun := fs.Bool("dry-run", false, "Show what would be synced")
+	verbose := fs.Bool("verbose", false, "Show individual captures")
+	fs.Parse(args)
+
+	// Query captures first (shared between both modes)
+	db, err := database.NewDB(getDBPath())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Database error: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	q := database.CaptureQuery{
+		Days:    *days,
+		Project: *project,
+		Limit:   *limit,
+	}
+	if *since != "" {
+		t, err := time.Parse("2006-01-02", *since)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid --since date: %v\n", err)
+			os.Exit(1)
+		}
+		q.Since = &t
+		q.Days = 0
+	}
+
+	captures, err := db.QueryCaptures(q)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Query error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(captures) == 0 {
+		fmt.Println("No captures found matching criteria.")
+		return
+	}
+
+	// Stats
+	byType := make(map[string]int)
+	byProject := make(map[string]int)
+	for _, c := range captures {
+		ct := "capture"
+		for _, tag := range strings.Split(c.Tags, ",") {
+			tag = strings.TrimSpace(strings.ToLower(tag))
+			if tag == "decision" || tag == "blocker" || tag == "question" {
+				ct = tag
+				break
+			}
+		}
+		byType[ct]++
+		p := c.Project
+		if p == "" {
+			p = "-"
+		}
+		byProject[p]++
+	}
+
+	fmt.Printf("Found %d captures:\n", len(captures))
+	fmt.Printf("  Types:    ")
+	first := true
+	for _, t := range []string{"decision", "blocker", "question", "capture"} {
+		if n, ok := byType[t]; ok {
+			if !first {
+				fmt.Printf(", ")
+			}
+			fmt.Printf("%s: %d", t, n)
+			first = false
+		}
+	}
+	fmt.Println()
+
+	fmt.Printf("  Projects: ")
+	first = true
+	for p, n := range byProject {
+		if !first {
+			fmt.Printf(", ")
+		}
+		fmt.Printf("%s: %d", p, n)
+		first = false
+	}
+	fmt.Println()
+	fmt.Println()
+
+	opts := openviking.SyncOptions{
+		BatchSize: *batchSize,
+		DryRun:    *dryRun,
+		Verbose:   *verbose,
+	}
+
+	if *direct {
+		// Direct mode: write files + Ollama embeddings, no VLM
+		ds := openviking.NewDirectSync()
+		ds.OpenVikingURL = *server
+		directResult, err := ds.SyncDirect(captures, opts)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Sync error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("\nDone: %d written, %d embedded, %d skipped, %d errors\n",
+			directResult.Written, directResult.Embedded, directResult.Skipped, directResult.Errors)
+		return
+	}
+
+	// Session mode: OpenViking session lifecycle (needs VLM)
+	client := openviking.NewClient(*server)
+	if !*dryRun {
+		if err := client.Health(); err != nil {
+			fmt.Fprintf(os.Stderr, "Cannot reach OpenViking at %s: %v\n", *server, err)
+			fmt.Fprintf(os.Stderr, "Start the server first, use --direct, or use --dry-run\n")
+			os.Exit(1)
+		}
+	}
+
+	result, err := openviking.Sync(client, captures, opts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Sync error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if *dryRun {
+		fmt.Printf("\nDry run: %d captures in %d batches\n", result.CapturesProcessed, result.BatchCount)
+	} else {
+		fmt.Printf("\nDone: %d captures → %d memories (%d batches, %d errors)\n",
+			result.CapturesProcessed, result.MemoriesExtracted, result.BatchCount, result.Errors)
 	}
 }
 

@@ -1,0 +1,225 @@
+# Direct Sync Format — Round-Trip Fidelity Tests
+# Tests that the uro_*.md format produced by `uroboro sync --direct`
+# can be read back by an LLM and correctly parsed.
+#
+# Run: cd tests/promptfoo && promptfoo eval -c direct_sync.yaml
+
+description: "Direct sync format — round-trip fidelity"
+
+prompts:
+  - "{{captures}}"
+
+providers:
+  - id: file://sync_quality_provider.py
+    label: claude-sonnet
+    config:
+      model: claude-sonnet-4-6
+      max_tokens: 2048
+
+# output is JSON: { text, memories: [{type, title, content, tags}], memory_count }
+
+tests:
+  # =================================================================
+  # CATEGORY 1: Format parseability — structured markdown with YAML metadata
+  # =================================================================
+
+  - description: "Decision markdown with full metadata is parseable"
+    vars:
+      captures: |
+        # [DECISION] PostgreSQL over MongoDB for user service — data is highly relational and requires ACID transactions (considered: MongoDB (document model doesn't fit relational data))
+
+        ---
+        type: decision
+        project: uroboro
+        branch: main
+        tags: architecture, database
+        captured: 2026-03-14 10:30
+        uroboro_id: 42
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 1"
+      - type: javascript
+        value: "(r => r.memories.some(m => /postgres/i.test(m.content) && /mongo/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: "(r => r.memories.some(m => /acid|relational/i.test(m.content)))(JSON.parse(output))"
+
+  - description: "Blocker markdown preserves waiting_on"
+    vars:
+      captures: |
+        # [BLOCKER] OpenViking commit with qwen3:8b via Ollama times out at 30min — memory extraction pipeline makes too many sequential LLM calls for local CPU inference (waiting on: GPU acceleration or bypass VLM)
+
+        ---
+        type: blocker
+        project: uroboro
+        branch: main
+        captured: 2026-03-14 09:42
+        uroboro_id: 99
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 1"
+      - type: javascript
+        value: "(r => r.memories.some(m => /timeout|30.?min|slow/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: "(r => r.memories.some(m => /ollama|qwen|local/i.test(m.content)))(JSON.parse(output))"
+
+  - description: "Question markdown preserves open issue"
+    vars:
+      captures: |
+        # [QUESTION] Whether to shard the captures table at scale or add better indexes — revisit at 1M rows
+
+        ---
+        type: question
+        project: uroboro
+        captured: 2026-03-13 14:00
+        uroboro_id: 55
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 1"
+      - type: javascript
+        value: "(r => r.memories.some(m => /shard|index/i.test(m.content)))(JSON.parse(output))"
+
+  - description: "Generic capture with tags"
+    vars:
+      captures: |
+        # [CAPTURE] Built fractal explorer at /home/qry/projects/fractals — WebGL2 fractal visualization with Mandelbrot, Julia, and Burning Ship variants
+
+        ---
+        type: capture
+        project: fractals
+        tags: webgl, visualization
+        captured: 2026-03-11 20:15
+        uroboro_id: 2980
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 1"
+      - type: javascript
+        value: "(r => r.memories.some(m => /fractal|webgl/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: "(r => r.memories.some(m => /mandelbrot|julia|burning ship/i.test(m.content)))(JSON.parse(output))"
+
+  # =================================================================
+  # CATEGORY 2: Metadata extraction — can the LLM read the YAML block?
+  # =================================================================
+
+  - description: "Project extracted from metadata"
+    vars:
+      captures: |
+        # [DECISION] Thin MCP wrapper over HTTP API — tools call fetch() to mod endpoints
+
+        ---
+        type: decision
+        project: claude-in-mindustry
+        tags: mcp, architecture
+        captured: 2026-03-12 15:00
+        uroboro_id: 3000
+    assert:
+      - type: javascript
+        value: "(r => r.memories.some(m => /mindustry/i.test(m.content) || (m.tags && m.tags.some(function(t) { return /mindustry/i.test(t); }))))(JSON.parse(output))"
+
+  - description: "Tags extracted from metadata"
+    vars:
+      captures: |
+        # [DECISION] LangGraph agentic RAG over custom pipeline
+
+        ---
+        type: decision
+        project: qallo
+        tags: ai, rag, langchain
+        captured: 2026-03-12 11:00
+        uroboro_id: 3010
+    assert:
+      - type: javascript
+        value: "(r => r.memories.some(m => m.tags && m.tags.some(function(t) { return /rag|langchain|ai/i.test(t); })))(JSON.parse(output))"
+
+  # =================================================================
+  # CATEGORY 3: Multi-file batch — multiple uro_*.md files at once
+  # =================================================================
+
+  - description: "Multiple direct-sync files in one batch"
+    vars:
+      captures: |
+        --- File: uro_abc123.md ---
+
+        # [DECISION] Redis over in-memory for session store — persistent across restarts
+
+        ---
+        type: decision
+        project: qallo
+        tags: infrastructure
+        captured: 2026-03-12 09:00
+        uroboro_id: 2990
+
+        --- File: uro_def456.md ---
+
+        # [BLOCKER] Waiting on DNS propagation for staging environment
+
+        ---
+        type: blocker
+        project: qallo
+        captured: 2026-03-12 10:00
+        uroboro_id: 2991
+
+        --- File: uro_ghi789.md ---
+
+        # [CAPTURE] Code review complete — 23 tests pass, zero regressions
+
+        ---
+        type: capture
+        project: qallo
+        tags: testing
+        captured: 2026-03-12 11:00
+        uroboro_id: 2992
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 3"
+      - type: javascript
+        value: "(r => r.memories.some(m => /redis/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: "(r => r.memories.some(m => /dns|staging/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: "(r => r.memories.some(m => /23 test|zero regression/i.test(m.content)))(JSON.parse(output))"
+
+  # =================================================================
+  # CATEGORY 4: Edge cases in format
+  # =================================================================
+
+  - description: "No metadata block — content-only file still parseable"
+    vars:
+      captures: |
+        # [DECISION] SQLite over Postgres for local-only tool
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 1"
+      - type: javascript
+        value: "(r => r.memories.some(m => /sqlite/i.test(m.content)))(JSON.parse(output))"
+
+  - description: "Long content with reasoning preserved"
+    vars:
+      captures: |
+        # [DECISION] egui/eframe over tauri/iced for GUI — Pure Rust, immediate-mode, compiles fast, egui_plot for inline charts. No web stack needed. Fits the "simple GUI" requirement — can reuse all existing Rust simulation code directly. (considered: tauri (web frontend overhead), iced (Elm architecture more complex for data-heavy dashboards), ratatui (TUI not GUI))
+
+        ---
+        type: decision
+        project: primordial
+        captured: 2026-03-12 17:33
+        uroboro_id: 3047
+    assert:
+      - type: javascript
+        value: "(r => r.memories.some(m => /egui|eframe/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: "(r => r.memories.some(m => /tauri|iced|ratatui/i.test(m.content)))(JSON.parse(output))"
+
+  - description: "Considered alternatives are preserved"
+    vars:
+      captures: |
+        # [DECISION] @nestjs/schedule in-process cron over n8n/external orchestration for batch jobs — simpler, no extra infra (considered: n8n, Temporal, external cron)
+
+        ---
+        type: decision
+        project: qallo
+        tags: scheduling
+        captured: 2026-03-12 14:00
+        uroboro_id: 3020
+    assert:
+      - type: javascript
+        value: "(r => r.memories.some(m => /n8n|temporal|external/i.test(m.content)))(JSON.parse(output))"

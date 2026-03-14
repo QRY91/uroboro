@@ -1,0 +1,200 @@
+# Uroboro→OpenViking Sync Quality Tests
+# Tests that memory extraction preserves key information from captures.
+# Simulates what OpenViking's VLM does during session commit.
+#
+# Run: cd tests/promptfoo && promptfoo eval -c sync_quality.yaml
+
+description: "Sync quality — memory extraction fidelity"
+
+prompts:
+  - "{{captures}}"
+
+providers:
+  - id: file://sync_quality_provider.py
+    label: claude-sonnet
+    config:
+      model: claude-sonnet-4-6
+      max_tokens: 2048
+
+# output is JSON: { text, memories: [{type, title, content, tags}], memory_count }
+
+tests:
+  # =================================================================
+  # CATEGORY 1: Key information preservation
+  # =================================================================
+
+  - description: "Decision preserves both alternatives and reasoning"
+    vars:
+      captures: |
+        Development captures from project 'uroboro' (1 entry):
+
+        [DECISION] PostgreSQL over MongoDB for user service — data is highly relational and requires ACID transactions
+        (project: uroboro | tags: architecture, database)
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 1"
+      - type: javascript
+        value: "(r => r.memories.some(m => /postgres/i.test(m.content) && /mongo/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: "(r => r.memories.some(m => /acid|relational|transaction/i.test(m.content)))(JSON.parse(output))"
+
+  - description: "Blocker preserves what and who"
+    vars:
+      captures: |
+        Development captures from project 'qallo' (1 entry):
+
+        [BLOCKER] Can't proceed with payment integration — waiting on Stripe platform account approval
+        (project: qallo | tags: payments, external)
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 1"
+      - type: javascript
+        value: "(r => r.memories.some(m => /stripe/i.test(m.content) && /payment/i.test(m.content)))(JSON.parse(output))"
+
+  - description: "Question preserves the open issue"
+    vars:
+      captures: |
+        Development captures from project 'uroboro' (1 entry):
+
+        [QUESTION] Whether to shard the captures table at scale or add better indexes — revisit at 1M rows
+        (project: uroboro)
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 1"
+      - type: javascript
+        value: "(r => r.memories.some(m => /shard|index/i.test(m.content) && /1M|million|scale/i.test(m.content)))(JSON.parse(output))"
+
+  # =================================================================
+  # CATEGORY 2: Batch extraction — multiple captures in one session
+  # =================================================================
+
+  - description: "Multi-capture batch preserves all distinct decisions"
+    vars:
+      captures: |
+        Development captures from project 'qallo' (3 entries):
+
+        [DECISION] Redis over in-memory for session store — persistent sessions across restarts, supports horizontal scaling
+        (project: qallo | tags: infrastructure)
+
+        [DECISION] BullMQ over Agenda for job queue — better retry semantics and TypeScript support
+        (project: qallo | tags: infrastructure)
+
+        [DECISION] Zod over Yup for schema validation — better TypeScript inference, already on TS 5
+        (project: qallo | tags: tooling)
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 3"
+      - type: javascript
+        value: "(r => r.memories.some(m => /redis/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: "(r => r.memories.some(m => /bullmq/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: "(r => r.memories.some(m => /zod/i.test(m.content)))(JSON.parse(output))"
+
+  - description: "Mixed types batch preserves type distinctions"
+    vars:
+      captures: |
+        Development captures from project 'primordial' (3 entries):
+
+        [DECISION] egui/eframe over tauri/iced for GUI — pure Rust, immediate-mode, compiles fast
+        (project: primordial | tags: gui, architecture)
+
+        [BLOCKER] PyO3 build failing on Python 3.14 — waiting on pyo3 upstream fix for 3.14 support
+        (project: primordial | tags: build, python)
+
+        [CAPTURE] Workspace now has 4 crates: core (simulation engine), world (star system), cli (commands), gui (visualization)
+        (project: primordial | tags: architecture)
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 3"
+      - type: javascript
+        value: "(r => r.memories.some(m => /egui|eframe/i.test(m.content)))(JSON.parse(output))"
+      - type: javascript
+        value: '(r => r.memories.some(m => /pyo3|python.*3\.14/i.test(m.content)))(JSON.parse(output))'
+      - type: javascript
+        value: "(r => r.memories.some(m => /4 crate|core.*world.*cli.*gui/i.test(m.content)))(JSON.parse(output))"
+
+  # =================================================================
+  # CATEGORY 3: No hallucination — don't add what's not there
+  # =================================================================
+
+  - description: "Does not invent reasoning not present in capture"
+    vars:
+      captures: |
+        Development captures from project 'qryzone' (1 entry):
+
+        [DECISION] InstancedMesh over individual Mesh objects for quip cubes
+        (project: qryzone | tags: 3d, performance)
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 1"
+      - type: javascript
+        value: "(r => { var m = r.memories.find(function(x) { return /instancedmesh/i.test(x.content); }); return m && !/\\d+x faster|\\d+% improv|\\d+ fps/.test(m.content); })(JSON.parse(output))"
+
+  - description: "Does not merge unrelated captures into one memory"
+    vars:
+      captures: |
+        Development captures from project 'mixed' (2 entries):
+
+        [DECISION] SQLite over Postgres for uroboro — local-only tool, zero-config
+        (project: uroboro)
+
+        [DECISION] WebSockets over SSE for real-time feed — need bidirectional communication
+        (project: qallo)
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).memory_count >= 2"
+      - type: javascript
+        value: "(r => !r.memories.some(function(m) { return /sqlite/i.test(m.content) && /websocket/i.test(m.content); }))(JSON.parse(output))"
+
+  # =================================================================
+  # CATEGORY 4: Project context preservation
+  # =================================================================
+
+  - description: "Project name survives extraction"
+    vars:
+      captures: |
+        Development captures from project 'claude-in-mindustry' (1 entry):
+
+        [DECISION] Thin MCP wrapper over HTTP API — tools call fetch() to mod endpoints, no game logic in MCP server
+        (project: claude-in-mindustry | tags: mcp, architecture)
+    assert:
+      - type: javascript
+        value: "(r => r.memories.some(m => /mindustry/i.test(m.content) || (m.tags && m.tags.some(function(t) { return /mindustry/i.test(t); }))))(JSON.parse(output))"
+
+  - description: "Tags survive as metadata"
+    vars:
+      captures: |
+        Development captures from project 'qallo' (1 entry):
+
+        [DECISION] LangGraph agentic RAG over custom pipeline — LangChain/LangGraph as central orchestration layer
+        (project: qallo | tags: ai, rag, langchain)
+    assert:
+      - type: javascript
+        value: "(r => r.memories.some(m => m.tags && m.tags.length > 0 && m.tags.some(function(t) { return /rag|langchain|ai/i.test(t); })))(JSON.parse(output))"
+
+  # =================================================================
+  # CATEGORY 5: Searchability — extracted text should be findable
+  # =================================================================
+
+  - description: "Technical terms preserved for search"
+    vars:
+      captures: |
+        Development captures from project 'qallo' (1 entry):
+
+        [DECISION] @nestjs/schedule in-process cron over n8n/external orchestration for batch jobs — simpler, no extra infra
+        (project: qallo | tags: scheduling, infrastructure)
+    assert:
+      - type: javascript
+        value: '(r => r.memories.some(m => /nestjs|@nestjs\/schedule/i.test(m.content) && /cron|batch|schedul/i.test(m.content)))(JSON.parse(output))'
+
+  - description: "Concrete values preserved (not just concepts)"
+    vars:
+      captures: |
+        Development captures from project 'qryzone' (1 entry):
+
+        [DECISION] 3:1 brick ratio (156x52px) with running bond (half-offset) for brick wall page
+        (project: qryzone | tags: css, design)
+    assert:
+      - type: javascript
+        value: "(r => r.memories.some(m => /156|52|3:1|running bond/i.test(m.content)))(JSON.parse(output))"

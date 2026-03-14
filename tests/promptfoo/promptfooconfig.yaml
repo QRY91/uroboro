@@ -1,0 +1,235 @@
+# Uroboro MCP Tool Consistency Test Suite
+# Tests that Claude consistently captures decisions, blockers, and questions
+# in the correct format when given the uroboro system prompt + tools.
+#
+# Run: cd tests/promptfoo && promptfoo eval
+# View: promptfoo view
+
+description: "Uroboro capture consistency"
+
+prompts:
+  - "{{prompt}}"
+
+providers:
+  - id: file://uroboro_provider.py
+    label: claude-sonnet
+    config:
+      model: claude-sonnet-4-6
+      max_tokens: 1024
+  - id: file://uroboro_provider.py
+    label: claude-haiku
+    config:
+      model: claude-haiku-4-5-20251001
+      max_tokens: 1024
+
+# output is JSON: { text, tool_calls: [{tool, args}], stop_reason, tool_count }
+# Inline JS assertions are evaluated as expressions (no return/const)
+
+tests:
+  # =================================================================
+  # CATEGORY 1: Decision capture — should call uro_decision
+  # =================================================================
+
+  - description: "Explicit choice between two technologies"
+    vars:
+      prompt: "Let's use PostgreSQL instead of MongoDB for the user service. The data is highly relational and we need ACID transactions."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+      - type: javascript
+        value: "(r => { var d = r.tool_calls.find(c => c.tool === 'uro_decision'); return d && /over|instead of|rather than/i.test(d.args.decision); })(JSON.parse(output))"
+
+  - description: "Architectural decision — where logic lives"
+    vars:
+      prompt: "I think auth validation should live in middleware rather than in each route handler. That way we have a single point of change and it's DRY."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+      - type: javascript
+        value: "(r => { var d = r.tool_calls.find(c => c.tool === 'uro_decision'); return d && d.args.reasoning && d.args.reasoning.length > 10; })(JSON.parse(output))"
+
+  - description: "Library choice with trade-off"
+    vars:
+      prompt: "For schema validation, let's go with Zod over Yup. The TypeScript inference is much better and we're already on TS 5."
+    assert:
+      - type: javascript
+        value: "(r => { var d = r.tool_calls.find(c => c.tool === 'uro_decision'); return d && /zod/i.test(d.args.decision) && (/yup/i.test(d.args.decision) || (d.args.alternatives && /yup/i.test(d.args.alternatives))); })(JSON.parse(output))"
+
+  - description: "Performance vs clarity trade-off"
+    vars:
+      prompt: "We could use a single raw SQL query for the dashboard stats, but I'd rather use the ORM with 3 separate queries. Clarity matters more than saving a few milliseconds here."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+
+  - description: "Implicit decision in implementation context"
+    vars:
+      prompt: "I'm going to structure the API with separate handler files per resource rather than one big router file. Easier to find things as the project grows."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+
+  # =================================================================
+  # CATEGORY 2: Blocker capture — should call uro_blocker
+  # =================================================================
+
+  - description: "Blocked on external API access"
+    vars:
+      prompt: "We can't proceed with the payment integration — I'm still waiting on Stripe to approve our platform account. Been 3 days."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_blocker')"
+      - type: javascript
+        value: "(r => { var b = r.tool_calls.find(c => c.tool === 'uro_blocker'); return b && b.args.waiting_on && b.args.waiting_on.length > 0; })(JSON.parse(output))"
+
+  - description: "Blocked on team decision"
+    vars:
+      prompt: "The data model for notifications is blocked — we need Sarah to decide whether we're doing push notifications or just email. Can't design the schema without that."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_blocker')"
+
+  # =================================================================
+  # CATEGORY 3: Question capture — should call uro_question
+  # =================================================================
+
+  - description: "Deferred technical question"
+    vars:
+      prompt: "I'm not sure yet whether we should shard the captures table when it gets big, or just add better indexes. Let's revisit that when we hit 1M rows."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_question')"
+
+  - description: "Open design question"
+    vars:
+      prompt: "Still undecided on whether the recap output should be markdown or plain text. Both have trade-offs with different consumers. We'll figure it out later."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_question')"
+
+  # =================================================================
+  # CATEGORY 4: Negative cases — should NOT capture
+  # =================================================================
+
+  - description: "Trivial code edit — no capture needed"
+    vars:
+      prompt: "Can you rename the variable 'x' to 'count' in that loop?"
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_count === 0"
+
+  - description: "Simple question — no capture needed"
+    vars:
+      prompt: "What does the handleMCPToolCall function do?"
+    assert:
+      - type: javascript
+        value: "!JSON.parse(output).tool_calls.some(c => ['uro_decision','uro_blocker','uro_question','uro_capture'].includes(c.tool))"
+
+  - description: "Greeting — no capture needed"
+    vars:
+      prompt: "Hey, I'm back. Let's continue working on the MCP server."
+    assert:
+      - type: javascript
+        value: "!JSON.parse(output).tool_calls.some(c => c.tool !== 'uro_recap')"
+
+  # =================================================================
+  # CATEGORY 5: Format quality — decision text structure
+  # =================================================================
+
+  - description: "Decision format includes both alternatives"
+    vars:
+      prompt: "For the CLI framework, we'll use Cobra. I looked at urfave/cli too but Cobra has better subcommand support and auto-generated help."
+    assert:
+      - type: javascript
+        value: "(r => { var d = r.tool_calls.find(c => c.tool === 'uro_decision'); return d && ((/cobra/i.test(d.args.decision) && /urfave/i.test(d.args.decision)) || (d.args.alternatives && /urfave/i.test(d.args.alternatives))); })(JSON.parse(output))"
+
+  - description: "Decision reasoning is substantive, not generic"
+    vars:
+      prompt: "Let's use SQLite over Postgres for uroboro. It's a local-only tool, no concurrent writes, and zero-config deployment matters."
+    assert:
+      - type: javascript
+        value: "(r => { var d = r.tool_calls.find(c => c.tool === 'uro_decision'); return d && d.args.reasoning && /local|concurrent|config|deploy|single.?user|embed/i.test(d.args.reasoning); })(JSON.parse(output))"
+
+  # =================================================================
+  # CATEGORY 6: Edge cases — ambiguous scenarios
+  # =================================================================
+
+  - description: "Statement of fact — not a decision"
+    vars:
+      prompt: "The codebase already uses Express. I'm adding a new route for /api/health."
+    assert:
+      - type: javascript
+        value: "!JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+
+  - description: "Multiple decisions in one message"
+    vars:
+      prompt: "Two things: first, let's use Redis for the session store instead of in-memory. Second, for the job queue, we'll go with BullMQ over Agenda — it has better retry semantics."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.filter(c => c.tool === 'uro_decision').length >= 2"
+
+  - description: "Mixed: decision + blocker in one message"
+    vars:
+      prompt: "I've decided to use WebSockets over SSE for the real-time feed — we need bidirectional communication. But we're blocked on the load balancer config, ops team hasn't enabled sticky sessions yet."
+    assert:
+      - type: javascript
+        value: "(r => r.tool_calls.some(c => c.tool === 'uro_decision') && r.tool_calls.some(c => c.tool === 'uro_blocker'))(JSON.parse(output))"
+
+  # =================================================================
+  # CATEGORY 7: Harder edge cases
+  # =================================================================
+
+  - description: "Problem description without decision — should NOT trigger uro_decision"
+    vars:
+      prompt: "The API response times are getting worse. P95 is at 800ms now and the database queries are the bottleneck. We need to figure out what to do about this."
+    assert:
+      - type: javascript
+        value: "!JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+
+  - description: "User asking AI to choose — question, not a decision"
+    vars:
+      prompt: "Which should we use for caching, Redis or Memcached? What are the trade-offs?"
+    assert:
+      - type: javascript
+        value: "!JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+
+  - description: "Sarcastic/joking message — should NOT capture anything"
+    vars:
+      prompt: "Let's just rewrite everything in Rust lol. Actually no, let's use Haskell. Just kidding, back to the real work."
+    assert:
+      - type: javascript
+        value: "!JSON.parse(output).tool_calls.some(c => ['uro_decision','uro_blocker','uro_question','uro_capture'].includes(c.tool))"
+
+  - description: "Rejected alternative with final choice — SHOULD capture as decision"
+    vars:
+      prompt: "We considered Redis but ruled it out — too much operational overhead for our small team. Sticking with Memcached since it's simpler and we only need basic key-value caching."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+      - type: javascript
+        value: "(r => { var d = r.tool_calls.find(c => c.tool === 'uro_decision'); return d && /memcached/i.test(d.args.decision) && /redis/i.test(d.args.decision); })(JSON.parse(output))"
+
+  - description: "Subtle implicit decision in implementation detail"
+    vars:
+      prompt: "I'll add the retry logic with exponential backoff starting at 100ms, doubling each time up to 5 retries. That should handle the transient failures without hammering the service."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+      - type: javascript
+        value: "(r => { var d = r.tool_calls.find(c => c.tool === 'uro_decision'); return d && /backoff|retry|exponential/i.test(d.args.decision); })(JSON.parse(output))"
+
+  - description: "Resolved blocker — should NOT trigger uro_blocker"
+    vars:
+      prompt: "We were blocked on the API key from the payments team but got it this morning. Proceeding with the Stripe integration now."
+    assert:
+      - type: javascript
+        value: "!JSON.parse(output).tool_calls.some(c => c.tool === 'uro_blocker')"
+
+  - description: "Long rambling message with one buried decision"
+    vars:
+      prompt: "So I've been thinking about the project structure a lot. There's the question of testing frameworks, and we still need to figure out CI. The frontend is in okay shape, though the bundle size could be better. Oh, and for the ORM I think we should go with Drizzle over Prisma — the SQL-like API is more transparent and generates better queries. Anyway, we also need to update the README and probably add some contribution guidelines at some point."
+    assert:
+      - type: javascript
+        value: "JSON.parse(output).tool_calls.some(c => c.tool === 'uro_decision')"
+      - type: javascript
+        value: "(r => { var d = r.tool_calls.find(c => c.tool === 'uro_decision'); return d && /drizzle/i.test(d.args.decision) && /prisma/i.test(d.args.decision); })(JSON.parse(output))"
