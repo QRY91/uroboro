@@ -23,6 +23,7 @@ type Capture struct {
 	Project   string
 	Tags      string
 	Branch    string
+	Machine   string
 }
 
 func NewDB(dbPath string) (*DB, error) {
@@ -86,7 +87,8 @@ func (db *DB) migrate() error {
 			content TEXT NOT NULL,
 			project TEXT,
 			tags TEXT,
-			branch TEXT
+			branch TEXT,
+			machine TEXT
 		);
 		CREATE INDEX idx_captures_timestamp ON captures(timestamp);
 		CREATE INDEX idx_captures_project ON captures(project);
@@ -95,8 +97,8 @@ func (db *DB) migrate() error {
 			return fmt.Errorf("create schema: %w", err)
 		}
 	} else {
-		// Migrate: add branch column if missing
-		var hasBranch bool
+		// Migrate: add missing columns
+		var hasBranch, hasMachine bool
 		rows, err := db.db.Query(`PRAGMA table_info(captures)`)
 		if err != nil {
 			return fmt.Errorf("check columns: %w", err)
@@ -111,8 +113,11 @@ func (db *DB) migrate() error {
 			if err := rows.Scan(&cid, &name, &typ, &notnull, &dflt, &pk); err != nil {
 				return err
 			}
-			if name == "branch" {
+			switch name {
+			case "branch":
 				hasBranch = true
+			case "machine":
+				hasMachine = true
 			}
 		}
 		if !hasBranch {
@@ -120,26 +125,42 @@ func (db *DB) migrate() error {
 				return fmt.Errorf("add branch column: %w", err)
 			}
 		}
+		if !hasMachine {
+			if _, err := db.db.Exec(`ALTER TABLE captures ADD COLUMN machine TEXT`); err != nil {
+				return fmt.Errorf("add machine column: %w", err)
+			}
+		}
 	}
 
 	return nil
 }
 
-func (db *DB) InsertCapture(content, project, tags, branch string, timestamp *time.Time) (*Capture, error) {
+func (db *DB) InsertCapture(content, project, tags, branch, machine string, timestamp *time.Time) (*Capture, error) {
 	ts := time.Now()
 	if timestamp != nil {
 		ts = *timestamp
 	}
 	result, err := db.db.Exec(
-		`INSERT INTO captures (content, project, tags, branch, timestamp) VALUES (?, ?, ?, ?, ?)`,
-		content, project, tags, branch, ts,
+		`INSERT INTO captures (content, project, tags, branch, machine, timestamp) VALUES (?, ?, ?, ?, ?, ?)`,
+		content, project, tags, branch, machine, ts,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	id, _ := result.LastInsertId()
-	return &Capture{ID: id, Timestamp: ts, Content: content, Project: project, Tags: tags, Branch: branch}, nil
+	return &Capture{ID: id, Timestamp: ts, Content: content, Project: project, Tags: tags, Branch: branch, Machine: machine}, nil
+}
+
+// ExistsCapture checks if a capture with the same content and project already exists.
+// Used by import to avoid duplicates.
+func (db *DB) ExistsCapture(content, project string) (bool, error) {
+	var count int
+	err := db.db.QueryRow(
+		`SELECT COUNT(*) FROM captures WHERE content = ? AND COALESCE(project, '') = ?`,
+		content, project,
+	).Scan(&count)
+	return count > 0, err
 }
 
 // QueryCaptures is a flexible query builder for captures
@@ -147,15 +168,17 @@ type CaptureQuery struct {
 	Days    int
 	Project string
 	Branch  string
+	Machine string
 	Limit   int
 	Since   *time.Time
 	Until   *time.Time
-	Keyword string // Text search in content (case-insensitive LIKE)
-	Tags    []string // Match captures having ANY of these tags (LIKE-based)
+	Keyword  string   // Text search in content (case-insensitive LIKE)
+	Tags     []string // Match captures having ANY of these tags (LIKE-based)
+	Projects []string // Match captures from ANY of these projects (IN clause)
 }
 
 func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
-	query := `SELECT id, timestamp, content, COALESCE(project, ''), COALESCE(tags, ''), COALESCE(branch, '') FROM captures WHERE 1=1`
+	query := `SELECT id, timestamp, content, COALESCE(project, ''), COALESCE(tags, ''), COALESCE(branch, ''), COALESCE(machine, '') FROM captures WHERE 1=1`
 	var args []interface{}
 
 	if q.Days > 0 {
@@ -174,6 +197,10 @@ func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
 		query += ` AND branch = ?`
 		args = append(args, q.Branch)
 	}
+	if q.Machine != "" {
+		query += ` AND machine = ?`
+		args = append(args, q.Machine)
+	}
 	if q.Until != nil {
 		query += ` AND timestamp <= ?`
 		args = append(args, q.Until.Format("2006-01-02 15:04:05"))
@@ -184,6 +211,14 @@ func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
 			query += ` AND content LIKE ?`
 			args = append(args, "%"+word+"%")
 		}
+	}
+	if len(q.Projects) > 0 {
+		placeholders := make([]string, len(q.Projects))
+		for i, p := range q.Projects {
+			placeholders[i] = "?"
+			args = append(args, p)
+		}
+		query += ` AND project IN (` + strings.Join(placeholders, ",") + `)`
 	}
 	if len(q.Tags) > 0 {
 		tagClauses := make([]string, len(q.Tags))
@@ -210,7 +245,7 @@ func (db *DB) QueryCaptures(q CaptureQuery) ([]Capture, error) {
 	var captures []Capture
 	for rows.Next() {
 		var c Capture
-		if err := rows.Scan(&c.ID, &c.Timestamp, &c.Content, &c.Project, &c.Tags, &c.Branch); err != nil {
+		if err := rows.Scan(&c.ID, &c.Timestamp, &c.Content, &c.Project, &c.Tags, &c.Branch, &c.Machine); err != nil {
 			return nil, err
 		}
 		captures = append(captures, c)

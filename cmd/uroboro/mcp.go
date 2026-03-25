@@ -11,6 +11,7 @@ import (
 	"time"
 
 	urocontext "github.com/QRY91/uroboro/internal/context"
+	"github.com/QRY91/uroboro/internal/conventions"
 	"github.com/QRY91/uroboro/internal/database"
 	"github.com/QRY91/uroboro/internal/distill"
 	"github.com/QRY91/uroboro/internal/promptprofile"
@@ -219,6 +220,24 @@ func getMCPTools() []map[string]interface{} {
 			},
 		},
 		{
+			"name":        "uro_conventions",
+			"description": "Extract coding conventions from git history. Auto-scopes decisions to the repos being analyzed by default. Provide repos, scan_dir, or both.",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"repos":         map[string]string{"type": "string", "description": "Comma-separated absolute paths to git repositories"},
+					"scan_dir":      map[string]string{"type": "string", "description": "Discover all git repos in this directory (combines with repos)"},
+					"days":          map[string]interface{}{"type": "integer", "description": "Limit to last N days (default: 180)"},
+					"since":         map[string]string{"type": "string", "description": "Limit to after date (YYYY-MM-DD)"},
+					"correlate":     map[string]interface{}{"type": "boolean", "description": "Join git↔uro captures by ±30min window (default: true)"},
+					"audit_dir":     map[string]string{"type": "string", "description": "Path to workspace audit markdown directory for supplementary context"},
+					"all_decisions": map[string]interface{}{"type": "boolean", "description": "Include decisions from all projects instead of auto-scoping to repo names (default: false)"},
+					"all_commits":   map[string]interface{}{"type": "boolean", "description": "Extract all commits, not just style-signal ones — recommended for richer analysis (default: false)"},
+					"max_per_repo":  map[string]interface{}{"type": "integer", "description": "Cap commits per repo to prevent large repos dominating (default: 50; 0 = unlimited)"},
+				},
+			},
+		},
+		{
 			"name":        "uro_enforcement",
 			"description": "Configure uroboro enforcement hooks (pre-compact checkpoint, post-tool-use nudge). These hooks inject capture reminders during active work. Both are opt-in since they add tokens to context.",
 			"inputSchema": map[string]interface{}{
@@ -356,6 +375,22 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 
 		resultText, err = mcpStats(args.Mode, args.Since, args.Until, args.Days, args.Project, args.Branch, args.Interval)
 
+	case "uro_conventions":
+		var args struct {
+			Repos        string `json:"repos"`
+			ScanDir      string `json:"scan_dir"`
+			Days         int    `json:"days"`
+			Since        string `json:"since"`
+			Correlate    *bool  `json:"correlate"`
+			AuditDir     string `json:"audit_dir"`
+			AllDecisions bool   `json:"all_decisions"`
+			AllCommits   bool   `json:"all_commits"`
+			MaxPerRepo   int    `json:"max_per_repo"`
+		}
+		json.Unmarshal(params.Arguments, &args)
+
+		resultText, err = mcpConventions(args.Repos, args.ScanDir, args.Days, args.Since, args.Correlate, args.AuditDir, args.AllDecisions, args.AllCommits, args.MaxPerRepo)
+
 	case "uro_distill":
 		var args struct {
 			Source    string `json:"source"`
@@ -437,7 +472,7 @@ func mcpCapture(content string, tags []string, timestampStr string) error {
 		ts = &parsed
 	}
 
-	_, err = db.InsertCapture(content, project, tagsStr, branch, ts)
+	_, err = db.InsertCapture(content, project, tagsStr, branch, localMachineHostname(), ts)
 	return err
 }
 
@@ -977,6 +1012,83 @@ func detectProject() string {
 	}
 
 	return ""
+}
+
+func mcpConventions(repos, scanDir string, days int, since string, correlate *bool, auditDir string, allDecisions bool, allCommits bool, maxPerRepo int) (string, error) {
+	if repos == "" && scanDir == "" {
+		return "", fmt.Errorf("provide repos (comma-separated paths) or scan_dir")
+	}
+
+	// Split and resolve explicit repo paths
+	var repoPaths []string
+	for _, r := range strings.Split(repos, ",") {
+		r = strings.TrimSpace(r)
+		if r == "" {
+			continue
+		}
+		if strings.HasPrefix(r, "~/") {
+			home, _ := os.UserHomeDir()
+			r = filepath.Join(home, r[2:])
+		}
+		abs, err := filepath.Abs(r)
+		if err != nil {
+			continue
+		}
+		repoPaths = append(repoPaths, abs)
+	}
+
+	// Resolve scan_dir
+	if scanDir != "" {
+		if strings.HasPrefix(scanDir, "~/") {
+			home, _ := os.UserHomeDir()
+			scanDir = filepath.Join(home, scanDir[2:])
+		}
+		abs, err := filepath.Abs(scanDir)
+		if err != nil {
+			return "", fmt.Errorf("resolve scan_dir: %w", err)
+		}
+		scanDir = abs
+	}
+
+	cor := true
+	if correlate != nil {
+		cor = *correlate
+	}
+	if days == 0 {
+		days = 180
+	}
+
+	var sinceTime *time.Time
+	if since != "" {
+		t, err := mcpParseTimestamp(since)
+		if err != nil {
+			return "", fmt.Errorf("invalid since: %w", err)
+		}
+		sinceTime = &t
+	}
+	if sinceTime == nil {
+		t := time.Now().AddDate(0, 0, -days)
+		sinceTime = &t
+	}
+
+	opts := conventions.Options{
+		Repos:        repoPaths,
+		ScanDir:      scanDir,
+		Days:         days,
+		Since:        sinceTime,
+		Correlate:    cor,
+		AuditDir:     auditDir,
+		AllDecisions: allDecisions,
+		AllCommits:   allCommits,
+		MaxPerRepo:   maxPerRepo,
+	}
+
+	result, err := conventions.Run(opts, getDBPath())
+	if err != nil {
+		return "", err
+	}
+
+	return result.Prompt, nil
 }
 
 func mcpDistill(source, repo, project string, days int, since string, correlate bool) (string, error) {

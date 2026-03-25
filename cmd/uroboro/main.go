@@ -50,12 +50,18 @@ func main() {
 		handleStatus(os.Args[2:])
 	case "report", "-r":
 		handleReport(os.Args[2:])
+	case "conventions":
+		handleConventions(os.Args[2:])
 	case "distill":
 		handleDistill(os.Args[2:])
 	case "prompt-profile":
 		handlePromptProfile(os.Args[2:])
 	case "backup":
 		handleBackup(os.Args[2:])
+	case "export":
+		handleExport(os.Args[2:])
+	case "import":
+		handleImport(os.Args[2:])
 	case "sync":
 		handleSync(os.Args[2:])
 	case "hooks":
@@ -336,6 +342,176 @@ func handleReport(args []string) {
 	} else {
 		fmt.Print(out)
 	}
+}
+
+func handleExport(args []string) {
+	fs := flag.NewFlagSet("export", flag.ExitOnError)
+	project := fs.String("project", "", "Filter by project")
+	machine := fs.String("machine", "", "Filter by machine")
+	since := fs.String("since", "", "Only captures after date (YYYY-MM-DD)")
+	days := fs.Int("days", 0, "Only captures from last N days")
+	output := fs.String("out", "", "Output file (default: stdout)")
+	fs.Parse(args)
+
+	db, err := database.NewDB(getDBPath())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Database error: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	q := database.CaptureQuery{
+		Project: *project,
+		Machine: *machine,
+		Days:    *days,
+	}
+	if *since != "" {
+		t, err := time.ParseInLocation("2006-01-02", *since, time.Local)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid --since date: %v\n", err)
+			os.Exit(1)
+		}
+		q.Since = &t
+	}
+
+	captures, err := db.QueryCaptures(q)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Query error: %v\n", err)
+		os.Exit(1)
+	}
+
+	out := os.Stdout
+	if *output != "" {
+		f, err := os.Create(*output)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Create file: %v\n", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+		out = f
+	}
+
+	enc := json.NewEncoder(out)
+	for _, c := range captures {
+		rec := map[string]string{
+			"timestamp": c.Timestamp.Format("2006-01-02T15:04:05"),
+			"content":   c.Content,
+			"project":   c.Project,
+			"tags":      c.Tags,
+			"branch":    c.Branch,
+			"machine":   c.Machine,
+		}
+		if err := enc.Encode(rec); err != nil {
+			fmt.Fprintf(os.Stderr, "Encode error: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	if *output != "" {
+		fmt.Fprintf(os.Stderr, "%d captures exported to %s\n", len(captures), *output)
+	}
+}
+
+func handleImport(args []string) {
+	fs := flag.NewFlagSet("import", flag.ExitOnError)
+	machine := fs.String("machine", "", "Override machine field for all imported captures")
+	dryRun := fs.Bool("dry-run", false, "Show what would be imported without writing")
+	skipDups := fs.Bool("skip-dups", true, "Skip captures that already exist (same content+project+timestamp ±1s)")
+	fs.Parse(args)
+
+	var inputPath string
+	if len(fs.Args()) > 0 {
+		inputPath = fs.Args()[0]
+	}
+
+	var input *os.File
+	if inputPath == "" || inputPath == "-" {
+		input = os.Stdin
+	} else {
+		f, err := os.Open(inputPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Open file: %v\n", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+		input = f
+	}
+
+	db, err := database.NewDB(getDBPath())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Database error: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	imported, skipped, errors := 0, 0, 0
+	dec := json.NewDecoder(input)
+	for dec.More() {
+		var rec map[string]string
+		if err := dec.Decode(&rec); err != nil {
+			fmt.Fprintf(os.Stderr, "Decode error: %v\n", err)
+			errors++
+			continue
+		}
+
+		content := rec["content"]
+		if content == "" {
+			skipped++
+			continue
+		}
+
+		project := rec["project"]
+		tags := rec["tags"]
+		branch := rec["branch"]
+		mach := rec["machine"]
+		if *machine != "" {
+			mach = *machine
+		}
+
+		var ts *time.Time
+		if tsStr := rec["timestamp"]; tsStr != "" {
+			parsed, err := parseTimestamp(tsStr)
+			if err == nil {
+				ts = &parsed
+			}
+		}
+
+		if *skipDups {
+			exists, err := db.ExistsCapture(content, project)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Dedup check error: %v\n", err)
+			} else if exists {
+				skipped++
+				continue
+			}
+		}
+
+		if *dryRun {
+			fmt.Printf("would import: [%s] %s\n", project, truncateStr(content, 60))
+			imported++
+			continue
+		}
+
+		if _, err := db.InsertCapture(content, project, tags, branch, mach, ts); err != nil {
+			fmt.Fprintf(os.Stderr, "Insert error: %v\n", err)
+			errors++
+			continue
+		}
+		imported++
+	}
+
+	verb := "Imported"
+	if *dryRun {
+		verb = "Would import"
+	}
+	fmt.Fprintf(os.Stderr, "%s %d captures, skipped %d duplicates, %d errors\n", verb, imported, skipped, errors)
+}
+
+func truncateStr(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "..."
 }
 
 func handleBackup(args []string) {
@@ -641,6 +817,7 @@ Commands:
   status               Show recent activity
   report               Generate time report for billing
   backup               Back up the capture database
+  conventions          Extract multi-repo conventions and generate analysis prompt
   distill              Extract style signal data from git + uroboro
   prompt-profile       Analyze Claude Code prompting patterns
   hooks                Install/uninstall enforcement hooks for Claude Code
@@ -702,6 +879,16 @@ Prompt profile options:
   --out FILE           Output file (default: stdout)
   --claude-dir PATH    Claude Code projects dir (default: ~/.claude/projects)
 
+Conventions options:
+  REPO1 [REPO2 ...]   Explicit git repository paths (optional if --scan is used)
+  --scan DIR           Discover all git repos in a directory
+  --days N             Limit to last N days (default: 180)
+  --since DATE         Limit to after date (2006-01-02)
+  --correlate          Join git↔uro captures (default: true)
+  --all-decisions      Include decisions from all projects (default: auto-scope to repo names)
+  --audit-dir DIR      Workspace audit markdown directory
+  --out DIR            Output directory (default: ~/.local/share/uroboro/style-data/)
+
 Distill options:
   --source SOURCE      git, uro, or all (default: all)
   --repo PATH          Git repository path (default: current directory)
@@ -748,6 +935,16 @@ func getDBPath() string {
 	dbPath := common.GetDefaultDBPath()
 	os.MkdirAll(filepath.Dir(dbPath), 0755)
 	return dbPath
+}
+
+// localMachineHostname returns the machine name for capture attribution.
+// Respects UROBORO_MACHINE env var override (useful in containers/CI).
+func localMachineHostname() string {
+	if h := os.Getenv("UROBORO_MACHINE"); h != "" {
+		return h
+	}
+	h, _ := os.Hostname()
+	return h
 }
 
 func prependTags(args []string, tag string) []string {

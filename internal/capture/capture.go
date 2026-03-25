@@ -12,6 +12,16 @@ import (
 	"github.com/QRY91/uroboro/internal/tagging"
 )
 
+// localHostname returns the machine name for capture attribution.
+// Falls back to empty string if not determinable.
+func localHostname() string {
+	if h := os.Getenv("UROBORO_MACHINE"); h != "" {
+		return h
+	}
+	h, _ := os.Hostname()
+	return h
+}
+
 type Service struct {
 	db *database.DB
 }
@@ -42,8 +52,9 @@ func (s *Service) Capture(content, project, tags string, timestamp *time.Time) e
 		}
 	}
 
-	// Auto-detect branch
+	// Auto-detect branch and machine
 	branch := detector.DetectBranch()
+	machine := localHostname()
 
 	// Auto-enhance tags
 	analyzer := tagging.NewTagAnalyzer()
@@ -57,7 +68,7 @@ func (s *Service) Capture(content, project, tags string, timestamp *time.Time) e
 
 	// Store to database if available, otherwise file
 	if s.db != nil {
-		capture, err := s.db.InsertCapture(content, project, tags, branch, timestamp)
+		capture, err := s.db.InsertCapture(content, project, tags, branch, machine, timestamp)
 		if err != nil {
 			return err
 		}

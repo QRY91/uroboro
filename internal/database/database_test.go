@@ -15,7 +15,7 @@ func TestDatabaseIntegration(t *testing.T) {
 	defer db.Close()
 
 	t.Run("InsertCapture", func(t *testing.T) {
-		capture, err := db.InsertCapture("Test capture content", "testproject", "tag1,tag2", "", nil)
+		capture, err := db.InsertCapture("Test capture content", "testproject", "tag1,tag2", "", "", nil)
 		if err != nil {
 			t.Fatalf("Failed to insert capture: %v", err)
 		}
@@ -35,11 +35,11 @@ func TestDatabaseIntegration(t *testing.T) {
 	})
 
 	t.Run("GetRecentCaptures", func(t *testing.T) {
-		_, err := db.InsertCapture("Recent capture 1", "project1", "", "", nil)
+		_, err := db.InsertCapture("Recent capture 1", "project1", "", "", "", nil)
 		if err != nil {
 			t.Fatalf("Failed to insert: %v", err)
 		}
-		_, err = db.InsertCapture("Recent capture 2", "project2", "test", "", nil)
+		_, err = db.InsertCapture("Recent capture 2", "project2", "test", "", "", nil)
 		if err != nil {
 			t.Fatalf("Failed to insert: %v", err)
 		}
@@ -70,7 +70,7 @@ func TestDatabaseIntegration(t *testing.T) {
 	})
 
 	t.Run("EmptyFields", func(t *testing.T) {
-		capture, err := db.InsertCapture("Content only", "", "", "", nil)
+		capture, err := db.InsertCapture("Content only", "", "", "", "", nil)
 		if err != nil {
 			t.Fatalf("Failed to insert capture with empty fields: %v", err)
 		}
@@ -152,7 +152,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 5; i++ {
-			if _, err := db.InsertCapture("Concurrent capture A", "projectA", "", "", nil); err != nil {
+			if _, err := db.InsertCapture("Concurrent capture A", "projectA", "", "", "", nil); err != nil {
 				t.Errorf("Concurrent insert A failed: %v", err)
 			}
 		}
@@ -161,7 +161,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 5; i++ {
-			if _, err := db.InsertCapture("Concurrent capture B", "projectB", "", "", nil); err != nil {
+			if _, err := db.InsertCapture("Concurrent capture B", "projectB", "", "", "", nil); err != nil {
 				t.Errorf("Concurrent insert B failed: %v", err)
 			}
 		}
