@@ -1,6 +1,7 @@
 package distill
 
 import (
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -26,9 +27,44 @@ type commitMeta struct {
 	message    string
 }
 
+// noiseOnlyExts are file extensions that carry no code style signal.
+var noiseOnlyExts = map[string]bool{
+	".md": true, ".txt": true, ".lock": true, ".sum": true,
+	".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".svg": true,
+	".ico": true,
+}
+
+// noiseOnlyNames are exact filenames that carry no code style signal.
+var noiseOnlyNames = map[string]bool{
+	"package-lock.json": true, "yarn.lock": true, "Pipfile.lock": true,
+	"poetry.lock": true, "Cargo.lock": true,
+}
+
+// isNoiseOnlyCommit returns true when every touched file is a noise file
+// (docs, lockfiles, images) — no code style signal.
+func isNoiseOnlyCommit(files []string) bool {
+	if len(files) == 0 {
+		return false
+	}
+	for _, f := range files {
+		base := filepath.Base(f)
+		if noiseOnlyNames[base] {
+			continue
+		}
+		ext := strings.ToLower(filepath.Ext(f))
+		if noiseOnlyExts[ext] {
+			continue
+		}
+		return false // at least one non-noise file
+	}
+	return true
+}
+
 type GitExtractor struct {
-	RepoPath string
-	Since    *time.Time
+	RepoPath   string
+	Since      *time.Time
+	AllCommits bool // when true, skip StyleFilterRegex
+	MaxPerRepo int  // 0 = unlimited; cap to most recent N after extraction
 }
 
 func NewGitExtractor(repoPath string, since *time.Time) *GitExtractor {
@@ -55,6 +91,11 @@ func (e *GitExtractor) Extract() ([]GitExtract, error) {
 			continue
 		}
 
+		// Skip commits that only touch noise files (docs, lockfiles, images)
+		if isNoiseOnlyCommit(files) {
+			continue
+		}
+
 		diff, err := e.getDiff(c.parentHash, c.hash)
 		if err != nil {
 			continue
@@ -73,6 +114,12 @@ func (e *GitExtractor) Extract() ([]GitExtract, error) {
 			DiffStats:  stats,
 		})
 	}
+
+	// Cap per-repo if requested (results are already in date-desc order from git log)
+	if e.MaxPerRepo > 0 && len(results) > e.MaxPerRepo {
+		results = results[:e.MaxPerRepo]
+	}
+
 	return results, nil
 }
 
@@ -82,16 +129,17 @@ func (e *GitExtractor) gitCmd(args ...string) (string, error) {
 	return string(out), err
 }
 
-// listMatchingCommits runs git log with --grep to filter by style-signal regex.
+// listMatchingCommits runs git log, optionally filtered by style-signal regex.
 // Format: hash|parent|authordate_iso|subject
 func (e *GitExtractor) listMatchingCommits() ([]commitMeta, error) {
-	args := []string{
-		"log",
-		"--extended-regexp",
-		"--grep=" + StyleFilterRegex,
-		"-i",
-		"--format=%H|%P|%aI|%s",
-		"--no-merges",
+	args := []string{"log", "--format=%H|%P|%aI|%s", "--no-merges"}
+	if !e.AllCommits {
+		args = append(args, "--extended-regexp", "--grep="+StyleFilterRegex, "-i")
+	}
+	if e.MaxPerRepo > 0 {
+		// Ask git to stop early — avoids traversing huge repos when we only want the top N.
+		// We request 2× the cap to leave room for post-extraction filtering (noise, root commits).
+		args = append(args, fmt.Sprintf("--max-count=%d", e.MaxPerRepo*2))
 	}
 	if e.Since != nil {
 		args = append(args, "--since="+e.Since.Format("2006-01-02"))
