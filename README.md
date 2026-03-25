@@ -54,6 +54,35 @@ uro prompt-profile --days 30
 uro prompt-profile --extract --out prompts.jsonl
 ```
 
+## Multi-device
+
+Captures record which machine they came from. Move data between machines with export/import:
+
+```bash
+# Export captures as JSONL
+uroboro export --since 2024-01-01 --out captures.jsonl
+uroboro export --project myapp --days 30  # to stdout
+
+# Import from another machine (deduplicates by content+project)
+uroboro import captures.jsonl --machine cambrian
+uroboro import --dry-run captures.jsonl   # preview first
+
+# Pull live from a remote machine (requires uroboro installed there)
+ssh cambrian uroboro export --since 2024-01-01 | uroboro import --machine cambrian
+```
+
+Override the detected hostname with `UROBORO_MACHINE=myhost` (useful in containers/CI).
+
+For retroactive ingestion from Claude Code session logs (no uroboro install needed on the remote):
+
+```bash
+# Rsync remote sessions, then extract decisions via LLM
+rsync -av remote:~/.claude/projects/ ~/.claude/remote-projects/
+python scripts/ingest_sessions.py --projects-dir ~/.claude/remote-projects scan
+python scripts/ingest_sessions.py --projects-dir ~/.claude/remote-projects extract --out candidates.jsonl
+uroboro import candidates.jsonl --machine remote
+```
+
 ## Backup
 
 ```bash
@@ -168,9 +197,10 @@ Use `scripts/style-analysis-prompt.md` as a Claude Code prompt to analyze the JS
 ## Philosophy
 
 - **Local-first** — SQLite database in `~/.local/share/uroboro/`
-- **No cloud** — Your data stays on your machine
+- **No cloud** — Your data stays on your machine(s)
 - **Tool-agnostic** — Works standalone or with Claude Code
 - **Minimal friction** — Quick captures, powerful retrieval
+- **Multi-device ready** — Export/import JSONL to sync across machines; machine field tracks capture origin
 
 ## Data
 
