@@ -101,6 +101,8 @@ func getMCPTools() []map[string]interface{} {
 					"decision":     map[string]string{"type": "string", "description": "What was decided (e.g., 'JWT over sessions')"},
 					"reasoning":    map[string]string{"type": "string", "description": "Why (e.g., 'stateless, scales horizontally')"},
 					"alternatives": map[string]string{"type": "string", "description": "What else was considered"},
+					"project":      map[string]string{"type": "string", "description": "Project name (overrides auto-detection from git)"},
+					"tags":         map[string]string{"type": "string", "description": "Comma-separated additional tags (decision tag always added)"},
 					"timestamp":    map[string]string{"type": "string", "description": "ISO timestamp for retroactive logging (e.g., 2024-01-15T14:30:00)"},
 				},
 				"required": []string{"decision"},
@@ -114,6 +116,8 @@ func getMCPTools() []map[string]interface{} {
 				"properties": map[string]interface{}{
 					"blocker":    map[string]string{"type": "string", "description": "What is blocking"},
 					"waiting_on": map[string]string{"type": "string", "description": "Who/what we're waiting on"},
+					"project":    map[string]string{"type": "string", "description": "Project name (overrides auto-detection from git)"},
+					"tags":       map[string]string{"type": "string", "description": "Comma-separated additional tags (blocker tag always added)"},
 					"timestamp":  map[string]string{"type": "string", "description": "ISO timestamp for retroactive logging (e.g., 2024-01-15T14:30:00)"},
 				},
 				"required": []string{"blocker"},
@@ -126,6 +130,8 @@ func getMCPTools() []map[string]interface{} {
 				"type": "object",
 				"properties": map[string]interface{}{
 					"question":  map[string]string{"type": "string", "description": "The open question"},
+					"project":   map[string]string{"type": "string", "description": "Project name (overrides auto-detection from git)"},
+					"tags":      map[string]string{"type": "string", "description": "Comma-separated additional tags (question tag always added)"},
 					"timestamp": map[string]string{"type": "string", "description": "ISO timestamp for retroactive logging (e.g., 2024-01-15T14:30:00)"},
 				},
 				"required": []string{"question"},
@@ -139,6 +145,7 @@ func getMCPTools() []map[string]interface{} {
 				"properties": map[string]interface{}{
 					"content":   map[string]string{"type": "string", "description": "What to capture"},
 					"tags":      map[string]string{"type": "string", "description": "Comma-separated tags"},
+					"project":   map[string]string{"type": "string", "description": "Project name (overrides auto-detection from git)"},
 					"timestamp": map[string]string{"type": "string", "description": "ISO timestamp for retroactive logging (e.g., 2024-01-15T14:30:00)"},
 				},
 				"required": []string{"content"},
@@ -275,6 +282,8 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			Decision     string `json:"decision"`
 			Reasoning    string `json:"reasoning"`
 			Alternatives string `json:"alternatives"`
+			Project      string `json:"project"`
+			Tags         string `json:"tags"`
 			Timestamp    string `json:"timestamp"`
 		}
 		json.Unmarshal(params.Arguments, &args)
@@ -287,13 +296,24 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			content += " (considered: " + args.Alternatives + ")"
 		}
 
-		err = mcpCapture(content, []string{"decision"}, args.Timestamp)
+		tags := []string{"decision"}
+		if args.Tags != "" {
+			for _, t := range strings.Split(args.Tags, ",") {
+				if tt := strings.TrimSpace(t); tt != "" && tt != "decision" {
+					tags = append(tags, tt)
+				}
+			}
+		}
+
+		err = mcpCapture(content, tags, args.Timestamp, args.Project)
 		resultText = "Decision recorded"
 
 	case "uro_blocker":
 		var args struct {
 			Blocker   string `json:"blocker"`
 			WaitingOn string `json:"waiting_on"`
+			Project   string `json:"project"`
+			Tags      string `json:"tags"`
 			Timestamp string `json:"timestamp"`
 		}
 		json.Unmarshal(params.Arguments, &args)
@@ -303,23 +323,44 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			content += " (waiting on: " + args.WaitingOn + ")"
 		}
 
-		err = mcpCapture(content, []string{"blocker"}, args.Timestamp)
+		blockerTags := []string{"blocker"}
+		if args.Tags != "" {
+			for _, t := range strings.Split(args.Tags, ",") {
+				if tt := strings.TrimSpace(t); tt != "" && tt != "blocker" {
+					blockerTags = append(blockerTags, tt)
+				}
+			}
+		}
+
+		err = mcpCapture(content, blockerTags, args.Timestamp, args.Project)
 		resultText = "Blocker recorded"
 
 	case "uro_question":
 		var args struct {
 			Question  string `json:"question"`
+			Project   string `json:"project"`
+			Tags      string `json:"tags"`
 			Timestamp string `json:"timestamp"`
 		}
 		json.Unmarshal(params.Arguments, &args)
 
-		err = mcpCapture(args.Question, []string{"question"}, args.Timestamp)
+		questionTags := []string{"question"}
+		if args.Tags != "" {
+			for _, t := range strings.Split(args.Tags, ",") {
+				if tt := strings.TrimSpace(t); tt != "" && tt != "question" {
+					questionTags = append(questionTags, tt)
+				}
+			}
+		}
+
+		err = mcpCapture(args.Question, questionTags, args.Timestamp, args.Project)
 		resultText = "Question recorded"
 
 	case "uro_capture":
 		var args struct {
 			Content   string `json:"content"`
 			Tags      string `json:"tags"`
+			Project   string `json:"project"`
 			Timestamp string `json:"timestamp"`
 		}
 		json.Unmarshal(params.Arguments, &args)
@@ -331,7 +372,7 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 			}
 		}
 
-		err = mcpCapture(args.Content, tags, args.Timestamp)
+		err = mcpCapture(args.Content, tags, args.Timestamp, args.Project)
 		resultText = "Captured"
 
 	case "uro_recap":
@@ -451,7 +492,7 @@ func handleMCPToolCall(req MCPRequest) MCPResponse {
 	}
 }
 
-func mcpCapture(content string, tags []string, timestampStr string) error {
+func mcpCapture(content string, tags []string, timestampStr string, projectOverride ...string) error {
 	db, err := database.NewDB(getDBPath())
 	if err != nil {
 		return err
@@ -460,6 +501,9 @@ func mcpCapture(content string, tags []string, timestampStr string) error {
 
 	detector := urocontext.NewProjectDetector()
 	project := detectProject()
+	if len(projectOverride) > 0 && projectOverride[0] != "" {
+		project = projectOverride[0]
+	}
 	branch := detector.DetectBranch()
 	tagsStr := strings.Join(tags, ",")
 
